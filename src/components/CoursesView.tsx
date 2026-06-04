@@ -33,7 +33,7 @@ export default function CoursesView({
   onSetEnrollModalOpen,
   searchQuery
 }: CoursesViewProps) {
-  // State untuk melacak mata kuliah yang sedang dipilih/diinspeksi detailnya
+  // State untuk melacak mata kuliah yang sedang dipilih/diinspeksi detailnya oleh pengguna
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   
   // State untuk melacak apakah pengguna sedang dalam mode edit informasi mata kuliah
@@ -52,17 +52,30 @@ export default function CoursesView({
   const [colorHex, setColorHex] = useState('#3525cd');
   const [errorMsg, setErrorMsg] = useState('');
 
+  // Kamus terjemahan nama hari dari bahasa Inggris ke bahasa Indonesia
+  const dayNameIndonesian: Record<string, string> = {
+    'Monday': 'Senin',
+    'Tuesday': 'Selasa',
+    'Wednesday': 'Rabu',
+    'Thursday': 'Kamis',
+    'Friday': 'Jumat',
+    'Saturday': 'Sabtu',
+    'Sunday': 'Minggu'
+  };
+
   // Pilihan palet warna dot bulat untuk membedakan mata kuliah secara visual
   const colorsOption = [
     { label: 'Indigo', value: '#3525cd' },
-    { label: 'Rust', value: '#7e3000' },
-    { label: 'Slate grey', value: '#505f76' },
-    { label: 'Violaceous', value: '#4f46e5' },
-    { label: 'Crimson red', value: '#ba1a1a' },
-    { label: 'Emerald green', value: '#16a34a' }
+    { label: 'Cokelat Karat', value: '#7e3000' },
+    { label: 'Abu-abu Slate', value: '#505f76' },
+    { label: 'Ungu Violet', value: '#4f46e5' },
+    { label: 'Merah Crimson', value: '#ba1a1a' },
+    { label: 'Hijau Zamrud', value: '#16a34a' }
   ];
 
   // Helper untuk menentukan tanggal pertemuan kuliah berikutnya berdasarkan nama hari
+  // Fungsi ini menghitung selisih hari antara hari ini dan hari kuliah yang ditargetkan,
+  // lalu memformatnya dalam string tanggal terformat menggunakan format lokal Indonesia ('id-ID').
   const getNextClassDate = (dayName: string): string => {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const targetDayIndex = days.indexOf(dayName);
@@ -77,10 +90,12 @@ export default function CoursesView({
     }
     
     d.setDate(d.getDate() + daysUntil);
-    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+    return d.toLocaleDateString('id-ID', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
   };
 
   // Menangani pengiriman form pendaftaran mata kuliah baru
+  // Melakukan validasi sederhana, memicu callback onAddCourse pada komponen induk,
+  // lalu mereset state formulir kembali ke nilai bawaan.
   const handleEnrollSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
@@ -120,6 +135,7 @@ export default function CoursesView({
   };
 
   // Mengisi form edit dengan data mata kuliah yang akan diubah sebelum modal edit ditampilkan
+  // Memasukkan data mata kuliah terpilih ke dalam state formulir untuk ditampilkan di modal edit.
   const handleInspectEditClick = (course: Course) => {
     setIsEditing(true);
     setCourseCode(course.course_code);
@@ -135,6 +151,8 @@ export default function CoursesView({
   };
 
   // Menangani pengiriman form perubahan data mata kuliah
+  // Memvalidasi data, memicu callback onEditCourse pada komponen induk untuk memperbarui data,
+  // serta memperbarui data selectedCourse lokal dan menutup modal edit.
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
@@ -165,6 +183,7 @@ export default function CoursesView({
   };
 
   // Menangani proses pembatalan pendaftaran (unenroll/hapus) mata kuliah
+  // Memicu callback onDeleteCourse dan membersihkan pilihan mata kuliah aktif.
   const handleDeleteClick = (courseId: number) => {
     onDeleteCourse(courseId);
     setSelectedCourse(null);
@@ -189,9 +208,9 @@ export default function CoursesView({
       {/* Header Halaman */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-on-surface">Fall Semester 2026</h2>
+          <h2 className="text-3xl font-bold tracking-tight text-on-surface">Semester Ganjil 2026</h2>
           <p className="text-sm text-on-surface-variant font-medium mt-1">
-            {courses.length} Active Courses Enrolled • {totalSks} SKS Credits Checked
+            {courses.length} Mata Kuliah Aktif Terdaftar • {totalSks} SKS Terdaftar
           </p>
         </div>
         <div className="flex gap-2">
@@ -201,7 +220,7 @@ export default function CoursesView({
             className="px-4 py-2 bg-primary hover:bg-[#4F46E5] text-white rounded-lg text-xs font-semibold flex items-center gap-2 shadow-sm cursor-pointer transition-colors"
           >
             <Plus className="w-4 h-4" />
-            <span>Enroll Course</span>
+            <span>Tambah Mata Kuliah</span>
           </button>
         </div>
       </div>
@@ -215,14 +234,14 @@ export default function CoursesView({
             <button
               onClick={() => handleInspectEditClick(selectedCourse)}
               className="text-on-surface-variant hover:text-primary p-2 bg-white border border-[#E2E8F0] hover:bg-[#F1F5F9] rounded-lg transition-colors cursor-pointer flex items-center justify-center"
-              title="Edit course information"
+              title="Edit informasi mata kuliah"
             >
               <Edit2 className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => handleDeleteClick(selectedCourse.id)}
               className="text-red-500 hover:text-red-700 p-2 bg-white border border-red-100 hover:bg-red-50 rounded-lg transition-colors cursor-pointer flex items-center justify-center"
-              title="Unenroll course"
+              title="Batalkan pendaftaran mata kuliah"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
@@ -242,7 +261,7 @@ export default function CoursesView({
               {selectedCourse.course_code}
             </span>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/15">
-              Active Course
+              Mata Kuliah Aktif
             </span>
           </div>
 
@@ -255,7 +274,7 @@ export default function CoursesView({
             </span>
             <span className="flex items-center gap-1.5 bg-white p-2.5 rounded-lg border border-[#E2E8F0] shadow-2xs">
               <Clock className="w-3.5 h-3.5 text-primary" />
-              {selectedCourse.day_of_week}, {selectedCourse.start_time} - {selectedCourse.end_time}
+              {dayNameIndonesian[selectedCourse.day_of_week] || selectedCourse.day_of_week}, {selectedCourse.start_time} - {selectedCourse.end_time}
             </span>
             <span className="flex items-center gap-1.5 bg-white p-2.5 rounded-lg border border-[#E2E8F0] shadow-2xs">
               <MapPin className="w-3.5 h-3.5 text-primary" />
@@ -263,7 +282,7 @@ export default function CoursesView({
             </span>
             <span className="flex items-center gap-1.5 bg-white p-2.5 rounded-lg border border-[#E2E8F0] shadow-2xs">
               <GraduationCap className="w-3.5 h-3.5 text-primary" />
-              {selectedCourse.sks} Credits / SKS
+              {selectedCourse.sks} SKS (Kredit)
             </span>
           </div>
 
@@ -272,17 +291,17 @@ export default function CoursesView({
             <div>
               <h4 className="text-xs font-bold text-on-surface uppercase tracking-wider mb-2 flex items-center gap-1.5">
                 <Calendar className="w-4 h-4 text-primary" />
-                Upcoming Schedule
+                Jadwal Mendatang
               </h4>
               <div className="bg-white border border-[#E2E8F0] p-4 rounded-xl shadow-2xs">
                 <p className="text-sm font-bold text-on-surface">
-                  Lecture Series Occurrence
+                  Jadwal Seri Kuliah
                 </p>
                 <p className="text-xs text-on-surface-variant mt-1.5 font-medium">
-                  Next Class: <span className="text-primary font-bold">{getNextClassDate(selectedCourse.day_of_week)}</span>
+                  Kelas Berikutnya: <span className="text-primary font-bold">{getNextClassDate(selectedCourse.day_of_week)}</span>
                 </p>
                 <p className="text-[10px] text-[#94A3B8] font-bold mt-1 uppercase">
-                  Time: {selectedCourse.start_time} - {selectedCourse.end_time} ({selectedCourse.room})
+                  Waktu: {selectedCourse.start_time} - {selectedCourse.end_time} ({selectedCourse.room})
                 </p>
               </div>
             </div>
@@ -291,11 +310,11 @@ export default function CoursesView({
             <div>
               <h4 className="text-xs font-bold text-on-surface uppercase tracking-wider mb-2 flex items-center gap-1.5">
                 <CheckSquare className="w-4 h-4 text-primary" />
-                Recent Tasks Checklist
+                Checklist Tugas Terbaru
               </h4>
               {tasks.filter((t) => t.course_id === selectedCourse.id).length === 0 ? (
                 <div className="bg-white border border-[#E2E8F0] p-4 rounded-xl shadow-2xs">
-                  <p className="text-xs text-on-surface-variant italic font-medium">No pending assignments linked to this course.</p>
+                  <p className="text-xs text-on-surface-variant italic font-medium">Tidak ada tugas tertunda yang terkait dengan mata kuliah ini.</p>
                 </div>
               ) : (
                 <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
@@ -332,8 +351,8 @@ export default function CoursesView({
         {filteredCourses.length === 0 ? (
           <div className="col-span-full text-center py-12 bg-white border border-[#E2E8F0] rounded-2xl">
             <BookOpen className="w-12 h-12 text-[#94A3B8] mx-auto mb-3 opacity-60" />
-            <p className="text-sm font-semibold text-on-surface">No courses enrolled</p>
-            <p className="text-xs text-on-surface-variant mt-1">Try adding the class metadata manually.</p>
+            <p className="text-sm font-semibold text-on-surface">Belum ada mata kuliah terdaftar</p>
+            <p className="text-xs text-on-surface-variant mt-1">Silakan tambah informasi mata kuliah baru.</p>
           </div>
         ) : (
           filteredCourses.map((course) => {
@@ -367,7 +386,7 @@ export default function CoursesView({
                   {/* Badge jumlah tugas pending yang terdeteksi */}
                   {courseTasksCount > 0 && (
                     <span className="text-[9px] font-bold px-2 py-0.5 bg-red-50 text-red-600 border border-red-100 rounded-full">
-                      {courseTasksCount} Pending
+                      {courseTasksCount} Belum Selesai
                     </span>
                   )}
                 </div>
@@ -377,7 +396,7 @@ export default function CoursesView({
                     {course.course_name}
                   </h3>
                   <p className="text-xs text-on-surface-variant font-semibold">
-                    Lecture series with {course.sks} SKS credits.
+                    Mata kuliah dengan {course.sks} SKS.
                   </p>
                 </div>
 
@@ -389,7 +408,7 @@ export default function CoursesView({
                   <div className="flex items-center gap-2.5">
                     <Clock className="text-[#94A3B8] w-3.5 h-3.5" />
                     <span>
-                      {course.day_of_week}s, {course.start_time} - {course.end_time}
+                      {dayNameIndonesian[course.day_of_week] || course.day_of_week}, {course.start_time} - {course.end_time}
                     </span>
                   </div>
                   <div className="flex items-center gap-2.5">
@@ -403,16 +422,16 @@ export default function CoursesView({
         )}
       </div>
 
-      {/* Modal Popup Pendaftaran Mata Kuliah Baru (Enroll Course Modal) */}
+      {/* Modal Popup Pendaftaran Mata Kuliah Baru (Tambah Mata Kuliah Baru Modal) */}
       {isEnrollModalOpen && (
         <div className="fixed inset-0 bg-[#1b1b24]/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-[560px] overflow-hidden border border-[#E2E8F0] animate-zoom-in">
             {/* Header Modal */}
             <div className="px-6 py-4 bg-[#F8FAFC] border-b border-[#E2E8F0] flex items-center justify-between">
               <div>
-                <h3 className="font-bold text-on-surface text-lg">Enroll New Course</h3>
+                <h3 className="font-bold text-on-surface text-lg">Tambah Mata Kuliah Baru</h3>
                 <p className="text-xs text-on-surface-variant font-medium mt-0.5">
-                  Input detail for your upcoming academic schedule
+                  Masukkan rincian untuk jadwal akademik Anda berikutnya
                 </p>
               </div>
               <button
@@ -436,7 +455,7 @@ export default function CoursesView({
               <div className="grid grid-cols-3 gap-4">
                 <div className="col-span-1">
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    Course Code
+                    Kode Mata Kuliah
                   </label>
                   <input
                     type="text"
@@ -449,12 +468,12 @@ export default function CoursesView({
                 </div>
                 <div className="col-span-2">
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    Course Name
+                    Nama Mata Kuliah
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="Algorithm Analysis"
+                    placeholder="Analisis Algoritma"
                     value={courseName}
                     onChange={(e) => setCourseName(e.target.value)}
                     className="w-full h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-medium"
@@ -466,7 +485,7 @@ export default function CoursesView({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    Credits / SKS
+                    SKS (Kredit)
                   </label>
                   <input
                     type="number"
@@ -480,12 +499,12 @@ export default function CoursesView({
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    Room / Location
+                    Ruangan / Lokasi
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="Science Hall, Room 304"
+                    placeholder="Gedung Sains, Ruang 304"
                     value={room}
                     onChange={(e) => setRoom(e.target.value)}
                     className="w-full h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-medium"
@@ -496,7 +515,7 @@ export default function CoursesView({
               {/* Form Field: Nama Dosen Pengampu */}
               <div>
                 <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                  Lecturer Name
+                  Nama Dosen
                 </label>
                 <input
                   type="text"
@@ -512,25 +531,25 @@ export default function CoursesView({
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    Class Day
+                    Hari Kuliah
                   </label>
                   <select
                     value={dayOfWeek}
                     onChange={(e) => setDayOfWeek(e.target.value)}
                     className="w-full h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-on-surface font-semibold"
                   >
-                    <option value="Monday">Monday</option>
-                    <option value="Tuesday">Tuesday</option>
-                    <option value="Wednesday">Wednesday</option>
-                    <option value="Thursday">Thursday</option>
-                    <option value="Friday">Friday</option>
-                    <option value="Saturday">Saturday</option>
-                    <option value="Sunday">Sunday</option>
+                    <option value="Monday">Senin</option>
+                    <option value="Tuesday">Selasa</option>
+                    <option value="Wednesday">Rabu</option>
+                    <option value="Thursday">Kamis</option>
+                    <option value="Friday">Jumat</option>
+                    <option value="Saturday">Sabtu</option>
+                    <option value="Sunday">Minggu</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    Start Time
+                    Jam Mulai
                   </label>
                   <input
                     type="time"
@@ -542,7 +561,7 @@ export default function CoursesView({
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    End Time
+                    Jam Selesai
                   </label>
                   <input
                     type="time"
@@ -557,7 +576,7 @@ export default function CoursesView({
               {/* Pemilihan warna visual (Color Dot Selections) */}
               <div>
                 <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                  Theme Palette Color
+                  Warna Tema
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {colorsOption.map((c) => {
@@ -585,13 +604,13 @@ export default function CoursesView({
                   onClick={() => onSetEnrollModalOpen(false)}
                   className="px-4 py-2 border border-[#E2E8F0] rounded-lg text-xs font-semibold hover:bg-[#F1F5F9] cursor-pointer"
                 >
-                  Cancel
+                  Batal
                 </button>
                 <button
                   type="submit"
                   className="px-5 py-2 bg-primary hover:bg-[#4F46E5] text-white font-semibold rounded-lg text-xs shadow-sm cursor-pointer"
                 >
-                  Enroll Course
+                  Tambah Mata Kuliah
                 </button>
               </div>
 
@@ -607,9 +626,9 @@ export default function CoursesView({
             {/* Header Modal Edit */}
             <div className="px-6 py-4 bg-[#F8FAFC] border-b border-[#E2E8F0] flex items-center justify-between">
               <div>
-                <h3 className="font-bold text-on-surface text-lg">Edit Course Info</h3>
+                <h3 className="font-bold text-on-surface text-lg">Edit Informasi Mata Kuliah</h3>
                 <p className="text-xs text-on-surface-variant font-medium mt-0.5">
-                  Update class metadata records for {selectedCourse.course_code}
+                  Perbarui data informasi kelas untuk {selectedCourse.course_code}
                 </p>
               </div>
               <button
@@ -633,7 +652,7 @@ export default function CoursesView({
               <div className="grid grid-cols-3 gap-4">
                 <div className="col-span-1">
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    Course Code
+                    Kode Mata Kuliah
                   </label>
                   <input
                     type="text"
@@ -645,7 +664,7 @@ export default function CoursesView({
                 </div>
                 <div className="col-span-2">
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    Course Name
+                    Nama Mata Kuliah
                   </label>
                   <input
                     type="text"
@@ -661,7 +680,7 @@ export default function CoursesView({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    Credits / SKS
+                    SKS (Kredit)
                   </label>
                   <input
                     type="number"
@@ -675,7 +694,7 @@ export default function CoursesView({
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    Room / Location
+                    Ruangan / Lokasi
                   </label>
                   <input
                     type="text"
@@ -690,7 +709,7 @@ export default function CoursesView({
               {/* Edit Nama Dosen Pengampu */}
               <div>
                 <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                  Lecturer Name
+                  Nama Dosen
                 </label>
                 <input
                   type="text"
@@ -705,25 +724,25 @@ export default function CoursesView({
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    Class Day
+                    Hari Kuliah
                   </label>
                   <select
                     value={dayOfWeek}
                     onChange={(e) => setDayOfWeek(e.target.value)}
                     className="w-full h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-on-surface font-semibold"
                   >
-                    <option value="Monday">Monday</option>
-                    <option value="Tuesday">Tuesday</option>
-                    <option value="Wednesday">Wednesday</option>
-                    <option value="Thursday">Thursday</option>
-                    <option value="Friday">Friday</option>
-                    <option value="Saturday">Saturday</option>
-                    <option value="Sunday">Sunday</option>
+                    <option value="Monday">Senin</option>
+                    <option value="Tuesday">Selasa</option>
+                    <option value="Wednesday">Rabu</option>
+                    <option value="Thursday">Kamis</option>
+                    <option value="Friday">Jumat</option>
+                    <option value="Saturday">Sabtu</option>
+                    <option value="Sunday">Minggu</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    Start Time
+                    Jam Mulai
                   </label>
                   <input
                     type="time"
@@ -735,7 +754,7 @@ export default function CoursesView({
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    End Time
+                    Jam Selesai
                   </label>
                   <input
                     type="time"
@@ -750,7 +769,7 @@ export default function CoursesView({
               {/* Edit Pilihan Warna */}
               <div>
                 <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                  Theme Palette Color
+                  Warna Tema
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {colorsOption.map((c) => {
@@ -778,13 +797,13 @@ export default function CoursesView({
                   onClick={() => setIsEditing(false)}
                   className="px-4 py-2 border border-[#E2E8F0] rounded-lg text-xs font-semibold hover:bg-slate-100 cursor-pointer"
                 >
-                  Cancel
+                  Batal
                 </button>
                 <button
                   type="submit"
                   className="px-5 py-2 bg-primary hover:bg-[#4F46E5] text-white font-semibold rounded-lg text-xs shadow-sm cursor-pointer"
                 >
-                  Save Changes
+                  Simpan Perubahan
                 </button>
               </div>
 

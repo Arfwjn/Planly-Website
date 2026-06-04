@@ -14,9 +14,10 @@ interface NotesViewProps {
 /**
  * Komponen NotesView
  * 
- * Komponen ini digunakan untuk menampilkan, mencari, menyaring, menambah, mengedit, 
- * dan menghapus catatan kuliah (notes). Catatan dapat dikaitkan dengan mata kuliah tertentu (courses)
- * dan mendukung visualisasi khusus seperti daftar tugas (to-do list) dan gambar ilustrasi.
+ * Di sini kita mengelola visualisasi daftar catatan kuliah (notes). Komponen ini berguna untuk
+ * menampilkan, mencari, menyaring, menambah, mengedit, dan menghapus catatan kuliah. 
+ * Catatan dapat kita kaitkan dengan mata kuliah tertentu (courses) serta mendukung beberapa
+ * visualisasi khusus seperti daftar tugas (to-do list) dan gambar ilustrasi.
  */
 export default function NotesView({
   notes,
@@ -26,27 +27,27 @@ export default function NotesView({
   onDeleteNote,
   searchQuery
 }: NotesViewProps) {
-  // State untuk melacak apakah formulir tambah catatan baru sedang terbuka
+  // Di sini kita menggunakan state untuk melacak apakah formulir tambah catatan baru sedang terbuka
   const [isAdding, setIsAdding] = useState(false);
-  // State untuk menyimpan judul dan isi catatan baru yang sedang diinput
+  // State ini kita gunakan untuk menyimpan judul dan isi catatan baru yang sedang diinput oleh pengguna
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  // State untuk menyimpan ID mata kuliah yang dipilih untuk catatan baru
+  // State ini berguna untuk menyimpan ID mata kuliah yang kita pilih untuk catatan baru
   const [courseId, setCourseId] = useState<string>('');
-  // State untuk menyimpan pesan kesalahan validasi formulir tambah catatan
+  // State ini kita pakai untuk menyimpan pesan kesalahan saat validasi formulir tambah catatan
   const [errorMsg, setErrorMsg] = useState('');
 
-  // State untuk melacak catatan yang sedang dipilih/dilihat detailnya, serta status edit
+  // Di sini kita melacak catatan yang sedang dipilih/dilihat detailnya, serta status editnya
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [isEditing, setIsEditing] = useState(false);
 
-  // State untuk menyimpan data input saat menyunting/mengedit catatan yang dipilih
+  // State ini kita gunakan untuk menyimpan data input saat menyunting/mengedit catatan yang sedang kita pilih
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
   const [editCourseId, setEditCourseId] = useState<string>('');
   const [editErrorMsg, setEditErrorMsg] = useState('');
 
-  // Fungsi ini dipanggil ketika pengguna memilih salah satu catatan untuk melihat detailnya.
+  // Fungsi ini berguna untuk menangani pemilihan salah satu catatan agar kita bisa melihat detailnya.
   // Di sini, kita memuat data catatan tersebut ke dalam state penyuntingan dan menutup mode edit terlebih dahulu.
   const handleInspectNote = (note: Note) => {
     setSelectedNote(note);
@@ -57,8 +58,8 @@ export default function NotesView({
     setEditErrorMsg('');
   };
 
-  // Menangani pengiriman form saat membuat catatan baru.
-  // Di sini kita memvalidasi input, memanggil fungsi callback onAddNote, dan mereset form.
+  // Fungsi ini berguna untuk menangani pengiriman form saat kita membuat catatan baru.
+  // Di sini kita memvalidasi input, memanggil fungsi callback onAddNote, dan mereset form kembali ke kondisi awal.
   const handleCreateNoteSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
@@ -81,7 +82,7 @@ export default function NotesView({
     setIsAdding(false);
   };
 
-  // Menangani pengiriman form saat mengedit catatan yang dipilih.
+  // Fungsi ini berguna untuk menangani pengiriman form saat kita mengedit catatan yang dipilih.
   // Di sini kita memvalidasi perubahan lalu memperbarui catatan melalui callback onEditNote.
   const handleEditNoteSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,8 +105,8 @@ export default function NotesView({
     setIsEditing(false);
   };
 
-  // Fungsi ini menangani penghapusan catatan.
-  // Kita menggunakan e.stopPropagation() agar klik tombol tidak memicu event klik pada kartu catatan (handleInspectNote).
+  // Fungsi ini berguna untuk menangani penghapusan catatan yang ada.
+  // Kita menggunakan e.stopPropagation() di sini agar klik tombol tidak memicu event klik pada kartu catatan (handleInspectNote).
   const handleDeleteClick = (e: React.MouseEvent, noteId: number) => {
     e.stopPropagation();
     onDeleteNote(noteId);
@@ -115,16 +116,16 @@ export default function NotesView({
     }
   };
 
-  // Fungsi penolong untuk menghubungkan catatan dengan mata kuliah.
-  // Mengembalikan kode mata kuliah jika ID cocok, atau 'General' jika tidak terhubung ke mata kuliah spesifik.
+  // Fungsi penolong ini berguna untuk menghubungkan catatan dengan mata kuliah.
+  // Kita akan mengembalikan kode mata kuliah jika ID cocok, atau 'Umum' jika tidak terhubung ke mata kuliah spesifik.
   const getCourseTagName = (cid: number | null) => {
-    if (cid === null) return 'General';
+    if (cid === null) return 'Umum';
     const c = courses.find((item) => item.id === cid);
-    return c ? c.course_code : 'Academic';
+    return c ? c.course_code : 'Akademik';
   };
 
-  // Menyaring catatan berdasarkan query pencarian secara real-time.
-  // Pencarian mencakup judul catatan (title) dan konten catatan (content).
+  // Di sini kita menyaring catatan berdasarkan query pencarian secara real-time.
+  // Pencarian yang kita lakukan mencakup judul catatan (title) dan konten catatan (content).
   const filteredNotes = notes.filter((note) => {
     return (
       note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -138,9 +139,9 @@ export default function NotesView({
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-on-surface">Notes</h2>
+          <h2 className="text-3xl font-bold tracking-tight text-on-surface">Catatan</h2>
           <p className="text-sm text-on-surface-variant font-medium mt-1">
-            Capture ideas, summarize lectures, and organize research.
+            Catat ide, rangkum materi kuliah, dan atur riset Anda.
           </p>
         </div>
         <button
@@ -148,7 +149,7 @@ export default function NotesView({
           className="bg-primary hover:bg-[#4F46E5] text-white px-4 py-2.5 rounded-lg text-xs font-semibold flex items-center gap-2 shadow-sm transition-colors cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          <span>New Note</span>
+          <span>Catatan Baru</span>
         </button>
       </div>
 
@@ -162,7 +163,7 @@ export default function NotesView({
             <X className="w-4 h-4" />
           </button>
           
-          <h3 className="text-sm font-bold text-on-surface uppercase tracking-wider">Create New Lecture Note</h3>
+          <h3 className="text-sm font-bold text-on-surface uppercase tracking-wider">Buat Catatan Kuliah Baru</h3>
 
           {errorMsg && (
             <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-xs font-semibold flex items-center gap-2">
@@ -175,12 +176,12 @@ export default function NotesView({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1">
-                  Note Title
+                  Judul Catatan
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="Cognitive Psychology Lecture 4"
+                  placeholder="Kuliah Psikologi Kognitif 4"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-lg text-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
@@ -189,14 +190,14 @@ export default function NotesView({
               
               <div>
                 <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1">
-                  Tag Course (Optional)
+                  Kaitkan Mata Kuliah (Opsional)
                 </label>
                 <select
                   value={courseId}
                   onChange={(e) => setCourseId(e.target.value)}
                   className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-lg text-sm text-on-surface"
                 >
-                  <option value="">General Notes</option>
+                  <option value="">Catatan Umum</option>
                   {courses.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.course_code} - {c.course_name}
@@ -208,12 +209,12 @@ export default function NotesView({
 
             <div>
               <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1">
-                Content / Markdown Notes (Min. 15 lines suggested)
+                Isi / Catatan Materi
               </label>
               <textarea
                 required
                 rows={10}
-                placeholder="Start typing your notes here..."
+                placeholder="Mulai tulis catatan Anda di sini..."
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 className="w-full p-4 bg-white border border-[#E2E8F0] rounded-lg text-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-sans leading-relaxed"
@@ -226,13 +227,13 @@ export default function NotesView({
                 onClick={() => setIsAdding(false)}
                 className="px-4 py-2 border border-[#E2E8F0] bg-white rounded-lg text-xs font-semibold hover:bg-slate-50 cursor-pointer"
               >
-                Cancel
+                Batal
               </button>
               <button
                 type="submit"
                 className="px-5 py-2 bg-primary text-white rounded-lg text-xs font-semibold hover:bg-[#4F46E5] cursor-pointer"
               >
-                Save Note
+                Simpan Catatan
               </button>
             </div>
           </form>
@@ -244,12 +245,12 @@ export default function NotesView({
         {filteredNotes.length === 0 ? (
           <div className="break-inside-avoid bg-white border border-[#E2E8F0] rounded-2xl p-6 text-center shadow-sm w-full">
             <Notebook className="w-12 h-12 text-[#94A3B8] mx-auto mb-3 opacity-60" />
-            <p className="text-sm font-semibold text-on-surface">No notes match your query</p>
-            <p className="text-xs text-on-surface-variant mt-1">Try searching with other tags.</p>
+            <p className="text-sm font-semibold text-on-surface">Tidak ada catatan yang cocok</p>
+            <p className="text-xs text-on-surface-variant mt-1">Coba cari dengan kata kunci lain.</p>
           </div>
         ) : (
           filteredNotes.map((note) => {
-            // Visualisasi khusus: mendeteksi jika catatan adalah daftar tugas (to-do list)
+            // Di sini kita menggunakan visualisasi khusus: mendeteksi jika catatan adalah daftar tugas (to-do list)
             const isTodoNote = note.title.toLowerCase().includes('to-do list');
             
             return (
@@ -258,7 +259,7 @@ export default function NotesView({
                 onClick={() => handleInspectNote(note)}
                 className="break-inside-avoid bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-sm hover:shadow-md hover:border-primary/50 transition-all duration-300 cursor-pointer group flex flex-col gap-3 relative overflow-hidden"
               >
-                {/* Indikator aksen garis warna di sisi kiri khusus untuk to-do list */}
+                {/* Di sini kita tampilkan indikator aksen garis warna di sisi kiri khusus untuk to-do list */}
                 {isTodoNote && (
                   <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
                 )}
@@ -272,14 +273,14 @@ export default function NotesView({
                     <button
                       onClick={(e) => handleDeleteClick(e, note.id)}
                       className="text-red-500 hover:text-red-700 bg-transparent border-none p-0 cursor-pointer"
-                      title="Delete note"
+                      title="Hapus catatan"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
 
-                {/* Tampilan Konten Catatan: Jika to-do list, di-render sebagai checkbox interaktif (readOnly); jika teks biasa, di-render normal dengan batas baris */}
+                {/* Tampilan Konten Catatan: Di sini, jika catatan berupa to-do list, kita render sebagai checkbox interaktif (readOnly); jika teks biasa, kita render normal dengan batas baris */}
                 {isTodoNote ? (
                   <ul className="text-xs space-y-1 text-on-surface-variant font-medium">
                     {note.content.split('\n').map((item, id) => {
@@ -306,7 +307,7 @@ export default function NotesView({
                   </p>
                 )}
 
-                {/* Aksen grafis/gambar tambahan jika catatan berisi tentang "Architecture" */}
+                {/* Di sini kita tambahkan aksen grafis/gambar tambahan jika catatan berisi tentang "Architecture" */}
                 {note.title.includes('Architecture') && (
                   <div className="w-full h-28 bg-slate-100 rounded-lg overflow-hidden relative border border-[#E2E8F0] mt-1">
                     <img
@@ -324,7 +325,7 @@ export default function NotesView({
                     {getCourseTagName(note.course_id)}
                   </span>
                   <span className="text-[10px] font-medium ml-auto text-[#94A3B8]">
-                    Recently updated
+                    Baru diperbarui
                   </span>
                 </div>
 
@@ -345,7 +346,7 @@ export default function NotesView({
                 <span className="px-2.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-[#F1F5F9] text-on-surface-variant border border-[#E2E8F0]">
                   {getCourseTagName(selectedNote.course_id)}
                 </span>
-                <span className="text-[10px] text-[#94A3B8] ml-2 font-medium">Recently updated</span>
+                <span className="text-[10px] text-[#94A3B8] ml-2 font-medium">Baru diperbarui</span>
               </div>
               <div className="flex items-center gap-1.5">
                 {!isEditing && (
@@ -353,14 +354,14 @@ export default function NotesView({
                     <button
                       onClick={() => setIsEditing(true)}
                       className="p-1.5 text-on-surface-variant hover:text-primary hover:bg-[#F1F5F9] rounded-lg transition-colors cursor-pointer"
-                      title="Edit note"
+                      title="Edit catatan"
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={(e) => handleDeleteClick(e, selectedNote.id)}
                       className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                      title="Delete note"
+                      title="Hapus catatan"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -388,7 +389,7 @@ export default function NotesView({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1">
-                      Note Title
+                      Judul Catatan
                     </label>
                     <input
                       type="text"
@@ -400,14 +401,14 @@ export default function NotesView({
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1">
-                      Course Tag
+                      Kaitan Mata Kuliah
                     </label>
                     <select
                       value={editCourseId}
                       onChange={(e) => setEditCourseId(e.target.value)}
                       className="w-full h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-on-surface"
                     >
-                      <option value="">General Notes</option>
+                      <option value="">Catatan Umum</option>
                       {courses.map((c) => (
                         <option key={c.id} value={c.id}>
                           {c.course_code} - {c.course_name}
@@ -419,7 +420,7 @@ export default function NotesView({
 
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1">
-                    Content Notes
+                    Isi Catatan
                   </label>
                   <textarea
                     required
@@ -436,13 +437,13 @@ export default function NotesView({
                     onClick={() => setIsEditing(false)}
                     className="px-4 py-2 border border-[#E2E8F0] rounded-lg text-xs font-semibold hover:bg-slate-100 cursor-pointer"
                   >
-                    Cancel
+                    Batal
                   </button>
                   <button
                     type="submit"
                     className="px-5 py-2 bg-primary text-white rounded-lg text-xs font-semibold hover:bg-[#4F46E5] cursor-pointer"
                   >
-                    Save Changes
+                    Simpan Perubahan
                   </button>
                 </div>
               </form>
