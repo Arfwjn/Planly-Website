@@ -1,3 +1,12 @@
+/**
+ * Komponen TasksView
+ * 
+ * File ini berfungsi untuk mengelola dan menampilkan daftar tugas (Tasks) pengguna.
+ * Di sini kita bisa melihat daftar tugas, menyaring berdasarkan status (pending/selesai)
+ * atau pencarian, melihat detail tugas, menambahkan tugas baru, mengubah data tugas, 
+ * serta menghapus tugas yang ada.
+ */
+
 import React, { useState } from 'react';
 import { CheckSquare, Clock, GraduationCap, Plus, X, Calendar, AlertCircle, Trash2, Edit2, Info } from 'lucide-react';
 import { Task, Course } from '../types';
@@ -25,13 +34,15 @@ export default function TasksView({
   onSetSlideOverOpen,
   searchQuery
 }: TasksViewProps) {
+  // State untuk menyaring tab aktif: 'pending' (tugas belum selesai) vs 'done' (tugas selesai)
   const [activeTab, setActiveTab] = useState<'pending' | 'done'>('pending');
 
-  // Task Details Panel & Edit Mode State
+  // State untuk melacak tugas yang sedang dipilih untuk detail/inspeksi dan status edit mode
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isEditing, setIsEditing] = useState(false);
 
-  // New Task form state
+  // State Manajemen Form untuk Tugas Baru (New Task)
+  // State ini menampung nilai input dari form penambahan tugas baru di dalam slide-over drawer
   const [newTitle, setNewTitle] = useState('');
   const [newCourseId, setNewCourseId] = useState<number | null>(null);
   const [newDeadlineDate, setNewDeadlineDate] = useState('');
@@ -41,7 +52,8 @@ export default function TasksView({
   const [newDescription, setNewDescription] = useState('');
   const [validationError, setValidationError] = useState('');
 
-  // Edit Task form state
+  // State Manajemen Form untuk Mengedit Tugas (Edit Task)
+  // State ini menyimpan nilai sementara ketika pengguna sedang mengubah data tugas yang dipilih
   const [editTitle, setEditTitle] = useState('');
   const [editCourseId, setEditCourseId] = useState<number | null>(null);
   const [editDeadlineDate, setEditDeadlineDate] = useState('');
@@ -51,6 +63,7 @@ export default function TasksView({
   const [editDescription, setEditDescription] = useState('');
   const [editValidationError, setEditValidationError] = useState('');
 
+  // Fungsi untuk memuat data tugas ke dalam form edit saat pengguna membuka detail tugas
   const handleInspectTask = (task: Task) => {
     setSelectedTask(task);
     setIsEditing(false);
@@ -64,10 +77,12 @@ export default function TasksView({
     setEditValidationError('');
   };
 
+  // Fungsi untuk menangani pengiriman form pembuatan tugas baru
   const handleCreateTaskSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setValidationError('');
 
+    // Validasi input form secara sederhana
     if (!newTitle.trim()) {
       setValidationError('Harap masukkan judul tugas.');
       return;
@@ -77,6 +92,7 @@ export default function TasksView({
       return;
     }
 
+    // Mengirim data tugas baru ke fungsi callback parent
     onAddTask({
       task_title: newTitle,
       description: newDescription,
@@ -87,7 +103,7 @@ export default function TasksView({
       user_id: 0
     });
 
-    // Reset Form fields
+    // Reset seluruh field form setelah berhasil dikirim
     setNewTitle('');
     setNewCourseId(null);
     setNewDeadlineDate('');
@@ -95,13 +111,16 @@ export default function TasksView({
     setNewIsPriority(false);
     setNewIsFinished(false);
     setNewDescription('');
+    // Menutup slide-over drawer tugas baru
     onSetSlideOverOpen(false);
   };
 
+  // Fungsi untuk menangani pengiriman form edit/pembaruan tugas
   const handleEditTaskSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setEditValidationError('');
 
+    // Validasi input form edit
     if (!editTitle.trim()) {
       setEditValidationError('Judul tugas tidak boleh kosong.');
       return;
@@ -111,6 +130,7 @@ export default function TasksView({
       return;
     }
 
+    // Mengirim pembaruan tugas ke fungsi callback parent
     onEditTask(selectedTask!.id, {
       ...selectedTask!,
       task_title: editTitle,
@@ -121,22 +141,27 @@ export default function TasksView({
       course_id: editCourseId
     });
 
+    // Mereset state inspeksi setelah selesai mengedit
     setSelectedTask(null);
     setIsEditing(false);
   };
 
+  // Fungsi untuk menangani penghapusan tugas dan menutup panel detail/inspeksi
   const handleDeleteTaskClick = (taskId: number) => {
     onDeleteTask(taskId);
     setSelectedTask(null);
     setIsEditing(false);
   };
 
+  // Helper untuk mendapatkan nama mata kuliah berdasarkan ID mata kuliah.
+  // Jika ID kosong, dikembalikan kategori General / Personal.
   const getCourseName = (courseId: number | null) => {
     if (courseId === null) return 'General / Personal';
     const c = courses.find((item) => item.id === courseId);
     return c ? c.course_name : 'University Event';
   };
 
+  // Helper untuk memformat batas waktu (deadline) secara relatif terhadap hari ini.
   const formatRelDeadline = (dateStr: string, timeStr: string, isFinished: boolean) => {
     const today = new Date();
     const taskDate = new Date(`${dateStr}T${timeStr}`);
@@ -159,7 +184,8 @@ export default function TasksView({
     }
   };
 
-  // Filter & Search tasks
+  // Menyaring tugas berdasarkan tab aktif (Pending vs Finished) dan query pencarian (searchQuery)
+  // Hasilnya kemudian diurutkan berdasarkan tanggal deadline terkecil/terdekat.
   const filteredTasks = tasks
     .filter((t) => {
       const matchStatus = activeTab === 'pending' ? !t.is_finished : t.is_finished;
@@ -173,7 +199,7 @@ export default function TasksView({
   return (
     <div className="max-w-[1000px] mx-auto w-full relative">
       
-      {/* Page Header */}
+      {/* Header Halaman */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-on-surface">Tasks</h1>
@@ -181,6 +207,7 @@ export default function TasksView({
             Manage your academic workload and assignment deadlines.
           </p>
         </div>
+        {/* Tombol untuk membuka Slide-Over Drawer tugas baru */}
         <button
           onClick={() => onSetSlideOverOpen(true)}
           className="bg-primary hover:bg-[#4F46E5] text-white px-4 py-2.5 rounded-lg text-xs font-semibold flex items-center gap-2 shadow-sm transition-colors cursor-pointer"
@@ -190,7 +217,7 @@ export default function TasksView({
         </button>
       </div>
 
-      {/* Selector Tabs */}
+      {/* Tab Filter (Pending vs Finished) */}
       <div className="flex gap-6 border-b border-[#E2E8F0] mb-6">
         <button
           onClick={() => setActiveTab('pending')}
@@ -214,7 +241,7 @@ export default function TasksView({
         </button>
       </div>
 
-      {/* Task List Canvas */}
+      {/* Daftar Tugas (Task List Canvas) */}
       <div className="space-y-3">
         {filteredTasks.length === 0 ? (
           <div className="text-center py-12 bg-white border border-[#E2E8F0] rounded-2xl">
@@ -236,6 +263,7 @@ export default function TasksView({
                 className="bg-white border border-[#E2E8F0] rounded-xl p-4 shadow-sm hover:shadow-md transition-all group flex items-start gap-4 cursor-pointer"
                 onClick={() => handleInspectTask(task)}
               >
+                {/* Checkbox untuk mengubah status tugas secara instan tanpa masuk drawer detail */}
                 <div className="pt-1 select-none" onClick={(e) => e.stopPropagation()}>
                   <input
                     type="checkbox"
@@ -255,6 +283,7 @@ export default function TasksView({
                       {task.task_title}
                     </h3>
                     
+                    {/* Badge Prioritas atau Terlambat (Overdue) */}
                     <span
                       className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                         task.is_priority || isOverdue
@@ -271,10 +300,12 @@ export default function TasksView({
                   </p>
 
                   <div className="flex flex-wrap gap-4 text-xs font-semibold text-on-surface-variant">
+                    {/* Menampilkan pemetaan mata kuliah terkait */}
                     <span className="flex items-center gap-1">
                       <GraduationCap className="w-3.5 h-3.5 stroke-[2px]" />
                       {getCourseName(task.course_id)}
                     </span>
+                    {/* Menampilkan waktu tenggat (deadline) */}
                     <span className={`flex items-center gap-1 ${isOverdue ? 'text-red-600 font-bold' : ''}`}>
                       <Clock className="w-3.5 h-3.5" />
                       {formatRelDeadline(deadlineDate, deadlineTime, task.is_finished)}
@@ -287,7 +318,7 @@ export default function TasksView({
         )}
       </div>
 
-      {/* Slide-Over Side Drawer for New Task */}
+      {/* Slide-Over Side Drawer untuk Menambahkan Tugas Baru */}
       {isSlideOverOpen && (
         <div
           className="fixed inset-0 bg-[#1b1b24]/30 backdrop-blur-xs z-50 transition-opacity"
@@ -297,7 +328,7 @@ export default function TasksView({
             className="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl z-50 flex flex-col border-l border-[#E2E8F0] transform transition-transform duration-300"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
+            {/* Header Drawer */}
             <div className="px-6 py-4 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
               <h2 className="text-lg font-bold text-on-surface">New Task</h2>
               <button
@@ -308,7 +339,7 @@ export default function TasksView({
               </button>
             </div>
 
-            {/* Content Form */}
+            {/* Form Input Tugas Baru */}
             <form onSubmit={handleCreateTaskSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
               {validationError && (
                 <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-xs font-semibold flex items-center gap-2">
@@ -317,6 +348,7 @@ export default function TasksView({
                 </div>
               )}
 
+              {/* Judul Tugas */}
               <div>
                 <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
                   Task Name / Title
@@ -331,6 +363,7 @@ export default function TasksView({
                 />
               </div>
 
+              {/* Dropdown Pemetaan Mata Kuliah Terkait */}
               <div>
                 <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
                   Associated Course
@@ -349,6 +382,7 @@ export default function TasksView({
                 </select>
               </div>
 
+              {/* Batas Waktu (Tanggal & Jam) */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
@@ -376,6 +410,7 @@ export default function TasksView({
                 </div>
               </div>
 
+              {/* Tombol Toggle Prioritas Utama */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider">
@@ -395,6 +430,7 @@ export default function TasksView({
                 </div>
               </div>
 
+              {/* Status Awal (Pending / Completed) */}
               <div>
                 <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
                   Initial Status
@@ -421,6 +457,7 @@ export default function TasksView({
                 </div>
               </div>
 
+              {/* Catatan / Keterangan Tambahan */}
               <div>
                 <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
                   Notes / Description (Optional)
@@ -434,7 +471,7 @@ export default function TasksView({
                 ></textarea>
               </div>
 
-              {/* Action Buttons */}
+              {/* Aksi Tambah Tugas */}
               <div className="pt-4 border-t border-[#E2E8F0] flex justify-end gap-3 font-sans">
                 <button
                   type="button"
@@ -455,7 +492,7 @@ export default function TasksView({
         </div>
       )}
 
-      {/* Task Inspection Drawer (Detail & Edit) */}
+      {/* Drawer Inspeksi Tugas (Detail & Edit) */}
       {selectedTask && (
         <div
           className="fixed inset-0 bg-[#1b1b24]/30 backdrop-blur-xs z-50 transition-opacity"
@@ -465,7 +502,7 @@ export default function TasksView({
             className="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl z-50 flex flex-col border-l border-[#E2E8F0] transform transition-transform duration-300"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
+            {/* Header Detail / Edit */}
             <div className="px-6 py-4 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
               <h2 className="text-lg font-bold text-on-surface">
                 {isEditing ? 'Edit Task' : 'Task Details'}
@@ -473,6 +510,7 @@ export default function TasksView({
               <div className="flex items-center gap-1.5">
                 {!isEditing && (
                   <>
+                    {/* Tombol Edit Mode */}
                     <button
                       onClick={() => setIsEditing(true)}
                       className="p-1.5 text-on-surface-variant hover:text-primary hover:bg-[#F1F5F9] rounded-lg transition-colors cursor-pointer"
@@ -480,6 +518,7 @@ export default function TasksView({
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
+                    {/* Tombol Hapus dengan Konfirmasi Instan */}
                     <button
                       onClick={() => handleDeleteTaskClick(selectedTask.id)}
                       className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
@@ -498,8 +537,9 @@ export default function TasksView({
               </div>
             </div>
 
-            {/* Inspection Content */}
+            {/* Konten Inspeksi */}
             {isEditing ? (
+              /* Form Edit Tugas Aktif */
               <form onSubmit={handleEditTaskSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
                 {editValidationError && (
                   <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-xs font-semibold flex items-center gap-2">
@@ -508,6 +548,7 @@ export default function TasksView({
                   </div>
                 )}
 
+                {/* Edit Judul Tugas */}
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
                     Task Name / Title
@@ -521,6 +562,7 @@ export default function TasksView({
                   />
                 </div>
 
+                {/* Edit Pemetaan Mata Kuliah */}
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
                     Associated Course
@@ -539,6 +581,7 @@ export default function TasksView({
                   </select>
                 </div>
 
+                {/* Edit Tanggal & Waktu Deadline */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
@@ -566,6 +609,7 @@ export default function TasksView({
                   </div>
                 </div>
 
+                {/* Edit Prioritas Tugas */}
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-bold text-on-surface uppercase tracking-wider">
@@ -585,6 +629,7 @@ export default function TasksView({
                   </div>
                 </div>
 
+                {/* Edit Status Tugas */}
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
                     Task Status
@@ -611,6 +656,7 @@ export default function TasksView({
                   </div>
                 </div>
 
+                {/* Edit Catatan Tambahan */}
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
                     Notes / Description
@@ -624,6 +670,7 @@ export default function TasksView({
                   ></textarea>
                 </div>
 
+                {/* Aksi Perubahan Edit */}
                 <div className="pt-4 border-t border-[#E2E8F0] flex justify-end gap-3">
                   <button
                     type="button"
@@ -641,6 +688,7 @@ export default function TasksView({
                 </div>
               </form>
             ) : (
+              /* Detail Info Tugas Mode View Saja */
               <div className="flex-1 overflow-y-auto p-6 space-y-6">
                 <div>
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
@@ -664,6 +712,7 @@ export default function TasksView({
                 </div>
 
                 <div className="space-y-4 pt-4 border-t border-slate-100 text-sm">
+                  {/* Pemetaan Mata Kuliah pada Detail Tugas */}
                   <div className="flex items-center gap-3">
                     <GraduationCap className="w-5 h-5 text-on-surface-variant" />
                     <div>
@@ -672,6 +721,7 @@ export default function TasksView({
                     </div>
                   </div>
 
+                  {/* Tenggat Waktu pada Detail Tugas */}
                   <div className="flex items-center gap-3">
                     <Clock className="w-5 h-5 text-on-surface-variant" />
                     <div>
@@ -683,6 +733,7 @@ export default function TasksView({
                   </div>
                 </div>
 
+                {/* Deskripsi/Catatan Detail Tugas */}
                 <div className="pt-4 border-t border-slate-100">
                   <p className="text-[11px] text-on-surface-variant uppercase font-bold tracking-wider mb-2">Description</p>
                   <div className="bg-[#F8FAFC] p-4 rounded-xl border border-[#E2E8F0] text-xs text-on-surface leading-relaxed min-h-24 whitespace-pre-wrap">
@@ -690,6 +741,7 @@ export default function TasksView({
                   </div>
                 </div>
 
+                {/* Tombol Utama Toggle Status Tugas (Mark Pending / Mark Complete) */}
                 <div className="pt-6 border-t border-slate-100">
                   <button
                     onClick={() => {

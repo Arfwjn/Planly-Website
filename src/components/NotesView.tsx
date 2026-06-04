@@ -11,6 +11,13 @@ interface NotesViewProps {
   searchQuery: string;
 }
 
+/**
+ * Komponen NotesView
+ * 
+ * Komponen ini digunakan untuk menampilkan, mencari, menyaring, menambah, mengedit, 
+ * dan menghapus catatan kuliah (notes). Catatan dapat dikaitkan dengan mata kuliah tertentu (courses)
+ * dan mendukung visualisasi khusus seperti daftar tugas (to-do list) dan gambar ilustrasi.
+ */
 export default function NotesView({
   notes,
   courses,
@@ -19,22 +26,28 @@ export default function NotesView({
   onDeleteNote,
   searchQuery
 }: NotesViewProps) {
+  // State untuk melacak apakah formulir tambah catatan baru sedang terbuka
   const [isAdding, setIsAdding] = useState(false);
+  // State untuk menyimpan judul dan isi catatan baru yang sedang diinput
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  // State untuk menyimpan ID mata kuliah yang dipilih untuk catatan baru
   const [courseId, setCourseId] = useState<string>('');
+  // State untuk menyimpan pesan kesalahan validasi formulir tambah catatan
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Detailed view & edit states
+  // State untuk melacak catatan yang sedang dipilih/dilihat detailnya, serta status edit
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Edit Note fields
+  // State untuk menyimpan data input saat menyunting/mengedit catatan yang dipilih
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
   const [editCourseId, setEditCourseId] = useState<string>('');
   const [editErrorMsg, setEditErrorMsg] = useState('');
 
+  // Fungsi ini dipanggil ketika pengguna memilih salah satu catatan untuk melihat detailnya.
+  // Di sini, kita memuat data catatan tersebut ke dalam state penyuntingan dan menutup mode edit terlebih dahulu.
   const handleInspectNote = (note: Note) => {
     setSelectedNote(note);
     setIsEditing(false);
@@ -44,6 +57,8 @@ export default function NotesView({
     setEditErrorMsg('');
   };
 
+  // Menangani pengiriman form saat membuat catatan baru.
+  // Di sini kita memvalidasi input, memanggil fungsi callback onAddNote, dan mereset form.
   const handleCreateNoteSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
@@ -66,6 +81,8 @@ export default function NotesView({
     setIsAdding(false);
   };
 
+  // Menangani pengiriman form saat mengedit catatan yang dipilih.
+  // Di sini kita memvalidasi perubahan lalu memperbarui catatan melalui callback onEditNote.
   const handleEditNoteSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setEditErrorMsg('');
@@ -87,6 +104,8 @@ export default function NotesView({
     setIsEditing(false);
   };
 
+  // Fungsi ini menangani penghapusan catatan.
+  // Kita menggunakan e.stopPropagation() agar klik tombol tidak memicu event klik pada kartu catatan (handleInspectNote).
   const handleDeleteClick = (e: React.MouseEvent, noteId: number) => {
     e.stopPropagation();
     onDeleteNote(noteId);
@@ -96,13 +115,16 @@ export default function NotesView({
     }
   };
 
+  // Fungsi penolong untuk menghubungkan catatan dengan mata kuliah.
+  // Mengembalikan kode mata kuliah jika ID cocok, atau 'General' jika tidak terhubung ke mata kuliah spesifik.
   const getCourseTagName = (cid: number | null) => {
     if (cid === null) return 'General';
     const c = courses.find((item) => item.id === cid);
     return c ? c.course_code : 'Academic';
   };
 
-  // Filter notes based on real-time search terms
+  // Menyaring catatan berdasarkan query pencarian secara real-time.
+  // Pencarian mencakup judul catatan (title) dan konten catatan (content).
   const filteredNotes = notes.filter((note) => {
     return (
       note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -130,7 +152,7 @@ export default function NotesView({
         </button>
       </div>
 
-      {/* Adding Mode Form Sheet inline */}
+      {/* Formulir inline untuk menambah catatan baru */}
       {isAdding && (
         <div className="p-6 bg-primary/5 border border-primary/20 rounded-2xl shadow-sm relative animate-fade-in space-y-4">
           <button
@@ -217,7 +239,7 @@ export default function NotesView({
         </div>
       )}
 
-      {/* Notes Masonry layout */}
+      {/* Tampilan Grid Masonry Catatan */}
       <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-6 space-y-6">
         {filteredNotes.length === 0 ? (
           <div className="break-inside-avoid bg-white border border-[#E2E8F0] rounded-2xl p-6 text-center shadow-sm w-full">
@@ -227,6 +249,7 @@ export default function NotesView({
           </div>
         ) : (
           filteredNotes.map((note) => {
+            // Visualisasi khusus: mendeteksi jika catatan adalah daftar tugas (to-do list)
             const isTodoNote = note.title.toLowerCase().includes('to-do list');
             
             return (
@@ -235,7 +258,7 @@ export default function NotesView({
                 onClick={() => handleInspectNote(note)}
                 className="break-inside-avoid bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-sm hover:shadow-md hover:border-primary/50 transition-all duration-300 cursor-pointer group flex flex-col gap-3 relative overflow-hidden"
               >
-                {/* Accent indicator for to-dos */}
+                {/* Indikator aksen garis warna di sisi kiri khusus untuk to-do list */}
                 {isTodoNote && (
                   <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
                 )}
@@ -256,7 +279,7 @@ export default function NotesView({
                   </div>
                 </div>
 
-                {/* Content Parsing & Formatting */}
+                {/* Tampilan Konten Catatan: Jika to-do list, di-render sebagai checkbox interaktif (readOnly); jika teks biasa, di-render normal dengan batas baris */}
                 {isTodoNote ? (
                   <ul className="text-xs space-y-1 text-on-surface-variant font-medium">
                     {note.content.split('\n').map((item, id) => {
@@ -283,7 +306,7 @@ export default function NotesView({
                   </p>
                 )}
 
-                {/* Accent Notebook Drawing Graphic inside architecture notes */}
+                {/* Aksen grafis/gambar tambahan jika catatan berisi tentang "Architecture" */}
                 {note.title.includes('Architecture') && (
                   <div className="w-full h-28 bg-slate-100 rounded-lg overflow-hidden relative border border-[#E2E8F0] mt-1">
                     <img
@@ -311,7 +334,7 @@ export default function NotesView({
         )}
       </div>
 
-      {/* Note Inspection Modal Sheet */}
+      {/* Modal Detail Catatan (Note Inspection & Editing) */}
       {selectedNote && (
         <div className="fixed inset-0 bg-[#1b1b24]/40 backdrop-blur-xs z-50 flex items-center justify-center p-4" onClick={() => setSelectedNote(null)}>
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-[640px] max-h-[85vh] flex flex-col overflow-hidden border border-[#E2E8F0] animate-zoom-in" onClick={(e) => e.stopPropagation()}>

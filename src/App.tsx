@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { User, Course, Task, Note, SidebarTab, LoginResponse } from './types';
 import { api } from './services/api';
 
-// Component Imports
+// Impor komponen-komponen view utama aplikasi
 import AuthView from './components/AuthView';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
@@ -13,37 +13,69 @@ import CoursesView from './components/CoursesView';
 import NotesView from './components/NotesView';
 import ProfileView from './components/ProfileView';
 
-// Mobile Bottom Nav Icons
+// Impor ikon untuk navigasi bawah pada perangkat mobile
 import { LayoutDashboard, CalendarDays, CheckSquare, FileText, User as UserIcon, Menu } from 'lucide-react';
 
+/**
+ * Komponen utama App yang mengatur seluruh alur navigasi, autentikasi,
+ * sinkronisasi data dari API, serta timer fokus global (Pomodoro).
+ */
 export default function App() {
-  // Authentication state
+  // --- STATE AUTENTIKASI ---
+  // Menentukan status login pengguna dengan membaca nilai dari localStorage
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     return localStorage.getItem('planly_auth') === 'true';
   });
 
+  // Menyimpan data profil pengguna aktif yang tersimpan di localStorage
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('planly_user');
     return saved ? JSON.parse(saved) : null;
   });
 
-  // App Database states
+  // --- STATE DATABASE APLIKASI ---
+  // Menyimpan daftar mata kuliah, tugas, dan catatan pengguna
   const [courses, setCourses] = useState<Course[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
-  const [loadingData, setLoadingData] = useState(false);
+  const [loadingData, setLoadingData] = useState(false); // Indikator ketika mengambil data dari API
 
-  // Global Navigation & Search
+  // --- STATE NAVIGASI GLOBAL & PENCARIAN ---
+  // Mengontrol tab aktif yang sedang dilihat oleh pengguna
   const [activeTab, setActiveTab] = useState<SidebarTab>('today');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState(''); // Query pencarian global
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Mengontrol tampilan sidebar pada layar kecil/mobile
 
-  // Overlay Controls
+  // --- KONTROL MODAL OVERLAY ---
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
   const [isEnrollCourseOpen, setIsEnrollCourseOpen] = useState(false);
 
+  // --- STATE TIMER FOKUS GLOBAL (POMODORO) ---
+  // Default waktu fokus disetel ke 1500 detik (25 menit)
+  const [focusTimeLeft, setFocusTimeLeft] = useState(1500);
+  const [isFocusTimerRunning, setIsFocusTimerRunning] = useState(false);
 
-  // Load database from API
+  // Effect untuk mengontrol jalannya timer fokus setiap detiknya
+  useEffect(() => {
+    let interval: any = null;
+    if (isFocusTimerRunning && focusTimeLeft > 0) {
+      interval = setInterval(() => {
+        setFocusTimeLeft((prev) => prev - 1);
+      }, 1000);
+    } else {
+      setIsFocusTimerRunning(false);
+    }
+    return () => clearInterval(interval);
+  }, [isFocusTimerRunning, focusTimeLeft]);
+
+  const handleResetFocusTimer = () => {
+    setFocusTimeLeft(1500);
+    setIsFocusTimerRunning(false);
+  };
+
+
+  // --- SINKRONISASI DATA DARI API ---
+  // Mengambil semua data pengguna (mata kuliah, tugas, catatan) secara paralel saat berhasil login
   useEffect(() => {
     if (isAuthenticated) {
       setLoadingData(true);
@@ -63,18 +95,20 @@ export default function App() {
     }
   }, [isAuthenticated]);
 
-  // Clean Search parameter upon route/tab changes
+  // Membersihkan kata kunci pencarian setiap kali pengguna berpindah tab
   useEffect(() => {
     setSearchQuery('');
   }, [activeTab]);
 
-  // Handlers
+  // --- HANDLER AUTENTIKASI ---
+  // Menyimpan data pengguna dan memperbarui status autentikasi ketika login berhasil
   const handleLoginSuccess = (loginResponse: LoginResponse) => {
     setCurrentUser(loginResponse.user);
     localStorage.setItem('planly_user', JSON.stringify(loginResponse.user));
     setIsAuthenticated(true);
   };
 
+  // Mengeluarkan pengguna dari sistem setelah konfirmasi, menghapus data lokal, dan mereset tab aktif
   const handleSignOut = () => {
     if (confirm('Apakah Anda yakin ingin keluar dari Planly?')) {
       api.auth.logout().then(() => {
@@ -86,6 +120,7 @@ export default function App() {
     }
   };
 
+  // Memperbarui data profil pengguna
   const handleUserUpdate = (payload: Partial<User>) => {
     api.profile.update(payload).then((savedUser) => {
       setCurrentUser(savedUser);
@@ -93,6 +128,8 @@ export default function App() {
     }).catch(err => alert(err.message));
   };
 
+  // --- HANDLER TUGAS (TASKS) ---
+  // Mengubah status penyelesaian tugas (selesai / belum selesai)
   const handleToggleTaskState = (taskId: number) => {
     api.tasks.finish(taskId).then((updatedTask) => {
       setTasks((prev) =>
@@ -101,6 +138,7 @@ export default function App() {
     }).catch(err => alert(err.message));
   };
 
+  // Menambahkan tugas baru ke dalam daftar
   const handleAddTask = (newTask: Omit<Task, 'id' | 'user_id'>) => {
     api.tasks.create(newTask).then((createdTask) => {
       setTasks((prev) => [createdTask, ...prev]);
@@ -108,6 +146,7 @@ export default function App() {
     }).catch(err => alert(err.message));
   };
 
+  // Memperbarui detail informasi tugas
   const handleEditTask = (taskId: number, updatedTask: Partial<Task>) => {
     api.tasks.update(taskId, updatedTask).then((savedTask) => {
       setTasks((prev) => prev.map((t) => (t.id === taskId ? savedTask : t)));
@@ -115,12 +154,15 @@ export default function App() {
     }).catch(err => alert(err.message));
   };
 
+  // Menghapus tugas berdasarkan ID
   const handleDeleteTask = (taskId: number) => {
     api.tasks.delete(taskId).then(() => {
       setTasks((prev) => prev.filter((t) => t.id !== taskId));
     }).catch(err => alert(err.message));
   };
 
+  // --- HANDLER MATA KULIAH (COURSES) ---
+  // Mendaftarkan mata kuliah baru
   const handleAddCourse = (newCourse: Omit<Course, 'id' | 'user_id'>) => {
     api.courses.create(newCourse).then((createdCourse) => {
       setCourses((prev) => [...prev, createdCourse]);
@@ -128,6 +170,7 @@ export default function App() {
     }).catch(err => alert(err.message));
   };
 
+  // Memperbarui detail mata kuliah dan memuat ulang tugas serta catatan terkait untuk menjaga sinkronisasi data
   const handleEditCourse = (courseId: number, updatedCourse: Partial<Course>) => {
     api.courses.update(courseId, updatedCourse).then((savedCourse) => {
       setCourses((prev) => prev.map((c) => (c.id === courseId ? savedCourse : c)));
@@ -137,6 +180,7 @@ export default function App() {
     }).catch(err => alert(err.message));
   };
 
+  // Menghapus mata kuliah beserta data terkait
   const handleDeleteCourse = (courseId: number) => {
     api.courses.delete(courseId).then(() => {
       setCourses((prev) => prev.filter((c) => c.id !== courseId));
@@ -145,6 +189,8 @@ export default function App() {
     }).catch(err => alert(err.message));
   };
 
+  // --- HANDLER CATATAN (NOTES) ---
+  // Menambahkan catatan kuliah baru
   const handleAddNote = (newNote: Omit<Note, 'id' | 'user_id'>) => {
     api.notes.create(newNote).then((createdNote) => {
       setNotes((prev) => [createdNote, ...prev]);
@@ -152,6 +198,7 @@ export default function App() {
     }).catch(err => alert(err.message));
   };
 
+  // Memperbarui isi catatan kuliah
   const handleEditNote = (noteId: number, updatedNote: Partial<Note>) => {
     api.notes.update(noteId, updatedNote).then((savedNote) => {
       setNotes((prev) => prev.map((n) => (n.id === noteId ? savedNote : n)));
@@ -159,13 +206,14 @@ export default function App() {
     }).catch(err => alert(err.message));
   };
 
+  // Menghapus catatan kuliah
   const handleDeleteNote = (noteId: number) => {
     api.notes.delete(noteId).then(() => {
       setNotes((prev) => prev.filter((n) => n.id !== noteId));
     }).catch(err => alert(err.message));
   };
 
-  // Switch to specific notes with a course filter
+  // Berpindah ke tab catatan dan otomatis memfilter berdasarkan kode mata kuliah yang dipilih
   const handleOpenNotesWithCourse = (courseId: number | null) => {
     setActiveTab('notes');
     if (courseId !== null) {
@@ -176,7 +224,8 @@ export default function App() {
     }
   };
 
-  // Content Loader Switch
+  // --- SWITCH UNTUK RENDERING KONTEN TAB ---
+  // Memilih komponen view yang akan ditampilkan di area konten utama berdasarkan tab aktif
   const renderTabContent = () => {
     if (!currentUser) return null;
     
@@ -189,6 +238,10 @@ export default function App() {
             tasks={tasks}
             onTabChange={setActiveTab}
             onOpenNotesWithCourse={handleOpenNotesWithCourse}
+            focusTimeLeft={focusTimeLeft}
+            isFocusTimerRunning={isFocusTimerRunning}
+            setIsFocusTimerRunning={setIsFocusTimerRunning}
+            onResetFocusTimer={handleResetFocusTimer}
           />
         );
       case 'calendar':
@@ -250,27 +303,33 @@ export default function App() {
     }
   };
 
+  // --- RENDER HALAMAN LOGIN / REGISTER ---
+  // Jika belum terautentikasi atau data profil belum dimuat, tampilkan halaman autentikasi AuthView
   if (!isAuthenticated || !currentUser) {
     return <AuthView onLoginSuccess={handleLoginSuccess} />;
   }
 
+  // --- RENDER STRUKTUR LAYOUT UTAMA ---
   return (
     <div className="bg-surface text-on-surface font-sans antialiased min-h-screen flex selection:bg-slate-200">
       
-      {/* Sidebar Navigation Drawer */}
+      {/* Sidebar Navigasi - Tampilan Samping Kiri (Desktop) / Drawer Slide-out (Mobile) */}
       <Sidebar
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        onNewTaskClick={() => setIsNewTaskOpen(true)}
         onSignOut={handleSignOut}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
+        focusTimeLeft={focusTimeLeft}
+        isFocusTimerRunning={isFocusTimerRunning}
+        setIsFocusTimerRunning={setIsFocusTimerRunning}
+        onResetFocusTimer={handleResetFocusTimer}
       />
 
-      {/* Main Core View Area */}
+      {/* Area Konten Utama Core View */}
       <main className="flex-1 lg:ml-[260px] flex flex-col min-h-screen relative w-full overflow-x-hidden">
         
-        {/* Global sticky Header */}
+        {/* Header Global Sticky - Berisi info pengguna, tombol menu burger mobile, dan kolom pencarian */}
         <Header
           user={currentUser}
           onMenuToggle={() => setIsSidebarOpen(true)}
@@ -279,7 +338,7 @@ export default function App() {
           activeTab={activeTab}
         />
 
-        {/* Dynamic content rendering with mobile-responsive layouts constraints */}
+        {/* Kontainer Utama Konten Dinamis */}
         <div className="flex-1 w-full max-w-[1280px] mx-auto px-6 py-8 pb-24 lg:pb-12">
           {loadingData ? (
             <div className="flex flex-col items-center justify-center py-24 gap-3">
@@ -291,7 +350,7 @@ export default function App() {
           )}
         </div>
 
-        {/* Bottom Navigation Bar for Mobile viewports */}
+        {/* Bilah Navigasi Bawah (Bottom Navigation Bar) khusus untuk viewport Mobile */}
         <nav className="fixed bottom-0 left-0 right-0 lg:hidden bg-white/90 backdrop-blur-md border-t border-[#E2E8F0] shadow-md flex justify-around items-center h-16 px-4 z-40">
           <button
             onClick={() => setActiveTab('today')}
@@ -300,7 +359,7 @@ export default function App() {
             }`}
           >
             <LayoutDashboard className="w-5 h-5" />
-            <span className="text-[9px] font-bold mt-0.5">Today</span>
+            <span className="text-[9px] font-bold mt-0.5">Hari Ini</span>
           </button>
 
           <button
@@ -310,7 +369,7 @@ export default function App() {
             }`}
           >
             <CalendarDays className="w-5 h-5" />
-            <span className="text-[9px] font-bold mt-0.5">Calendar</span>
+            <span className="text-[9px] font-bold mt-0.5">Jadwal</span>
           </button>
 
           <button
@@ -320,7 +379,7 @@ export default function App() {
             }`}
           >
             <CheckSquare className="w-5 h-5" />
-            <span className="text-[9px] font-bold mt-0.5">Tasks</span>
+            <span className="text-[9px] font-bold mt-0.5">Tugas</span>
           </button>
 
           <button
@@ -330,7 +389,7 @@ export default function App() {
             }`}
           >
             <FileText className="w-5 h-5" />
-            <span className="text-[9px] font-bold mt-0.5">Notes</span>
+            <span className="text-[9px] font-bold mt-0.5">Catatan</span>
           </button>
 
           <button
@@ -340,7 +399,7 @@ export default function App() {
             }`}
           >
             <UserIcon className="w-5 h-5" />
-            <span className="text-[9px] font-bold mt-0.5">Profile</span>
+            <span className="text-[9px] font-bold mt-0.5">Profil</span>
           </button>
         </nav>
 

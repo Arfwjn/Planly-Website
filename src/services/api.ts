@@ -1,11 +1,13 @@
 // =============================================================================
 // Planly — API Service Layer (Dual-mode: Mock / Live)
 //
-// When VITE_USE_MOCK=true  → localStorage-based mock (offline development)
-// When VITE_USE_MOCK=false → Real HTTP calls via Axios to Laravel API
+// Di sini kita mendefinisikan Service Layer API yang memiliki arsitektur dual-mode.
+// Jika variabel lingkungan VITE_USE_MOCK bernilai 'true' (atau tidak diatur ke 'false'),
+// sistem akan menggunakan Mock API berbasis localStorage untuk mendukung pengembangan offline.
+// Jika bernilai 'false', sistem akan melakukan panggilan HTTP asli menggunakan Axios ke API Laravel.
 //
-// All method signatures use the exact same types as the Laravel API contract.
-// Switching from mock to live requires ZERO code changes in components.
+// Semua fungsi di sini menggunakan tipe data yang sama persis dengan kontrak Laravel API.
+// Dengan begitu, kita bisa beralih dari mode Mock ke Live tanpa mengubah kode pada komponen React sama sekali.
 // =============================================================================
 
 import {
@@ -19,49 +21,60 @@ import {
 import { initialUser, initialCourses, initialTasks, initialNotes } from '../mockData';
 import httpClient from './httpClient';
 
+// Di sini kita mendeteksi mode yang digunakan berdasarkan environment variable VITE_USE_MOCK.
 const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false';
 
 // --- Mock helpers ---
+// Fungsi pembantu (helper) untuk mensimulasikan delay jaringan agar terasa seperti request asli.
 const delay = (ms: number = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Fungsi pembantu untuk mengambil data dari localStorage dengan fallback jika data belum ada.
+// Ini adalah bagian dari mekanisme sinkronisasi cadangan (backup sync) berbasis localStorage kita.
 const getStored = <T>(key: string, fallback: T): T => {
   const saved = localStorage.getItem(key);
   return saved ? JSON.parse(saved) : fallback;
 };
 
+// Fungsi pembantu untuk menyimpan data ke localStorage agar tersinkronisasi sebagai cadangan lokal.
 const setStored = <T>(key: string, data: T): void => {
   localStorage.setItem(key, JSON.stringify(data));
 };
 
+// Counter ID untuk data mock baru agar tidak bertabrakan dengan ID dari data seed awal.
 let mockIdCounter = 100; // Start high to avoid collisions with seed data
 
 // =============================================================================
-// AUTH
+// AUTH SERVICE SECTION
+// Layanan yang mengurus autentikasi pengguna seperti login, register, dan logout.
 // =============================================================================
 
 const authService = {
   /**
    * POST /api/auth/login
-   * Returns { token, user }
+   * Digunakan untuk masuk (login) ke dalam sistem. Mengembalikan token dan data user.
    */
   login: async (email: string, password: string): Promise<LoginResponse> => {
     if (USE_MOCK) {
       await delay(500);
       if (!email.trim() || !password.trim()) {
-        throw new Error('Email dan password wajib diisi.');
+        throw new Error('Email dan kata sandi wajib diisi.');
       }
-      if (email === 'error@example.com') {
-        throw new Error('Invalid email or password');
+      // Di sini kita memvalidasi kredensial login secara lokal khusus untuk Arief Sidik.
+      // Email harus 'arfwjn@gmail.com' dan password harus 'ariefsidik'.
+      if (email !== 'arfwjn@gmail.com' || password !== 'ariefsidik') {
+        throw new Error('Email atau kata sandi salah.');
       }
+      // Mengambil data user yang tersimpan di localStorage atau menggunakan initialUser jika kosong.
       const user = getStored<User>('planly_user', initialUser);
-      const updatedUser = { ...user, email };
-      setStored('planly_user', updatedUser);
+      setStored('planly_user', user);
       const token = `mock_token_${Date.now()}`;
+      // Menyimpan token dan status autentikasi ke localStorage untuk keperluan backup sync.
       localStorage.setItem('planly_token', token);
       localStorage.setItem('planly_auth', 'true');
-      return { token, user: updatedUser };
+      return { token, user };
     }
 
+    // Melakukan panggilan API asli ke server Laravel jika tidak dalam mode mock.
     const { data } = await httpClient.post<LoginResponse>('/auth/login', { email, password });
     localStorage.setItem('planly_token', data.token);
     localStorage.setItem('planly_auth', 'true');
@@ -70,7 +83,7 @@ const authService = {
 
   /**
    * POST /api/auth/register
-   * Returns { message, user }
+   * Mendaftarkan akun user baru ke dalam sistem.
    */
   register: async (payload: {
     name: string;
@@ -84,6 +97,7 @@ const authService = {
       if (!payload.name.trim() || !payload.email.trim()) {
         throw new Error('Harap lengkapi seluruh kolom pendaftaran.');
       }
+      // Membuat data user baru dengan ID mock dan foto profil default.
       const newUser: User = {
         id: ++mockIdCounter,
         name: payload.name,
@@ -93,11 +107,12 @@ const authService = {
         semester: null,
         profile_photo_url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAFoYkxvSC3Tl7Lha5JHOML3Cc2hYx5Hhoh_yA__QxGX6rbapw7zZtOvOWuvFsVnxR6nNGtzUzrFVJFfu_G8hudADmzAZDH1shSH7Mr3tS3ufjyGaU-d9hD3ArSwarBm1TR6cXqN2MiMoTBst4W8NxtPjM2uwHLLKhojSWGvUBep5mGtAO3VbZakDBXlptVD5J5wPcgTnWXzbc81YIbapCO5hSMDAgnhL_lL7dx-K2jpfWn0MgiODu-J2up9aV3_2Kd9JpojgjSs9g4',
       };
+      // Menyimpan data user baru ke localStorage untuk sinkronisasi.
       setStored('planly_user', newUser);
       localStorage.setItem('planly_auth', 'true');
       const token = `mock_token_${Date.now()}`;
       localStorage.setItem('planly_token', token);
-      return { message: 'Registration successful', user: newUser };
+      return { message: 'Pendaftaran berhasil', user: newUser };
     }
 
     const { data } = await httpClient.post<RegisterResponse>('/auth/register', payload);
@@ -106,6 +121,7 @@ const authService = {
 
   /**
    * POST /api/logout
+   * Mengeluarkan pengguna dari sistem dan membersihkan token dari localStorage.
    */
   logout: async (): Promise<void> => {
     if (USE_MOCK) {
@@ -125,16 +141,19 @@ const authService = {
 };
 
 // =============================================================================
-// PROFILE
+// PROFILE SERVICE SECTION
+// Layanan untuk mengambil dan memperbarui data profil pengguna saat ini.
 // =============================================================================
 
 const profileService = {
   /**
    * GET /api/profile
+   * Mengambil data profil user yang sedang login.
    */
   get: async (): Promise<User> => {
     if (USE_MOCK) {
       await delay(200);
+      // Di sini kita mengambil data profil user dari localStorage.
       return getStored<User>('planly_user', initialUser);
     }
     const { data } = await httpClient.get<User>('/profile');
@@ -143,12 +162,14 @@ const profileService = {
 
   /**
    * PUT /api/profile
+   * Memperbarui data profil user saat ini.
    */
   update: async (payload: ProfileUpdatePayload): Promise<User> => {
     if (USE_MOCK) {
       await delay(400);
       const current = getStored<User>('planly_user', initialUser);
       const updated = { ...current, ...payload };
+      // Menyimpan pembaruan profil ke localStorage agar tersinkronisasi secara lokal.
       setStored('planly_user', updated);
       return updated;
     }
@@ -158,16 +179,19 @@ const profileService = {
 };
 
 // =============================================================================
-// COURSES
+// COURSES SERVICE SECTION
+// Layanan untuk mengelola data Mata Kuliah (Courses).
 // =============================================================================
 
 const coursesService = {
   /**
    * GET /api/courses
+   * Mengambil semua daftar Mata Kuliah.
    */
   getAll: async (): Promise<Course[]> => {
     if (USE_MOCK) {
       await delay(300);
+      // Mengambil daftar mata kuliah dari local storage backup.
       return getStored<Course[]>('planly_courses', initialCourses);
     }
     const { data } = await httpClient.get<Course[]>('/courses');
@@ -176,6 +200,7 @@ const coursesService = {
 
   /**
    * POST /api/courses
+   * Membuat Mata Kuliah baru.
    */
   create: async (payload: CourseCreatePayload): Promise<Course> => {
     if (USE_MOCK) {
@@ -187,6 +212,7 @@ const coursesService = {
         user_id: 1,
         color_hex: payload.color_hex || '#3498db',
       };
+      // Menyimpan data mata kuliah baru ke localStorage backup sync.
       setStored('planly_courses', [...courses, newCourse]);
       return newCourse;
     }
@@ -196,6 +222,7 @@ const coursesService = {
 
   /**
    * GET /api/courses/{id}
+   * Mengambil detail satu Mata Kuliah berdasarkan ID.
    */
   show: async (id: number): Promise<Course> => {
     if (USE_MOCK) {
@@ -211,6 +238,7 @@ const coursesService = {
 
   /**
    * PUT /api/courses/{id}
+   * Memperbarui informasi Mata Kuliah yang sudah ada.
    */
   update: async (id: number, payload: CourseUpdatePayload): Promise<Course> => {
     if (USE_MOCK) {
@@ -220,6 +248,7 @@ const coursesService = {
       if (index === -1) throw new Error('Mata Kuliah tidak ditemukan.');
       const updated = [...courses];
       updated[index] = { ...updated[index], ...payload };
+      // Menyimpan hasil pembaruan mata kuliah ke localStorage backup sync.
       setStored('planly_courses', updated);
       return updated[index];
     }
@@ -229,6 +258,7 @@ const coursesService = {
 
   /**
    * DELETE /api/courses/{id}
+   * Menghapus Mata Kuliah tertentu.
    */
   delete: async (id: number): Promise<void> => {
     if (USE_MOCK) {
@@ -236,7 +266,8 @@ const coursesService = {
       const courses = getStored<Course[]>('planly_courses', initialCourses);
       setStored('planly_courses', courses.filter(c => c.id !== id));
 
-      // Cascade: set course_id to null for related tasks/notes
+      // Cascade delete / update: Jika mata kuliah dihapus,
+      // kita atur field course_id menjadi null pada tugas (tasks) dan catatan (notes) yang bersangkutan.
       const tasks = getStored<Task[]>('planly_tasks', initialTasks);
       setStored('planly_tasks', tasks.map(t => t.course_id === id ? { ...t, course_id: null } : t));
 
@@ -249,13 +280,14 @@ const coursesService = {
 };
 
 // =============================================================================
-// TASKS
+// TASKS SERVICE SECTION
+// Layanan untuk mengelola data Tugas (Tasks).
 // =============================================================================
 
 const tasksService = {
   /**
    * GET /api/tasks
-   * Optional: GET /api/tasks?course_id=X
+   * Mengambil semua daftar Tugas (opsional difilter berdasarkan course_id).
    */
   getAll: async (courseId?: number): Promise<Task[]> => {
     if (USE_MOCK) {
@@ -273,6 +305,7 @@ const tasksService = {
 
   /**
    * POST /api/tasks
+   * Membuat Tugas baru.
    */
   create: async (payload: TaskCreatePayload): Promise<Task> => {
     if (USE_MOCK) {
@@ -285,6 +318,7 @@ const tasksService = {
         is_finished: payload.is_finished ?? false,
         is_priority: payload.is_priority ?? false,
       };
+      // Menyimpan tugas baru ke dalam daftar lokal di localStorage.
       setStored('planly_tasks', [newTask, ...tasks]);
       return newTask;
     }
@@ -294,6 +328,7 @@ const tasksService = {
 
   /**
    * GET /api/tasks/{id}
+   * Mengambil detail satu Tugas berdasarkan ID.
    */
   show: async (id: number): Promise<Task> => {
     if (USE_MOCK) {
@@ -309,6 +344,7 @@ const tasksService = {
 
   /**
    * PUT /api/tasks/{id}
+   * Memperbarui data Tugas secara keseluruhan.
    */
   update: async (id: number, payload: TaskUpdatePayload): Promise<Task> => {
     if (USE_MOCK) {
@@ -318,6 +354,7 @@ const tasksService = {
       if (index === -1) throw new Error('Tugas tidak ditemukan.');
       const updated = [...tasks];
       updated[index] = { ...updated[index], ...payload };
+      // Menyimpan hasil pembaruan tugas ke localStorage.
       setStored('planly_tasks', updated);
       return updated[index];
     }
@@ -327,6 +364,7 @@ const tasksService = {
 
   /**
    * PATCH /api/tasks/{id}/finish
+   * Mengubah status penyelesaian (is_finished) dari suatu Tugas.
    */
   finish: async (id: number): Promise<Task> => {
     if (USE_MOCK) {
@@ -336,6 +374,7 @@ const tasksService = {
       if (index === -1) throw new Error('Tugas tidak ditemukan.');
       const updated = [...tasks];
       updated[index] = { ...updated[index], is_finished: !updated[index].is_finished };
+      // Menyimpan perubahan status is_finished ke localStorage.
       setStored('planly_tasks', updated);
       return updated[index];
     }
@@ -345,6 +384,7 @@ const tasksService = {
 
   /**
    * DELETE /api/tasks/{id}
+   * Menghapus Tugas tertentu.
    */
   delete: async (id: number): Promise<void> => {
     if (USE_MOCK) {
@@ -358,16 +398,19 @@ const tasksService = {
 };
 
 // =============================================================================
-// NOTES
+// NOTES SERVICE SECTION
+// Layanan untuk mengelola Catatan (Notes).
 // =============================================================================
 
 const notesService = {
   /**
    * GET /api/notes
+   * Mengambil semua daftar Catatan.
    */
   getAll: async (): Promise<Note[]> => {
     if (USE_MOCK) {
       await delay(300);
+      // Mengambil catatan yang ter-backup di localStorage.
       return getStored<Note[]>('planly_notes', initialNotes);
     }
     const { data } = await httpClient.get<Note[]>('/notes');
@@ -376,6 +419,7 @@ const notesService = {
 
   /**
    * POST /api/notes
+   * Membuat Catatan baru.
    */
   create: async (payload: NoteCreatePayload): Promise<Note> => {
     if (USE_MOCK) {
@@ -386,6 +430,7 @@ const notesService = {
         id: ++mockIdCounter,
         user_id: 1,
       };
+      // Menyimpan catatan baru ke localStorage backup sync.
       setStored('planly_notes', [newNote, ...notes]);
       return newNote;
     }
@@ -395,6 +440,7 @@ const notesService = {
 
   /**
    * GET /api/notes/{id}
+   * Mengambil detail satu Catatan berdasarkan ID.
    */
   show: async (id: number): Promise<Note> => {
     if (USE_MOCK) {
@@ -410,6 +456,7 @@ const notesService = {
 
   /**
    * PUT /api/notes/{id}
+   * Memperbarui isi Catatan yang sudah ada.
    */
   update: async (id: number, payload: NoteUpdatePayload): Promise<Note> => {
     if (USE_MOCK) {
@@ -419,6 +466,7 @@ const notesService = {
       if (index === -1) throw new Error('Catatan tidak ditemukan.');
       const updated = [...notes];
       updated[index] = { ...updated[index], ...payload };
+      // Menyimpan hasil update catatan ke localStorage.
       setStored('planly_notes', updated);
       return updated[index];
     }
@@ -428,6 +476,7 @@ const notesService = {
 
   /**
    * DELETE /api/notes/{id}
+   * Menghapus Catatan tertentu.
    */
   delete: async (id: number): Promise<void> => {
     if (USE_MOCK) {
@@ -442,6 +491,8 @@ const notesService = {
 
 // =============================================================================
 // EXPORT — unified API object
+// Kita menyatukan semua service section di atas ke dalam satu objek 'api'
+// agar lebih rapi dan mudah diimpor di bagian aplikasi lainnya.
 // =============================================================================
 
 export const api = {

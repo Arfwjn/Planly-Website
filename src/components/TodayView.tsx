@@ -1,5 +1,12 @@
+/**
+ * Komponen TodayView
+ * 
+ * Komponen ini berfungsi sebagai dasbor harian mahasiswa untuk melihat jadwal kuliah hari ini,
+ * memantau progres tugas, serta mengelola timer fokus (Focus Timer).
+ */
+
 import { useState, useEffect } from 'react';
-import { Clock, Play, Pause, AlertTriangle, ExternalLink, MessageSquare, MapPin, Users, Notebook, ChevronRight } from 'lucide-react';
+import { Clock, Play, Pause, AlertTriangle, MapPin, Users, Notebook } from 'lucide-react';
 import { Course, Task, SidebarTab } from '../types';
 
 interface TodayViewProps {
@@ -7,69 +14,106 @@ interface TodayViewProps {
   courses: Course[];
   tasks: Task[];
   onTabChange: (tab: SidebarTab) => void;
-  onOpenNotesWithCourse: (courseId: number) => void;
+  onOpenNotesWithCourse: (courseId: number | null) => void;
+  focusTimeLeft: number;
+  isFocusTimerRunning: boolean;
+  setIsFocusTimerRunning: (running: boolean) => void;
+  onResetFocusTimer: () => void;
 }
 
 export default function TodayView({
-  user,
   courses,
   tasks,
   onTabChange,
-  onOpenNotesWithCourse
+  onOpenNotesWithCourse,
+  focusTimeLeft,
+  isFocusTimerRunning,
+  setIsFocusTimerRunning
 }: TodayViewProps) {
-  const [timeLeft, setTimeLeft] = useState(2700); // 45:00 in seconds
-  const [isTimerRunning, setIsTimerRunning] = useState(false);
 
-  // Focus Timer Tick Loop
-  useEffect(() => {
-    let interval: any = null;
-    if (isTimerRunning && timeLeft > 0) {
-      interval = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
-      }, 1000);
-    } else {
-      setIsTimerRunning(false);
-    }
-    return () => clearInterval(interval);
-  }, [isTimerRunning, timeLeft]);
-
+  /**
+   * formatting time:
+   * Memformat waktu sisa fokus (dalam detik) menjadi format string MM:SS.
+   * Kita menggunakan padStart untuk memastikan angka menit dan detik selalu memiliki dua digit.
+   */
   const formatTimer = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  /**
+   * getTodayDateString:
+   * Mendapatkan representasi string tanggal hari ini dalam format Indonesia.
+   * Contoh: "Kamis, 4 Jun".
+   */
   const getTodayDateString = () => {
     const d = new Date();
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}`;
+    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]}`;
   };
 
+  /**
+   * getTodayDayOfWeek:
+   * Mendapatkan nama hari hari ini dalam bahasa Inggris untuk dicocokkan dengan data mata kuliah.
+   * Contoh: "Wednesday".
+   */
   const getTodayDayOfWeek = () => {
     const d = new Date();
     return d.toLocaleDateString('en-US', { weekday: 'long' });
   };
 
+  /**
+   * Memetakan nama hari bahasa Inggris ke bahasa Indonesia untuk kebutuhan tampilan visual UI.
+   */
+  const getIndonesianDayName = (day: string) => {
+    const map: Record<string, string> = {
+      'Sunday': 'Minggu',
+      'Monday': 'Senin',
+      'Tuesday': 'Selasa',
+      'Wednesday': 'Rabu',
+      'Thursday': 'Kamis',
+      'Friday': 'Jumat',
+      'Saturday': 'Sabtu'
+    };
+    return map[day] || day;
+  };
+
+  // Mendapatkan hari ini dalam format bahasa Inggris (misalnya "Thursday")
   const todayDay = getTodayDayOfWeek(); // e.g. "Wednesday"
 
-  // Filter courses that happen today
+  // Memfilter daftar mata kuliah yang dijadwalkan hanya untuk hari ini dan mengurutkannya secara kronologis
   const todayCourses = courses
     .filter((c) => c.day_of_week === todayDay)
     .sort((a, b) => a.start_time.localeCompare(b.start_time));
 
+  // Menentukan apakah ada jadwal kuliah untuk hari ini
   const hasCoursesToday = todayCourses.length > 0;
 
-  // Let's filter tasks to check counts
+  // Memfilter tugas-tugas yang belum diselesaikan (is_finished === false)
   const pendingTasks = tasks.filter((t) => !t.is_finished);
+  
+  // Menghitung jumlah tugas belum selesai yang memiliki tingkat prioritas tinggi
   const highPriorityCount = pendingTasks.filter((t) => t.is_priority).length;
   
-  // First pending task for current focus
+  // Mengambil tugas pertama dari daftar tugas pending untuk dijadikan fokus utama pengerjaan saat ini
   const focusTask = pendingTasks[0];
   
+  /**
+   * course progress calculation (task progress):
+   * Menghitung jumlah tugas yang sudah selesai serta persentase progres penyelesaian tugas secara keseluruhan.
+   * Jika tidak ada tugas, progres diatur ke 0.
+   */
   const completedCount = tasks.filter(t => t.is_finished).length;
   const progressPercentage = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
 
+  /**
+   * Menentukan status perkuliahan berdasarkan waktu saat ini:
+   * - 'in-progress' jika waktu sekarang berada di antara waktu mulai dan selesai kelas.
+   * - 'completed' jika waktu sekarang sudah melewati waktu selesai kelas.
+   * - 'upcoming' jika kelas belum dimulai.
+   */
   const getCourseStatus = (course: Course) => {
     const now = new Date();
     const currentMin = now.getHours() * 60 + now.getMinutes();
@@ -91,27 +135,31 @@ export default function TodayView({
 
   return (
     <div className="max-w-[1000px] mx-auto w-full space-y-6">
-      {/* Page Header */}
+      {/* Header Halaman */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-on-surface mb-1">
-          Today's Schedule
+          Jadwal Hari Ini
         </h1>
         <p className="text-sm text-on-surface-variant font-medium">
           {getTodayDateString()}
         </p>
       </div>
 
-      {/* Bento Grid Content */}
+      {/* 
+        bento layout grid:
+        Layout grid modular bergaya Bento (menggunakan Tailwind `grid grid-cols-1 md:grid-cols-3 gap-6`)
+        yang responsif untuk membagi halaman ke dalam beberapa wadah informasi ringkas secara estetis.
+      */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
-        {/* Pending Tasks Bento Box */}
+        {/* Bento Box: Tugas Belum Selesai (Mengarah ke tab Tugas saat diklik) */}
         <div
           onClick={() => onTabChange('tasks')}
           className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group cursor-pointer"
         >
           <div className="flex items-center justify-between mb-4">
             <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
-              Pending Tasks
+              Tugas Belum Selesai
             </span>
             <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-red-600 group-hover:scale-110 transition-transform">
               <AlertTriangle className="w-4 h-4" />
@@ -123,39 +171,46 @@ export default function TodayView({
             </div>
             <p className="text-xs text-on-surface-variant flex items-center gap-1.5 font-medium">
               <span className="w-2 h-2 rounded-full bg-red-600 inline-block"></span>
-              {highPriorityCount} High Priority
+              {highPriorityCount} Prioritas Tinggi
             </p>
           </div>
         </div>
 
-        {/* Current Focus Bento Box */}
+        {/* Bento Box: Fokus Saat Ini & Kontrol Timer Fokus (Lebar 2 kolom pada layar medium ke atas) */}
         <div className="bg-primary text-white border border-primary/25 rounded-2xl p-6 shadow-md md:col-span-2 relative overflow-hidden group">
-          {/* Decorative Background Accent */}
+          {/* Aksentuasi Dekoratif di Latar Belakang */}
           <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700 ease-out"></div>
           
           <div className="relative z-10 flex flex-col h-full justify-between">
             <div className="flex items-center justify-between mb-4">
               <span className="text-xs font-bold text-white/80 uppercase tracking-wider">
-                Current Focus
+                Fokus Saat Ini
               </span>
               <div className="flex items-center gap-2">
+                {/* 
+                  focus timer ticks:
+                  Menampilkan sisa waktu hitung mundur (focusTimeLeft) yang dikelola di tingkat atas (parent component).
+                  Setiap detiknya diperbarui oleh timer interval utama (focus timer ticks), dioper ke sini sebagai prop,
+                  dan tombol ini digunakan untuk memulai/menghentikan jalannya timer.
+                */}
                 <button
-                  onClick={() => setIsTimerRunning(!isTimerRunning)}
+                  onClick={() => setIsFocusTimerRunning(!isFocusTimerRunning)}
                   className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded-full text-xs font-semibold flex items-center gap-1.5 backdrop-blur-md cursor-pointer transition-colors"
                 >
-                  {isTimerRunning ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-                  <span>{formatTimer(timeLeft)}</span>
+                  {isFocusTimerRunning ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                  <span>{formatTimer(focusTimeLeft)}</span>
                 </button>
               </div>
             </div>
             
             <div>
               <h3 className="text-xl font-bold tracking-tight mb-2 truncate">
-                {focusTask ? focusTask.task_title : 'No pending tasks!'}
+                {focusTask ? focusTask.task_title : 'Tidak ada tugas tersisa!'}
               </h3>
               <p className="text-xs text-white/85 mb-3 line-clamp-2 min-h-8">
-                {focusTask ? (focusTask.description || 'No additional details.') : 'All your assignments for the semester are completed.'}
+                {focusTask ? (focusTask.description || 'Tidak ada deskripsi tambahan.') : 'Semua tugas semester Anda telah selesai dikerjakan.'}
               </p>
+              {/* Progres Penyelesaian Tugas Keseluruhan */}
               <div className="flex items-center gap-4">
                 <div className="flex-1 h-2 bg-white/20 rounded-full overflow-hidden">
                   <div
@@ -164,7 +219,7 @@ export default function TodayView({
                   >
                   </div>
                 </div>
-                <span className="text-xs font-bold">{progressPercentage}% Tasks Completed</span>
+                <span className="text-xs font-bold">{progressPercentage}% Tugas Selesai</span>
               </div>
             </div>
           </div>
@@ -172,29 +227,37 @@ export default function TodayView({
 
       </div>
 
-      {/* Main Timeline Area */}
+      {/* Bagian Jadwal Kuliah Utama */}
       <div className="bg-white border border-[#E2E8F0] rounded-2xl p-8 shadow-sm">
         <div className="flex items-center justify-between mb-8 border-b border-[#E2E8F0] pb-4">
-          <h3 className="text-lg font-bold text-on-surface">Daily Schedule</h3>
+          <h3 className="text-lg font-bold text-on-surface">Jadwal Kuliah</h3>
           <span className="text-xs text-on-surface-variant font-medium bg-[#F1F5F9] px-3 py-1 rounded-full">
-            {todayDay} View
+            Hari {getIndonesianDayName(todayDay)}
           </span>
         </div>
 
-        {/* Interactive Schedule List */}
+        {/* 
+          dynamic schedule timeline checklist:
+          Menampilkan barisan kelas hari ini secara dinamis dengan visualisasi garis timeline vertikal (checklist-style).
+          Mata kuliah yang sudah selesai (status === 'completed') akan di-render dengan opacity lebih rendah (opacity-50)
+          dan judul dicoret (line-through), sedangkan kelas yang sedang aktif ditandai dengan detak animasi (pulse)
+          dan warna primer untuk menarik perhatian pengguna secara real-time.
+        */}
         <div className="relative pl-4 md:pl-8">
-          {/* Vertical timeline connector */}
+          {/* Garis penghubung timeline vertikal */}
           <div className="absolute left-[27px] md:left-[43px] top-4 bottom-4 w-px bg-[#E2E8F0]"></div>
 
           {!hasCoursesToday ? (
+            /* Tampilan jika hari ini tidak ada jadwal kuliah */
             <div className="text-center py-12 bg-white border border-dashed border-[#C7C4D8] rounded-xl flex flex-col items-center justify-center">
               <Clock className="w-12 h-12 text-[#94A3B8] mb-3 opacity-60 animate-pulse" />
-              <h3 className="text-sm font-semibold text-on-surface">No classes for today</h3>
+              <h3 className="text-sm font-semibold text-on-surface">Tidak ada kelas hari ini</h3>
               <p className="text-xs text-on-surface-variant mt-1">
-                Enjoy your free day or work on your pending tasks.
+                Nikmati hari libur Anda atau kerjakan tugas-tugas yang belum selesai.
               </p>
             </div>
           ) : (
+            /* Merender setiap mata kuliah hari ini */
             todayCourses.map((course) => {
               const status = getCourseStatus(course);
               const isCompleted = status === 'completed';
@@ -202,14 +265,15 @@ export default function TodayView({
 
               return (
                 <div key={course.id} className={`relative flex gap-6 md:gap-8 mb-8 transition-opacity duration-300 ${isCompleted ? 'opacity-50' : ''}`}>
+                  {/* Kolom Waktu Mulai */}
                   <div className="w-16 flex-shrink-0 text-right pt-4">
                     <span className={`text-sm font-bold block ${isInProgress ? 'text-primary' : 'text-on-surface'}`}>{course.start_time}</span>
                     <span className="text-[10px] font-semibold text-on-surface-variant block">
-                      {parseInt(course.start_time) >= 12 ? 'PM' : 'AM'}
+                      {parseInt(course.start_time) >= 12 ? 'WIB' : 'WIB'}
                     </span>
                   </div>
                   
-                  {/* Dot Indicator */}
+                  {/* Indikator Titik Status (Dot Indicator) pada Timeline */}
                   <div className={`absolute top-5 rounded-full bg-white border-2 z-10 ${
                     isInProgress 
                       ? 'w-[15px] h-[15px] left-[20px] md:left-[36px] bg-primary border-white ring-4 ring-primary/20 animate-pulse' 
@@ -218,35 +282,40 @@ export default function TodayView({
                         : 'w-[9px] h-[9px] left-[23px] md:left-[39px] border-primary'
                   }`}></div>
                   
+                  {/* Kartu Informasi Kelas */}
                   <div className={`flex-1 bg-white border rounded-xl p-4 md:p-5 hover:border-primary transition-all shadow-sm ${
                     isInProgress ? 'border-primary/45 bg-primary/[0.02] ring-1 ring-primary/5' : 'border-[#E2E8F0]'
                   }`}>
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-2">
                       <div className="flex flex-wrap items-center gap-2">
+                        {/* Kode Mata Kuliah dengan warna kustom */}
                         <span
                           className="text-[10px] font-bold px-2 py-0.5 rounded text-white shadow-2xs"
                           style={{ backgroundColor: course.color_hex }}
                         >
                           {course.course_code}
                         </span>
+                        {/* Nama Mata Kuliah */}
                         <h4 className={`text-base font-bold text-on-surface inline ${isCompleted ? 'line-through text-on-surface-variant/80' : ''}`}>
                           {course.course_name}
                         </h4>
                       </div>
                       
+                      {/* Label Status Kelas */}
                       {isInProgress && (
                         <span className="inline-flex items-center gap-1 px-3 py-1 bg-primary text-white rounded-full text-xs font-bold shadow-sm">
                           <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-                          In Progress
+                          Sedang Berlangsung
                         </span>
                       )}
                       {isCompleted && (
                         <span className="inline-flex items-center gap-1 px-3 py-1 bg-slate-100 text-on-surface-variant rounded-full text-xs font-bold border border-slate-200">
-                          Completed
+                          Selesai
                         </span>
                       )}
                     </div>
                     
+                    {/* Detail Ruangan & Dosen */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-on-surface-variant mt-2 pt-2 border-t border-slate-50 font-medium">
                       <p className="flex items-center gap-1.5 font-medium">
                         <MapPin className="w-3.5 h-3.5 text-[#94A3B8]" /> {course.room}
@@ -256,12 +325,13 @@ export default function TodayView({
                       </p>
                     </div>
 
+                    {/* Tombol Interaktif: Membuka Catatan Khusus untuk Mata Kuliah ini */}
                     <div className="flex items-center gap-4 pt-3 mt-3 border-t border-slate-100 text-xs">
                       <button
                         onClick={() => onOpenNotesWithCourse(course.id)}
                         className="text-primary font-bold hover:underline flex items-center gap-1 bg-transparent border-none p-0 cursor-pointer"
                       >
-                        <Notebook className="w-3.5 h-3.5" /> Open Notes
+                        <Notebook className="w-3.5 h-3.5" /> Buka Catatan
                       </button>
                     </div>
                   </div>

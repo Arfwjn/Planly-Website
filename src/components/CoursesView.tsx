@@ -1,3 +1,11 @@
+/**
+ * Komponen CoursesView
+ * 
+ * File ini berguna untuk mengelola dan menampilkan daftar mata kuliah (Courses) pengguna.
+ * Komponen ini menyediakan visualisasi jadwal mata kuliah, daftar tugas terkait per mata kuliah,
+ * pendaftaran mata kuliah baru melalui modal popup, serta pengubahan dan pembatalan pendaftaran (hapus).
+ */
+
 import React, { useState } from 'react';
 import { Calendar, Clock, MapPin, User, GraduationCap, X, Plus, AlertCircle, BookOpen, Edit2, Trash2, CheckSquare } from 'lucide-react';
 import { Course, Task } from '../types';
@@ -7,7 +15,7 @@ interface CoursesViewProps {
   onAddCourse: (course: Course) => void;
   onEditCourse: (courseId: number, updatedCourse: Course) => void;
   onDeleteCourse: (courseId: number) => void;
-  onToggleTaskState?: (taskId: number) => void; // Optional to prevent breaking check-in
+  onToggleTaskState?: (taskId: number) => void; // Opsional agar tidak merusak fungsionalitas check-in
   tasks: Task[];
   isEnrollModalOpen: boolean;
   onSetEnrollModalOpen: (open: boolean) => void;
@@ -25,12 +33,14 @@ export default function CoursesView({
   onSetEnrollModalOpen,
   searchQuery
 }: CoursesViewProps) {
+  // State untuk melacak mata kuliah yang sedang dipilih/diinspeksi detailnya
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   
-  // Edit Mode state
+  // State untuk melacak apakah pengguna sedang dalam mode edit informasi mata kuliah
   const [isEditing, setIsEditing] = useState(false);
 
-  // Form fields (used for both Add and Edit)
+  // Form Fields State
+  // Kumpulan state ini digunakan bersama oleh Form Pendaftaran (Enroll) dan Form Edit
   const [courseCode, setCourseCode] = useState('');
   const [courseName, setCourseName] = useState('');
   const [sks, setSks] = useState(3);
@@ -42,6 +52,7 @@ export default function CoursesView({
   const [colorHex, setColorHex] = useState('#3525cd');
   const [errorMsg, setErrorMsg] = useState('');
 
+  // Pilihan palet warna dot bulat untuk membedakan mata kuliah secara visual
   const colorsOption = [
     { label: 'Indigo', value: '#3525cd' },
     { label: 'Rust', value: '#7e3000' },
@@ -51,6 +62,7 @@ export default function CoursesView({
     { label: 'Emerald green', value: '#16a34a' }
   ];
 
+  // Helper untuk menentukan tanggal pertemuan kuliah berikutnya berdasarkan nama hari
   const getNextClassDate = (dayName: string): string => {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const targetDayIndex = days.indexOf(dayName);
@@ -61,22 +73,25 @@ export default function CoursesView({
     
     let daysUntil = targetDayIndex - currentDayIndex;
     if (daysUntil <= 0) {
-      daysUntil += 7; // If today is Monday or past, find next Monday
+      daysUntil += 7; // Jika hari ini adalah hari tersebut atau sudah lewat, cari hari yang sama di minggu depan
     }
     
     d.setDate(d.getDate() + daysUntil);
     return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
   };
 
+  // Menangani pengiriman form pendaftaran mata kuliah baru
   const handleEnrollSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
 
+    // Validasi sederhana untuk memastikan data wajib diisi
     if (!courseCode || !courseName || !room || !lecturerName) {
       setErrorMsg('Harap isi semua kolom pendaftaran.');
       return;
     }
 
+    // Mengirim data mata kuliah baru ke parent component
     onAddCourse({
       id: 0,
       course_code: courseCode.trim().toUpperCase(),
@@ -91,7 +106,7 @@ export default function CoursesView({
       user_id: 1
     });
 
-    // Reset fields
+    // Reset isi form fields ke nilai default setelah pendaftaran berhasil
     setCourseCode('');
     setCourseName('');
     setSks(3);
@@ -100,9 +115,11 @@ export default function CoursesView({
     setDayOfWeek('Monday');
     setStartTime('09:00');
     setEndTime('10:30');
+    // Menutup modal popup pendaftaran
     onSetEnrollModalOpen(false);
   };
 
+  // Mengisi form edit dengan data mata kuliah yang akan diubah sebelum modal edit ditampilkan
   const handleInspectEditClick = (course: Course) => {
     setIsEditing(true);
     setCourseCode(course.course_code);
@@ -117,6 +134,7 @@ export default function CoursesView({
     setErrorMsg('');
   };
 
+  // Menangani pengiriman form perubahan data mata kuliah
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
@@ -140,21 +158,23 @@ export default function CoursesView({
       user_id: 1
     };
 
+    // Mengirim data hasil edit ke parent component
     onEditCourse(selectedCourse!.id, updated);
     setSelectedCourse(updated);
     setIsEditing(false);
   };
 
+  // Menangani proses pembatalan pendaftaran (unenroll/hapus) mata kuliah
   const handleDeleteClick = (courseId: number) => {
     onDeleteCourse(courseId);
     setSelectedCourse(null);
     setIsEditing(false);
   };
 
-  // Compute stats
+  // Menghitung total SKS dari semua mata kuliah terdaftar
   const totalSks = courses.reduce((sum, item) => sum + item.sks, 0);
 
-  // Filter courses based on search queries
+  // Menyaring mata kuliah berdasarkan kata kunci pencarian (nama, kode mata kuliah, atau dosen)
   const filteredCourses = courses.filter((c) => {
     return (
       c.course_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -166,7 +186,7 @@ export default function CoursesView({
   return (
     <div className="max-w-[1000px] mx-auto w-full space-y-6">
       
-      {/* Page Header */}
+      {/* Header Halaman */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tight text-on-surface">Fall Semester 2026</h2>
@@ -175,6 +195,7 @@ export default function CoursesView({
           </p>
         </div>
         <div className="flex gap-2">
+          {/* Tombol pemicu untuk membuka modal pendaftaran mata kuliah */}
           <button
             onClick={() => onSetEnrollModalOpen(true)}
             className="px-4 py-2 bg-primary hover:bg-[#4F46E5] text-white rounded-lg text-xs font-semibold flex items-center gap-2 shadow-sm cursor-pointer transition-colors"
@@ -185,11 +206,11 @@ export default function CoursesView({
         </div>
       </div>
 
-      {/* Course Detail Panel if a course is inspected */}
+      {/* Panel Detail Mata Kuliah (Ditampilkan jika ada mata kuliah yang dipilih untuk diinspeksi) */}
       {selectedCourse && (
         <div className="p-6 bg-primary/[0.02] border-2 border-primary/20 rounded-2xl relative shadow-xs animate-fade-in">
           
-          {/* Controls: Edit, Delete, Close */}
+          {/* Tombol aksi: Edit, Hapus, dan Tutup Panel */}
           <div className="absolute top-4 right-4 flex items-center gap-2">
             <button
               onClick={() => handleInspectEditClick(selectedCourse)}
@@ -247,7 +268,7 @@ export default function CoursesView({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-            {/* Upcoming Schedule */}
+            {/* Jadwal Kuliah Berikutnya */}
             <div>
               <h4 className="text-xs font-bold text-on-surface uppercase tracking-wider mb-2 flex items-center gap-1.5">
                 <Calendar className="w-4 h-4 text-primary" />
@@ -266,7 +287,7 @@ export default function CoursesView({
               </div>
             </div>
 
-            {/* Related Tasks checklist */}
+            {/* Checklist Tugas Terkait Mata Kuliah Terpilih */}
             <div>
               <h4 className="text-xs font-bold text-on-surface uppercase tracking-wider mb-2 flex items-center gap-1.5">
                 <CheckSquare className="w-4 h-4 text-primary" />
@@ -304,7 +325,9 @@ export default function CoursesView({
         </div>
       )}
 
-      {/* Courses Grid */}
+      {/* Grid Layout Courses */}
+      {/* Di sini layout grid menyusun kartu mata kuliah secara responsif.
+          cols-1 pada mobile, cols-2 pada tablet (md), dan cols-3 pada komputer (lg) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredCourses.length === 0 ? (
           <div className="col-span-full text-center py-12 bg-white border border-[#E2E8F0] rounded-2xl">
@@ -314,6 +337,8 @@ export default function CoursesView({
           </div>
         ) : (
           filteredCourses.map((course) => {
+            // Task count per course: menghitung jumlah tugas 'pending' (belum selesai)
+            // yang dikaitkan dengan mata kuliah ini
             const courseTasksCount = tasks.filter((t) => t.course_id === course.id && !t.is_finished).length;
             return (
               <article
@@ -321,7 +346,7 @@ export default function CoursesView({
                 onClick={() => setSelectedCourse(course)}
                 className="bg-white border border-[#E2E8F0] rounded-xl p-6 flex flex-col gap-4 relative overflow-hidden shadow-sm hover:shadow-md hover:border-primary/30 transition-all group cursor-pointer h-full"
               >
-                {/* Horizontal left primary side strip */}
+                {/* Pita penanda warna di sisi kiri kartu */}
                 <div
                   className="absolute left-0 top-0 bottom-0 w-1.5 transition-all group-hover:w-2"
                   style={{ backgroundColor: course.color_hex }}
@@ -339,6 +364,7 @@ export default function CoursesView({
                     {course.course_code}
                   </span>
                   
+                  {/* Badge jumlah tugas pending yang terdeteksi */}
                   {courseTasksCount > 0 && (
                     <span className="text-[9px] font-bold px-2 py-0.5 bg-red-50 text-red-600 border border-red-100 rounded-full">
                       {courseTasksCount} Pending
@@ -377,11 +403,11 @@ export default function CoursesView({
         )}
       </div>
 
-      {/* Enroll Course Modal */}
+      {/* Modal Popup Pendaftaran Mata Kuliah Baru (Enroll Course Modal) */}
       {isEnrollModalOpen && (
         <div className="fixed inset-0 bg-[#1b1b24]/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-[560px] overflow-hidden border border-[#E2E8F0] animate-zoom-in">
-            {/* Header */}
+            {/* Header Modal */}
             <div className="px-6 py-4 bg-[#F8FAFC] border-b border-[#E2E8F0] flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-on-surface text-lg">Enroll New Course</h3>
@@ -397,7 +423,7 @@ export default function CoursesView({
               </button>
             </div>
 
-            {/* Form */}
+            {/* Form Input Pendaftaran */}
             <form onSubmit={handleEnrollSubmit} className="p-6 space-y-4">
               {errorMsg && (
                 <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-xs font-semibold flex items-center gap-2 animate-pulse">
@@ -406,6 +432,7 @@ export default function CoursesView({
                 </div>
               )}
 
+              {/* Form Field: Kode & Nama Mata Kuliah */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="col-span-1">
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
@@ -435,6 +462,7 @@ export default function CoursesView({
                 </div>
               </div>
 
+              {/* Form Field: Jumlah SKS & Ruangan */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
@@ -465,6 +493,7 @@ export default function CoursesView({
                 </div>
               </div>
 
+              {/* Form Field: Nama Dosen Pengampu */}
               <div>
                 <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
                   Lecturer Name
@@ -479,6 +508,7 @@ export default function CoursesView({
                 />
               </div>
 
+              {/* Form Field: Waktu Kuliah (Hari, Jam Mulai & Jam Selesai) */}
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
@@ -524,6 +554,7 @@ export default function CoursesView({
                 </div>
               </div>
 
+              {/* Pemilihan warna visual (Color Dot Selections) */}
               <div>
                 <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
                   Theme Palette Color
@@ -547,7 +578,7 @@ export default function CoursesView({
                 </div>
               </div>
 
-              {/* Actions */}
+              {/* Tombol Aksi */}
               <div className="pt-4 border-t border-[#E2E8F0] flex justify-end gap-3 font-sans">
                 <button
                   type="button"
@@ -569,11 +600,11 @@ export default function CoursesView({
         </div>
       )}
 
-      {/* Edit Course Modal */}
+      {/* Modal Popup Edit Informasi Mata Kuliah (Edit Course Modal) */}
       {isEditing && selectedCourse && (
         <div className="fixed inset-0 bg-[#1b1b24]/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-[560px] overflow-hidden border border-[#E2E8F0] animate-zoom-in">
-            {/* Header */}
+            {/* Header Modal Edit */}
             <div className="px-6 py-4 bg-[#F8FAFC] border-b border-[#E2E8F0] flex items-center justify-between">
               <div>
                 <h3 className="font-bold text-on-surface text-lg">Edit Course Info</h3>
@@ -589,7 +620,7 @@ export default function CoursesView({
               </button>
             </div>
 
-            {/* Form */}
+            {/* Form Input Edit */}
             <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
               {errorMsg && (
                 <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-xs font-semibold flex items-center gap-2">
@@ -598,6 +629,7 @@ export default function CoursesView({
                 </div>
               )}
 
+              {/* Edit Kode & Nama Mata Kuliah */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="col-span-1">
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
@@ -625,6 +657,7 @@ export default function CoursesView({
                 </div>
               </div>
 
+              {/* Edit SKS & Ruangan */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
@@ -654,6 +687,7 @@ export default function CoursesView({
                 </div>
               </div>
 
+              {/* Edit Nama Dosen Pengampu */}
               <div>
                 <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
                   Lecturer Name
@@ -667,6 +701,7 @@ export default function CoursesView({
                 />
               </div>
 
+              {/* Edit Waktu Kuliah (Hari, Jam Mulai & Selesai) */}
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
@@ -712,6 +747,7 @@ export default function CoursesView({
                 </div>
               </div>
 
+              {/* Edit Pilihan Warna */}
               <div>
                 <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
                   Theme Palette Color
@@ -735,7 +771,7 @@ export default function CoursesView({
                 </div>
               </div>
 
-              {/* Actions */}
+              {/* Tombol Aksi Edit */}
               <div className="pt-4 border-t border-[#E2E8F0] flex justify-end gap-3">
                 <button
                   type="button"

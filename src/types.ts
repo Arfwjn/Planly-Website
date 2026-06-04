@@ -1,8 +1,18 @@
 // =============================================================================
-// Planly — TypeScript Types (aligned with Laravel REST API contract)
-// Field names match Laravel API JSON response keys exactly (snake_case).
+// Planly — TypeScript Types
+// 
+// File ini mendefinisikan interface dan tipe data TypeScript yang digunakan
+// di seluruh aplikasi kita. Semua field di sini ditulis dalam format snake_case
+// agar selaras dan cocok secara langsung dengan response JSON dari API Laravel.
+// Hal ini memudahkan kita dalam memetakan data dari backend ke frontend tanpa
+// perlu melakukan konversi format penulisan.
 // =============================================================================
 
+/**
+ * Interface User merepresentasikan data pengguna (user) di sistem kita.
+ * Berisi informasi pribadi dasar seperti nama, email, NIM, jurusan,
+ * semester, dan URL foto profil.
+ */
 export interface User {
   id: number;
   name: string;
@@ -13,6 +23,11 @@ export interface User {
   profile_photo_url: string | null;
 }
 
+/**
+ * Interface Course merepresentasikan data mata kuliah yang diambil oleh user.
+ * Menyimpan informasi kode, nama matakuliah, jumlah SKS, dosen pengampu,
+ * ruangan, hari, waktu mulai dan selesai, serta warna label untuk kalender.
+ */
 export interface Course {
   id: number;
   user_id: number;
@@ -21,23 +36,32 @@ export interface Course {
   sks: number;
   lecturer_name: string;
   room: string;
-  day_of_week: string;  // 'Monday', 'Tuesday', etc.
-  start_time: string;   // "HH:MM" format
-  end_time: string;     // "HH:MM" format
+  day_of_week: string;  // 'Monday', 'Tuesday', dll.
+  start_time: string;   // format "HH:MM"
+  end_time: string;     // format "HH:MM"
   color_hex: string;
 }
 
+/**
+ * Interface Task merepresentasikan tugas kuliah atau catatan tugas user.
+ * Tugas ini opsional dikaitkan dengan mata kuliah tertentu (course_id),
+ * memiliki tenggat waktu (deadline), status pengerjaan, dan tingkat prioritas.
+ */
 export interface Task {
   id: number;
   user_id: number;
   course_id: number | null;
   task_title: string;
   description: string | null;
-  deadline: string;     // "YYYY-MM-DD HH:MM:SS" format
+  deadline: string;     // format "YYYY-MM-DD HH:MM:SS"
   is_finished: boolean;
   is_priority: boolean;
 }
 
+/**
+ * Interface Note merepresentasikan catatan sederhana yang dibuat oleh user.
+ * Catatan ini bisa bersifat umum atau dikaitkan secara khusus dengan mata kuliah (course_id).
+ */
 export interface Note {
   id: number;
   user_id: number;
@@ -46,18 +70,28 @@ export interface Note {
   content: string;
 }
 
-// --- Auth DTOs (matching Laravel request/response shapes) ---
+// --- Auth DTOs (Data Transfer Objects untuk proses autentikasi Laravel) ---
 
+/**
+ * Payload yang kita kirimkan ke Laravel saat user ingin login.
+ */
 export interface LoginRequest {
   email: string;
   password: string;
 }
 
+/**
+ * Struktur response dari backend setelah user berhasil login,
+ * mengembalikan token akses (Bearer token) beserta detail data user.
+ */
 export interface LoginResponse {
   token: string;
   user: User;
 }
 
+/**
+ * Payload yang dikirimkan ke Laravel untuk pendaftaran akun baru.
+ */
 export interface RegisterRequest {
   name: string;
   email: string;
@@ -66,22 +100,53 @@ export interface RegisterRequest {
   nim?: string;
 }
 
+/**
+ * Struktur response setelah registrasi berhasil, berisi pesan sukses dan detail user baru.
+ */
 export interface RegisterResponse {
   message: string;
   user: User;
 }
 
-// --- CRUD DTOs ---
+// --- CRUD DTOs (Payload untuk operasi pembuatan dan pembaruan data) ---
 
+/**
+ * Payload untuk membuat mata kuliah baru.
+ * Di sini kita mengecualikan (Omit) field 'id' dan 'user_id' karena
+ * field tersebut akan diatur secara otomatis di sisi backend.
+ */
 export type CourseCreatePayload = Omit<Course, 'id' | 'user_id'>;
+
+/**
+ * Payload untuk memperbarui data mata kuliah yang sudah ada.
+ * Tipe data ini bersifat opsional (Partial) karena kita bisa saja hanya memperbarui beberapa field saja.
+ */
 export type CourseUpdatePayload = Partial<CourseCreatePayload>;
 
+/**
+ * Payload untuk membuat tugas baru (tanpa 'id' dan 'user_id').
+ */
 export type TaskCreatePayload = Omit<Task, 'id' | 'user_id'>;
+
+/**
+ * Payload untuk memperbarui status atau detail tugas.
+ */
 export type TaskUpdatePayload = Partial<TaskCreatePayload>;
 
+/**
+ * Payload untuk membuat catatan baru (tanpa 'id' dan 'user_id').
+ */
 export type NoteCreatePayload = Omit<Note, 'id' | 'user_id'>;
+
+/**
+ * Payload untuk memperbarui catatan yang sudah ada.
+ */
 export type NoteUpdatePayload = Partial<NoteCreatePayload>;
 
+/**
+ * Payload khusus untuk memperbarui profil user di backend.
+ * Semua field dibuat opsional agar user bisa mengubah informasi tertentu saja.
+ */
 export interface ProfileUpdatePayload {
   name?: string;
   email?: string;
@@ -90,6 +155,9 @@ export interface ProfileUpdatePayload {
   semester?: number | null;
 }
 
-// --- App Navigation ---
+// --- Navigasi Aplikasi ---
 
+/**
+ * Menentukan tab aktif pada sidebar navigasi utama aplikasi Planly.
+ */
 export type SidebarTab = 'today' | 'calendar' | 'tasks' | 'courses' | 'notes' | 'profile';

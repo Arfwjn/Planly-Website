@@ -21,15 +21,15 @@ export default function Header({
   const getSearchPlaceholder = () => {
     switch (activeTab) {
       case 'tasks':
-        return 'Search academic tasks...';
+        return 'Cari tugas akademik...';
       case 'courses':
-        return 'Search enrolled courses...';
+        return 'Cari mata kuliah terdaftar...';
       case 'notes':
-        return 'Search notes & lectures...';
+        return 'Cari catatan & perkuliahan...';
       case 'calendar':
-        return 'Search schedule events...';
+        return 'Cari jadwal kegiatan...';
       default:
-        return 'Search tasks, notes, or courses...';
+        return 'Cari tugas, catatan, atau mata kuliah...';
     }
   };
 
@@ -40,7 +40,7 @@ export default function Header({
         <button
           onClick={onMenuToggle}
           className="p-1.5 rounded-lg text-on-surface-variant hover:bg-slate-100 lg:hidden cursor-pointer"
-          aria-label="Open sidebar"
+          aria-label="Buka sidebar"
         >
           <Menu className="w-5 h-5" />
         </button>
@@ -60,18 +60,18 @@ export default function Header({
       {/* Trailing Controls & Profile */}
       <div className="flex items-center gap-2">
         <button
-          onClick={() => alert('No new notifications for current semester')}
+          onClick={() => alert('Tidak ada notifikasi baru untuk semester ini')}
           className="text-on-surface-variant hover:bg-[#F1F5F9] rounded-full p-2 focus:outline-none focus:ring-2 focus:ring-primary transition-all flex items-center justify-center relative cursor-pointer"
-          aria-label="Notifications"
+          aria-label="Notifikasi"
         >
           <Bell className="w-4 h-4" />
           <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
         </button>
 
         <button
-          onClick={() => alert('Planly Settings: Academic Semester 6 active')}
+          onClick={() => alert('Pengaturan Planly: Semester 6 aktif')}
           className="text-on-surface-variant hover:bg-[#F1F5F9] rounded-full p-2 focus:outline-none focus:ring-2 focus:ring-primary transition-all flex items-center justify-center cursor-pointer"
-          aria-label="Settings"
+          aria-label="Pengaturan"
         >
           <Settings className="w-4 h-4" />
         </button>
@@ -81,7 +81,7 @@ export default function Header({
         <div className="flex items-center gap-2 pl-1">
           <div className="w-9 h-9 rounded-full overflow-hidden border border-[#E2E8F0] cursor-pointer hover:ring-2 hover:ring-primary transition-all">
             <img
-              src={user.photoUrl}
+              src={user.profile_photo_url || ''}
               alt={user.name}
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"

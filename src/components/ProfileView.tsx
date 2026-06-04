@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User as UserIcon, Badge, MapPin, Bell, Palette, LogOut, ArrowRight, Save, X, Info } from 'lucide-react';
+import { User as UserIcon, MapPin, Bell, Palette, LogOut, ArrowRight, Save, X } from 'lucide-react';
 import { User } from '../types';
 
 interface ProfileViewProps {
@@ -8,19 +8,29 @@ interface ProfileViewProps {
   onSignOut: () => void;
 }
 
+/**
+ * Komponen ProfileView
+ * 
+ * Komponen ini digunakan untuk menampilkan profil pengguna (mahasiswa), mengelola formulir akun,
+ * menyalakan/menonaktifkan notifikasi, memilih tema tampilan, serta melakukan konfirmasi log out (keluar).
+ */
 export default function ProfileView({ user, onUserUpdate, onSignOut }: ProfileViewProps) {
+  // State untuk melacak apakah formulir pengeditan profil sedang aktif
   const [isEditingAccount, setIsEditingAccount] = useState(false);
+  // State untuk menyimpan nilai input formulir pengeditan akun (nama, NIM, program studi)
   const [editName, setEditName] = useState(user.name);
-  const [editNim, setEditNim] = useState(user.nim);
-  const [editMajor, setEditMajor] = useState(user.major);
+  const [editNim, setEditNim] = useState(user.nim || '');
+  const [editMajor, setEditMajor] = useState(user.major || '');
 
-  // Notifications toggle settings
+  // State untuk melacak status saklar notifikasi pengingat & email rangkuman harian (notifications toggles)
   const [reminders, setReminders] = useState(true);
   const [dailyDigest, setDailyDigest] = useState(false);
 
-  // Appearance toggle settings
+  // State untuk melacak pilihan tema tampilan (theme switcher triggers)
   const [themeMode, setThemeMode] = useState<'light' | 'dark'>('light');
 
+  // Menangani pengiriman formulir akun. Fungsi ini memperbarui data profil pengguna
+  // melalui callback onUserUpdate dan menonaktifkan mode edit setelah selesai.
   const handleAccountUpdateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onUserUpdate({
@@ -40,15 +50,15 @@ export default function ProfileView({ user, onUserUpdate, onSignOut }: ProfileVi
         <div className="relative w-32 h-32 md:w-36 md:h-36 rounded-full mb-4 group">
           <div className="absolute inset-0 rounded-full border-4 border-white shadow-md z-15"></div>
           <img
-            src={user.photoUrl}
-            alt="Large User Avatar"
+            src={user.profile_photo_url || ''}
+            alt="Avatar Pengguna"
             className="w-full h-full object-cover rounded-full z-10"
             referrerPolicy="no-referrer"
           />
           <button
-            onClick={() => alert('Photo upload: integrated with default university registration')}
+            onClick={() => alert('Unggah foto: terintegrasi dengan pendaftaran akademik default')}
             className="absolute bottom-1 right-1 z-20 w-8 h-8 rounded-full bg-primary hover:bg-[#4F46E5] text-white flex items-center justify-center shadow-md hover:scale-105 transition-transform cursor-pointer border border-white"
-            aria-label="Edit Profile Avatar"
+            aria-label="Edit Foto Profil"
           >
             <UserIcon className="w-4.5 h-4.5" />
           </button>
@@ -60,13 +70,14 @@ export default function ProfileView({ user, onUserUpdate, onSignOut }: ProfileVi
           {user.major} • NIM {user.nim} • Semester {user.semester}
         </p>
 
+        {/* Lencana (Badge) Mahasiswa Aktif dan Informasi Lokasi Kampus */}
         <div className="flex items-center gap-2 mt-4">
           <span className="px-3 py-1 rounded-full bg-primary/10 text-primary font-bold text-xs">
-            {user.classification}
+            Mahasiswa Aktif
           </span>
           <span className="px-3 py-1 rounded-full bg-slate-100 text-on-surface-variant font-semibold text-xs flex items-center gap-1">
             <MapPin className="w-3.5 h-3.5" />
-            {user.location}
+            Kampus Utama
           </span>
         </div>
       </section>
@@ -74,21 +85,22 @@ export default function ProfileView({ user, onUserUpdate, onSignOut }: ProfileVi
       {/* Settings Grid (Bento Style Layout) */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
-        {/* Account Details Setting */}
+        {/* Formulir Profil Akun (Account Details Form) */}
         <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-9 h-9 rounded-full bg-[#F5F2FF] flex items-center justify-center text-primary">
                 <UserIcon className="w-4.5 h-4.5" />
               </div>
-              <h3 className="text-base font-bold text-on-surface">Account Overview</h3>
+              <h3 className="text-base font-bold text-on-surface">Ringkasan Akun</h3>
             </div>
 
+            {/* Jika mode edit aktif, kita tampilkan formulir pengisian data akun */}
             {isEditingAccount ? (
               <form onSubmit={handleAccountUpdateSubmit} className="space-y-3 mb-4">
                 <div>
                   <label className="block text-[10px] font-bold text-on-surface uppercase mb-1">
-                    Full Name
+                    Nama Lengkap
                   </label>
                   <input
                     type="text"
@@ -101,7 +113,7 @@ export default function ProfileView({ user, onUserUpdate, onSignOut }: ProfileVi
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[10px] font-bold text-on-surface uppercase mb-1">
-                      NIM ID
+                      NIM
                     </label>
                     <input
                       type="text"
@@ -113,7 +125,7 @@ export default function ProfileView({ user, onUserUpdate, onSignOut }: ProfileVi
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-on-surface uppercase mb-1">
-                      Major Code
+                      Program Studi
                     </label>
                     <input
                       type="text"
@@ -129,20 +141,20 @@ export default function ProfileView({ user, onUserUpdate, onSignOut }: ProfileVi
                     type="submit"
                     className="px-3 py-1.5 bg-primary hover:bg-[#4F46E5] text-white font-semibold rounded text-xs flex items-center gap-1 cursor-pointer"
                   >
-                    <Save className="w-3 h-3" /> Save
+                    <Save className="w-3 h-3" /> Simpan
                   </button>
                   <button
                     type="button"
                     onClick={() => setIsEditingAccount(false)}
                     className="px-3 py-1.5 border border-[#E2E8F0] hover:bg-slate-50 text-on-surface-variant font-semibold rounded text-xs flex items-center gap-1 cursor-pointer"
                   >
-                    <X className="w-3 h-3" /> Cancel
+                    <X className="w-3 h-3" /> Batal
                   </button>
                 </div>
               </form>
             ) : (
               <p className="text-xs leading-relaxed text-on-surface-variant mb-6">
-                Manage your profile information, academic records registration id, university communication emails, and secure credentials.
+                Kelola informasi profil, nomor induk mahasiswa, email universitas, dan data keamanan Anda.
               </p>
             )}
           </div>
@@ -152,25 +164,26 @@ export default function ProfileView({ user, onUserUpdate, onSignOut }: ProfileVi
               onClick={() => setIsEditingAccount(true)}
               className="self-start text-primary font-bold text-xs flex items-center gap-1 hover:underline group cursor-pointer bg-transparent border-none p-0"
             >
-              <span>Update credentials</span>
+              <span>Perbarui profil</span>
               <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
             </button>
           )}
         </div>
 
-        {/* Action Notifications toggle settings */}
+        {/* Pengaturan Saklar Notifikasi (Notifications Toggle Settings) */}
         <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-9 h-9 rounded-full bg-[#F5F2FF] flex items-center justify-center text-primary">
                 <Bell className="w-4.5 h-4.5" />
               </div>
-              <h3 className="text-base font-bold text-on-surface">Notifications</h3>
+              <h3 className="text-base font-bold text-on-surface">Notifikasi</h3>
             </div>
             
+            {/* Saklar untuk pengingat tugas dan email rangkuman harian */}
             <div className="space-y-4 mb-4">
               <div className="flex justify-between items-center text-xs font-semibold text-on-surface">
-                <span>Assignment Reminders (SKS & Schedulers)</span>
+                <span>Pengingat Tugas & Jadwal</span>
                 <button
                   type="button"
                   onClick={() => setReminders(!reminders)}
@@ -185,7 +198,7 @@ export default function ProfileView({ user, onUserUpdate, onSignOut }: ProfileVi
               </div>
 
               <div className="flex justify-between items-center text-xs font-semibold text-on-surface">
-                <span>Daily Task Digest Email</span>
+                <span>Email Rangkuman Tugas Harian</span>
                 <button
                   type="button"
                   onClick={() => setDailyDigest(!dailyDigest)}
@@ -202,20 +215,21 @@ export default function ProfileView({ user, onUserUpdate, onSignOut }: ProfileVi
           </div>
           
           <p className="text-[10px] text-on-surface-variant font-medium">
-            Active alerts dispatched across registered channels.
+            Pemberitahuan aktif dikirim melalui saluran terdaftar.
           </p>
         </div>
 
-        {/* Color Palette theme settings */}
+        {/* Pengaturan Pilihan Tema (Theme Switcher Triggers) */}
         <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-9 h-9 rounded-full bg-[#F5F2FF] flex items-center justify-center text-primary">
               <Palette className="w-4.5 h-4.5" />
             </div>
-            <h3 className="text-base font-bold text-on-surface">Appearance Settings</h3>
+            <h3 className="text-base font-bold text-on-surface">Pengaturan Tampilan</h3>
           </div>
 
           <div className="grid grid-cols-2 gap-3 mt-2">
+            {/* Pemicu Mode Terang */}
             <div
               onClick={() => setThemeMode('light')}
               className={`border-2 rounded-xl p-3 flex flex-col items-center gap-2 cursor-pointer transition-all ${
@@ -225,35 +239,36 @@ export default function ProfileView({ user, onUserUpdate, onSignOut }: ProfileVi
               }`}
             >
               <Palette className="w-6 h-6 text-primary" />
-              <span className="text-xs font-bold text-primary">Light Mode</span>
+              <span className="text-xs font-bold text-primary">Mode Terang</span>
             </div>
             
+            {/* Pemicu Mode Gelap. Di sini ada alert untuk menginfokan bahwa fitur masih dijadwalkan pada rilis mendatang */}
             <div
               onClick={() => {
                 setThemeMode('dark');
-                alert('Planly Dark Space theme: scheduled for implementation in upcoming v2.0 update.');
+                alert('Tema Gelap Planly: dijadwalkan untuk implementasi pada pembaruan v2.0 mendatang.');
                 setThemeMode('light');
               }}
               className="border border-[#E2E8F0] bg-white hover:bg-slate-50 rounded-xl p-3 flex flex-col items-center gap-2 cursor-pointer transition-all"
             >
               <Palette className="w-6 h-6 text-on-surface-variant" />
-              <span className="text-xs font-semibold text-on-surface-variant">Dark Mode</span>
+              <span className="text-xs font-semibold text-on-surface-variant">Mode Gelap</span>
             </div>
           </div>
         </div>
 
-        {/* Sign Out Warning Box */}
+        {/* Tombol Keluar Sesi & Konfirmasi Log Out */}
         <div className="bg-red-50/50 border border-red-200 rounded-2xl p-6 text-center flex flex-col justify-center items-center">
           <LogOut className="w-8 h-8 text-red-600 mb-2" />
-          <h3 className="text-base font-bold text-red-600 mb-1">Sign Out Securely</h3>
+          <h3 className="text-base font-bold text-red-600 mb-1">Keluar dengan Aman</h3>
           <p className="text-xs text-on-surface-variant max-w-[280px] mb-4">
-            Terminate your current Planly academic session on this browser device safely.
+            Keluar dari sesi akademik Planly aktif Anda pada perangkat peramban ini dengan aman.
           </p>
           <button
             onClick={onSignOut}
             className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs rounded-full shadow-sm transition-colors cursor-pointer"
           >
-            Log Out Now
+            Keluar Sekarang
           </button>
         </div>
 
