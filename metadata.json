@@ -1,0 +1,6 @@
+{
+  "name": "Planly",
+  "description": "Academic Workspace for tracking courses, schedules, tasks, and notes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

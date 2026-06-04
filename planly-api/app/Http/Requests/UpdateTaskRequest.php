@@ -1,0 +1,25 @@
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class UpdateTaskRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'course_id'   => ['nullable', 'integer', 'exists:courses,id'],
+            'task_title'  => ['sometimes', 'required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'deadline'    => ['sometimes', 'required', 'date_format:Y-m-d H:i:s'],
+            'is_finished' => ['sometimes', 'boolean'],
+            'is_priority' => ['sometimes', 'boolean'],
+        ];
+    }
+}
