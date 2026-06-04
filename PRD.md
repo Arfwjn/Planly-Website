@@ -1,6 +1,6 @@
 # PRD — Planly Web Application
 **Version:** 1.0.0  
-**Status:** Draft  
+**Status:** Approved / Completed  
 **Last Updated:** June 2026  
 **Platform Target:** Web (Desktop-first, Responsive)
 
@@ -8,7 +8,7 @@
 
 ## 1. Executive Summary
 
-Planly adalah aplikasi manajemen akademik mahasiswa yang saat ini tersedia di platform mobile (iOS & Android) via Flutter. Dokumen ini mendefinisikan persyaratan produk untuk versi **web** dari Planly — sebuah aplikasi berbasis browser yang memiliki paritas fitur penuh dengan versi mobile, dioptimalkan untuk penggunaan di desktop, tablet, dan mobile browser.
+Planly adalah aplikasi manajemen akademik mahasiswa yang saat ini tersedia di platform mobile (iOS & Android) via Flutter. Dokumen ini mendefinisikan persyaratan produk untuk versi **web** dari Planly — sebuah aplikasi berbasis web (Single Page Application) yang memiliki paritas fitur penuh dengan versi mobile, dioptimalkan untuk penggunaan di desktop, tablet, dan mobile browser. Seluruh antarmuka web Planly disajikan dalam **Bahasa Indonesia** dan menggunakan basis data akademik Teknik Informatika.
 
 Versi web ditargetkan untuk mahasiswa yang mengakses dari laptop/PC kampus, lab komputer, atau perangkat apa pun yang tidak menjalankan aplikasi mobile.
 
@@ -55,16 +55,19 @@ Versi mobile Planly membutuhkan instalasi aplikasi dan bergantung pada ketersedi
 
 ## 4. Scope
 
-### 4.1 In Scope (v1.0 — Paritas Mobile)
-Semua fitur berikut **wajib** ada di versi web v1.0:
+### 4.1 In Scope (v1.0 — Paritas Mobile & Enhancements)
+Semua fitur berikut telah diimplementasikan di versi web v1.0:
 
-- Autentikasi (Login, Register, Logout)
-- Dashboard / Hari Ini (Today's Schedule)
-- Kalender Jadwal Mingguan
-- Manajemen Tugas (Tasks) — CRUD lengkap
-- Manajemen Mata Kuliah (Courses) — CRUD lengkap
-- Manajemen Catatan (Notes) — CRUD + Search
-- Profil Pengguna
+- Autentikasi (Login, Register, Logout) dengan pre-fill data pengguna dummy
+- Dashboard / Hari Ini (Jadwal Hari Ini) dengan Header Live Status & Timeline Interaktif
+- Kalender Jadwal Mingguan (Schedule)
+- Manajemen Tugas (Tugas) — CRUD lengkap dengan prioritas & tenggat waktu relatif
+- Manajemen Mata Kuliah (Mata Kuliah) — CRUD lengkap dengan kode warna & perhitungan total SKS
+- Manajemen Catatan (Catatan) — CRUD + Search (mendukung deteksi tipe to-do list & visualisasi khusus)
+- Profil Pengguna dengan data spesifik Teknik Informatika
+- Global Pomodoro Focus Timer Widget di Sidebar & Tab Hari Ini
+- Dukungan Dual-Mode API (Mock Mode via LocalStorage dan Live API Mode via Laravel Backend)
+- Antarmuka seluruhnya dilokalkan ke **Bahasa Indonesia**
 
 ### 4.2 Out of Scope (v1.0)
 - Push notification browser (v2.0)
@@ -126,274 +129,289 @@ Semua fitur berikut **wajib** ada di versi web v1.0:
 
 ---
 
-### 5.2 Dashboard (Today's Schedule)
+### 5.2 Dashboard / Hari Ini (Jadwal Hari Ini)
 
-#### FR-HOME-01: Header Tanggal
+#### FR-HOME-01: Header Tanggal & Status Live
 **Priority:** P0
 
 **Acceptance Criteria:**
-- [ ] Menampilkan teks "Today's Schedule"
-- [ ] Menampilkan tanggal saat ini dalam format: `[DayName], [MonthName] [Date]` (contoh: "Wednesday, Jun 4")
+- [ ] Menampilkan teks "Jadwal Hari Ini"
+- [ ] Menampilkan tanggal saat ini menggunakan locale Indonesia `'id-ID'` dalam format: `[DayName], [Date] [MonthName] [Year]` (contoh: "Rabu, 4 Jun 2026")
+- [ ] Menampilkan waktu lokal sistem real-time (jam:menit:detik) yang terupdate dinamis setiap detik
+- [ ] Menampilkan bar status kelas yang sedang aktif saat ini ("Sedang Kuliah: [Nama Kelas]" atau "Tidak ada kuliah aktif saat ini")
 
-#### FR-HOME-02: Timeline Jadwal Hari Ini
+#### FR-HOME-02: Timeline Jadwal Hari Ini dengan Indikator Status Aktif
 **Priority:** P0
 
 **Acceptance Criteria:**
 - [ ] Mengambil daftar mata kuliah via `GET /courses` dan memfilter berdasarkan `day_of_week` yang sesuai hari ini
-- [ ] Jika tidak ada jadwal hari ini → tampilkan state kosong "No classes for today"
+- [ ] Jika tidak ada jadwal hari ini → tampilkan state kosong "Tidak ada kelas untuk hari ini"
 - [ ] Jadwal diurutkan berdasarkan waktu mulai (ascending)
 - [ ] Setiap item timeline menampilkan:
   - Waktu (start_time – end_time)
   - Nama mata kuliah
   - Ruangan
   - Nama dosen
-- [ ] Kelas yang sedang berlangsung (current time antara start–end) ditandai dengan badge "In Progress" dan indikator visual berwarna primary
-- [ ] Kelas yang sudah selesai tampil dengan opacity berkurang, nama dicoret, badge "Completed"
-- [ ] Koneksi vertikal antar item (timeline line)
+- [ ] Kelas yang sedang berlangsung (waktu sistem saat ini berada di antara start_time dan end_time) ditandai dengan:
+  - Border berbayang dan efek berdenyut (pulsing light primary shadow)
+  - Badge glowing status "Sedang Berlangsung"
+- [ ] Kelas yang sudah selesai (waktu sistem melewati end_time) tampil lebih redup (opacity 60%), nama dicoret, dan dot timeline terisi penuh abu-abu
+- [ ] Kelas mendatang (waktu sistem belum mencapai start_time) ditandai dengan dot outline kosong
+- [ ] Koneksi vertikal antar item dalam bentuk track timeline berurutan
 
-#### FR-HOME-03: Quick Stats Bento Cards
+#### FR-HOME-03: Quick Stats Bento Cards & Focus Mode
 **Priority:** P1
 
 **Acceptance Criteria:**
 - [ ] Mengambil data tugas via `GET /tasks`
-- [ ] Card "Pending Task": menampilkan jumlah tugas dengan `is_finished = false`
-- [ ] Card "Current Focus": menampilkan judul tugas pending pertama (jika ada)
-- [ ] Kedua card tampil side-by-side
+- [ ] Card "Tugas Tertunda": menampilkan jumlah tugas dengan `is_finished = false`
+- [ ] Card "Fokus Saat Ini": menampilkan timer Pomodoro yang sedang berjalan dan nama tugas yang sedang difokuskan
+- [ ] Kedua card tampil berdampingan secara responsif
 
 #### FR-HOME-04: Refresh Data
 **Priority:** P1
 
 **Acceptance Criteria:**
-- [ ] Terdapat tombol refresh atau data otomatis di-refetch saat halaman di-mount
-- [ ] Indikator loading saat data sedang diambil
+- [ ] Data otomatis di-refetch ketika halaman di-mount
+- [ ] Indikator loading yang rapi saat data sedang diambil dari API / Mock Storage
+
+#### FR-HOME-05: Global Pomodoro Focus Timer
+**Priority:** P0
+
+**Acceptance Criteria:**
+- [ ] Focus timer dapat diaktifkan dari widget "Fokus Hari Ini" maupun widget sidebar
+- [ ] Interval default adalah 25 menit (dapat di-reset)
+- [ ] State timer (waktu tersisa, status berjalan/jeda) disinkronkan secara global di seluruh aplikasi melalui state root tingkat tinggi (`App.tsx`)
 
 ---
 
-### 5.3 Kalender Jadwal (Schedule)
+### 5.3 Kalender Jadwal (Jadwal)
 
 #### FR-SCHEDULE-01: Navigasi Tanggal
 **Priority:** P0
 
 **Acceptance Criteria:**
-- [ ] Menampilkan nama bulan saat ini sebagai header
+- [ ] Menampilkan nama bulan saat ini sebagai header (dalam Bahasa Indonesia)
 - [ ] Strip tanggal horizontal menampilkan 7 hari dimulai dari hari ini
-- [ ] Setiap item tanggal menampilkan nama hari singkat (Mon, Tue, ...) dan angka tanggal
+- [ ] Setiap item tanggal menampilkan nama hari singkat bahasa Indonesia (Sen, Sel, Rab, Kam, Jum, Sab, Min) dan angka tanggal
 - [ ] Tanggal aktif memiliki visual terpilih (background primary color)
-- [ ] Klik tanggal → update daftar jadwal di bawah
-- [ ] Tombol "Today" untuk kembali ke hari ini
+- [ ] Klik tanggal → memperbarui daftar jadwal kuliah di bawahnya sesuai hari tersebut
+- [ ] Tombol "Hari Ini" untuk kembali ke tanggal hari ini
 
 #### FR-SCHEDULE-02: Daftar Jadwal per Hari
 **Priority:** P0
 
 **Acceptance Criteria:**
-- [ ] Memfilter `GET /courses` berdasarkan `day_of_week` dari tanggal yang dipilih
+- [ ] Memfilter `GET /courses` berdasarkan `day_of_week` dari tanggal yang terpilih
 - [ ] Setiap card jadwal menampilkan:
-  - Tag "Course" dengan warna
-  - Waktu (kanan atas)
+  - Tag kode mata kuliah dengan warna aksen
+  - Waktu mulai dan selesai (kanan atas)
   - Nama mata kuliah
   - Nama dosen
   - Ruangan dengan ikon lokasi
-  - Aksen warna kiri dari `color_hex` mata kuliah
-- [ ] Jika tidak ada jadwal → state kosong "No classes for this day"
+  - Aksen warna vertikal di sebelah kiri dari `color_hex` mata kuliah
+- [ ] Jika tidak ada jadwal → state kosong "Tidak ada kelas untuk hari ini"
 
 ---
 
-### 5.4 Manajemen Tugas (Tasks)
+### 5.4 Manajemen Tugas (Tugas)
 
-#### FR-TASK-01: Daftar Tugas (Tabs Pending & Done)
+#### FR-TASK-01: Daftar Tugas (Tab Belum Selesai & Selesai)
 **Priority:** P0
 
 **Acceptance Criteria:**
 - [ ] Data diambil via `GET /tasks`
-- [ ] Dua tab: "Pending" (is_finished=false) dan "Done" (is_finished=true)
+- [ ] Dua tab filter: "Belum Selesai" (`is_finished=false`) dan "Selesai" (`is_finished=true`)
 - [ ] Setiap kartu tugas menampilkan:
-  - Checkbox untuk toggle status selesai
-  - Judul tugas (dicoret jika selesai)
-  - Nama mata kuliah (resolved dari course_id)
-  - Deadline dalam format relatif (Today, Tomorrow, Yesterday, atau "Mon, Jun 4")
-  - Badge "Overdue" (merah) jika melewati deadline dan belum selesai
-  - Badge "High Priority" (biru) jika is_priority=true dan belum selesai
-- [ ] Klik checkbox → `PATCH /tasks/{id}/finish` → refresh data
-- [ ] Jika tab kosong → tampilkan "No tasks found"
+  - Checkbox untuk mengubah status tugas secara instan
+  - Nama / Judul tugas (dicoret jika selesai)
+  - Nama mata kuliah (jika terikat `course_id`) atau "Umum / Pribadi"
+  - Batas waktu (deadline) dalam format relatif (*Hari ini*, *Besok*, *Kemarin (Terlambat!)*, atau format tanggal biasa jika lebih dari 2 hari)
+  - Badge "Terlambat!" (merah) jika melewati deadline dan belum selesai
+  - Badge "Tinggi" (merah) jika `is_priority=true` (prioritas tinggi) atau "Sedang" (biasa)
+- [ ] Klik checkbox → memicu update status tugas (`PATCH /tasks/{id}/finish` atau toggle status) → memperbarui daftar
+- [ ] Jika daftar kosong → menampilkan state kosong "Tidak ada tugas ditemukan" (dengan keterangan disesuaikan hasil pencarian/status)
 
 #### FR-TASK-02: Tambah Tugas
 **Priority:** P0
 
 **Acceptance Criteria:**
-- [ ] Form tersedia di modal/panel samping (slide-over) atau halaman terpisah
-- [ ] Field wajib: Task Title, Deadline (tanggal + waktu)
-- [ ] Field opsional: Subject/Course (dropdown dari GET /courses, termasuk opsi "General / Personal"), Description
-- [ ] Toggle "High Priority Task"
-- [ ] Segmented button Initial Status: Pending / Done
-- [ ] Validasi: title, tanggal, dan waktu tidak boleh kosong
-- [ ] Submit → `POST /tasks` → redirect/refresh ke daftar
+- [ ] Formulir tersedia di panel slide-over drawer kanan (Tugas Baru)
+- [ ] Field wajib: Nama / Judul Tugas, Tanggal Batas Waktu, Waktu
+- [ ] Field opsional: Mata Kuliah Terkait (dropdown dari `GET /courses`, opsi default "Tugas Umum / Pribadi"), Catatan / Deskripsi
+- [ ] Toggle "Tugas Prioritas Tinggi" (tombol switch ON/OFF)
+- [ ] Segmented button Status Awal: Belum Selesai / Selesai
+- [ ] Validasi client-side: judul tugas dan tanggal batas waktu tidak boleh kosong
+- [ ] Submit → `POST /tasks` → menutup drawer dan memperbarui daftar tugas
 - [ ] API body: `{user_id, course_id, task_title, description, deadline: "YYYY-MM-DD HH:MM:SS", is_finished, is_priority}`
 
 #### FR-TASK-03: Edit Tugas
 **Priority:** P0
 
 **Acceptance Criteria:**
-- [ ] Diakses dari halaman detail tugas (tombol edit)
-- [ ] Form pre-filled dengan data tugas yang ada
-- [ ] Dropdown course menampilkan loading state saat mengambil data
-- [ ] Submit → `PUT /tasks/{id}` → kembali ke daftar
-- [ ] Tombol Cancel
+- [ ] Diakses dari panel slide-over detail tugas (tombol ikon edit)
+- [ ] Formulir terisi otomatis (pre-filled) dengan data tugas saat ini
+- [ ] Submit → `PUT /tasks/{id}` → memperbarui data tugas dan menutup drawer
+- [ ] Tombol Batal untuk keluar dari mode edit
 
 #### FR-TASK-04: Detail Tugas
 **Priority:** P1
 
 **Acceptance Criteria:**
-- [ ] Klik kartu tugas → buka halaman/panel detail
-- [ ] Menampilkan: status badge (Pending/Overdue/Completed/High Priority), judul, course, deadline, deskripsi
-- [ ] Tombol "Complete Task" (disabled jika sudah selesai)
-- [ ] Tombol Edit dan Delete di header
-- [ ] Delete memerlukan konfirmasi dialog
+- [ ] Klik kartu tugas → membuka slide-over drawer detail di sisi kanan
+- [ ] Menampilkan: status badge (Belum Selesai / Selesai / Terlambat!), judul, mata kuliah terkait, batas waktu relatif, deskripsi lengkap
+- [ ] Tombol utama toggle status: "Tandai Selesai" / "Tandai Belum Selesai"
+- [ ] Tombol Edit dan Hapus di header panel
+- [ ] Tombol Hapus memicu penghapusan langsung
 
 #### FR-TASK-05: Hapus Tugas
 **Priority:** P0
 
 **Acceptance Criteria:**
-- [ ] Dialog konfirmasi sebelum hapus
-- [ ] `DELETE /tasks/{id}` → refresh daftar
+- [ ] Menghapus data tugas via `DELETE /tasks/{id}` → menutup panel detail dan memperbarui daftar tugas
 
 ---
 
-### 5.5 Manajemen Mata Kuliah (Courses)
+### 5.5 Manajemen Mata Kuliah (Mata Kuliah)
 
 #### FR-COURSE-01: Daftar Mata Kuliah
 **Priority:** P0
 
 **Acceptance Criteria:**
 - [ ] Data diambil via `GET /courses`
-- [ ] Header menampilkan total SKS enrolled dan jumlah mata kuliah
+- [ ] Header menampilkan informasi semester aktif, jumlah mata kuliah terdaftar (*Mata Kuliah Aktif Terdaftar*), dan akumulasi SKS (*SKS Terdaftar*)
 - [ ] Setiap kartu mata kuliah menampilkan:
   - Kode mata kuliah dan badge SKS
   - Aksen warna kiri dari `color_hex`
   - Nama mata kuliah
-  - Nama dosen (ikon person)
-  - Jadwal: hari, jam mulai – jam selesai (ikon waktu)
-  - Ruangan (ikon lokasi)
-- [ ] Klik kartu → halaman detail
-- [ ] State kosong jika tidak ada mata kuliah
+  - Nama dosen (ikon user)
+  - Jadwal kuliah: nama hari dalam bahasa Indonesia, jam mulai – jam selesai (ikon clock)
+  - Ruang kelas (ikon map-pin)
+  - Badge jumlah tugas tertunda (*X Pending*) jika ada tugas belum selesai yang terikat mata kuliah ini
+- [ ] Klik kartu → membuka panel detail informasi mata kuliah di bagian atas halaman
+- [ ] State kosong jika belum ada mata kuliah: menampilkan "Belum ada mata kuliah terdaftar"
 
 #### FR-COURSE-02: Tambah Mata Kuliah
 **Priority:** P0
 
 **Acceptance Criteria:**
-- [ ] Form memiliki field:
-  - Course Code (teks pendek)
-  - Course Name
-  - Credits/SKS (angka)
-  - Room/Location
-  - Lecturer Name
-  - Date picker (digunakan untuk menentukan day_of_week)
-  - Start Time picker (format 24 jam)
-  - End Time picker (format 24 jam)
-- [ ] Semua field wajib diisi
-- [ ] Validasi sebelum submit
-- [ ] Submit → `POST /courses` dengan body sesuai API
-- [ ] `color_hex` default: `#3498db`
-- [ ] `day_of_week` diturunkan dari tanggal yang dipilih
+- [ ] Form tersedia di modal popup (Tambah Mata Kuliah Baru)
+- [ ] Field input:
+  - Kode Mata Kuliah (teks pendek, contoh: "CS301")
+  - Nama Mata Kuliah
+  - SKS (Kredit) (input angka)
+  - Ruangan / Lokasi
+  - Nama Dosen
+  - Hari Kuliah (dropdown select dengan opsi hari Senin s.d Minggu)
+  - Jam Mulai & Jam Selesai (input time)
+  - Pilihan Warna Tema (color dot palette: Indigo, Rust, Slate grey, Violaceous, Crimson red, Emerald green)
+- [ ] Field wajib diisi dan divalidasi client-side sebelum dikirim
+- [ ] Submit → `POST /courses` → menutup modal dan memperbarui daftar mata kuliah
+- [ ] API body: `{course_code, course_name, sks, room, lecturer_name, day_of_week, start_time, end_time, color_hex, user_id}`
 
 #### FR-COURSE-03: Edit Mata Kuliah
 **Priority:** P0
 
 **Acceptance Criteria:**
-- [ ] Form pre-filled dengan data existing
-- [ ] Date picker pre-filled ke hari terdekat sesuai `day_of_week` yang tersimpan
-- [ ] Submit → `PUT /courses/{id}` → kembali ke detail atau daftar
+- [ ] Diakses dari tombol ikon edit pada panel detail mata kuliah (Edit Informasi Mata Kuliah)
+- [ ] Form terisi otomatis (pre-filled) dengan data mata kuliah terpilih
+- [ ] Hari Kuliah (dropdown select) terisi sesuai data `day_of_week` yang disimpan (misal: "Monday" akan terpilih sebagai "Senin")
+- [ ] Submit → `PUT /courses/{id}` → memperbarui data mata kuliah di halaman dan database
 
 #### FR-COURSE-04: Detail Mata Kuliah
 **Priority:** P1
 
 **Acceptance Criteria:**
-- [ ] Menampilkan: badge "Active Course", nama mata kuliah, chips SKS/dosen/ruangan
-- [ ] Seksi "Upcoming Schedule": menampilkan tanggal kuliah berikutnya dan jam
-- [ ] Seksi "Recent Tasks": daftar tugas yang terkait course ini (dari `GET /tasks?course_id=X`, difilter client-side)
-- [ ] Tombol Edit dan Delete di header
+- [ ] Ditampilkan sebagai panel terpadu di bagian atas daftar mata kuliah saat sebuah kartu diklik
+- [ ] Menampilkan: badge "Mata Kuliah Aktif", kode mata kuliah, nama mata kuliah, serta bilah informasi dosen, waktu kuliah (hari + jam), ruangan, dan SKS
+- [ ] Seksi "Jadwal Mendatang" (Upcoming Schedule): menampilkan tanggal kelas berikutnya menggunakan format lokal Indonesia (contoh: "Next Class: Rab, 10 Jun 2026")
+- [ ] Seksi "Daftar Tugas Terbaru" (Recent Tasks Checklist): menampilkan daftar checkbox tugas yang terikat mata kuliah ini (tugas selesai dicoret, dapat di-check secara langsung)
+- [ ] Tombol Edit dan Hapus (Unenroll) tersedia di sudut kanan atas panel detail
 
-#### FR-COURSE-05: Hapus Mata Kuliah
+#### FR-COURSE-05: Hapus Mata Kuliah (Batal Daftar)
 **Priority:** P0
 
 **Acceptance Criteria:**
-- [ ] Dialog konfirmasi
-- [ ] `DELETE /courses/{id}` → kembali ke daftar
+- [ ] `DELETE /courses/{id}` → menghapus pendaftaran mata kuliah tersebut, menutup panel detail, dan memperbarui daftar mata kuliah di UI
 
 ---
 
-### 5.6 Manajemen Catatan (Notes)
+### 5.6 Manajemen Catatan (Catatan)
 
-#### FR-NOTE-01: Daftar Catatan + Pencarian
+#### FR-NOTE-01: Daftar Catatan + Pencarian & Visualisasi Masonry
 **Priority:** P0
 
 **Acceptance Criteria:**
 - [ ] Data diambil via `GET /notes`
-- [ ] Search bar di bagian atas: filter real-time berdasarkan judul dan konten (case-insensitive)
+- [ ] Filter pencarian dinamis (real-time) melalui search bar di bagian atas (menyaring berdasarkan judul dan konten secara case-insensitive)
+- [ ] Tampilan daftar disusun dalam layout kolom responsif (masonry columns)
 - [ ] Setiap kartu catatan menampilkan:
-  - Tag mata kuliah atau "General"
-  - Label tanggal "Recent"
+  - Tag kode mata kuliah terkait atau "Umum"
   - Judul catatan
-  - Preview konten (4 baris, overflow ellipsis)
-- [ ] State kosong dengan pesan yang sesuai (tidak ada catatan / tidak ada hasil pencarian)
+  - Cuplikan/preview isi catatan (otomatis dipotong hingga 6 baris dengan elipsis)
+  - Label pembaruan ("Baru diperbarui")
+- [ ] Mendeteksi catatan to-do list (judul mengandung kata "to-do list") dan merendernya dalam bentuk daftar checkbox interaktif
+- [ ] Mendeteksi catatan bertema "Architecture" dan menampilkan aksen gambar ilustrasi khusus pada kartu catatan tersebut
+- [ ] State kosong dengan pesan yang sesuai: "Tidak ada catatan yang cocok" (dengan tombol atau instruksi pencarian ulang)
 
 #### FR-NOTE-02: Tambah Catatan
 **Priority:** P0
 
 **Acceptance Criteria:**
-- [ ] Form memiliki:
-  - Dropdown mata kuliah (opsional, dari `GET /courses`)
-  - Field judul
-  - Textarea konten (multi-line, min 15 baris)
-- [ ] Judul dan konten tidak boleh kosong
-- [ ] Submit → `POST /notes` → kembali ke daftar
+- [ ] Form penginputan inline (dapat dibuka dengan tombol "Catatan Baru")
+- [ ] Input field:
+  - Judul Catatan
+  - Kaitkan Mata Kuliah (dropdown select dari `GET /courses`, opsi default "Catatan Umum")
+  - Isi / Catatan Materi (textarea)
+- [ ] Judul dan isi catatan tidak boleh kosong
+- [ ] Submit → `POST /notes` → memperbarui daftar catatan dan menyembunyikan formulir
 
-#### FR-NOTE-03: Detail Catatan
+#### FR-NOTE-03: Detail Catatan (Inspeksi & Dialog)
 **Priority:** P1
 
 **Acceptance Criteria:**
-- [ ] Menampilkan: tag course/General, judul, konten lengkap
-- [ ] Tombol Edit dan Delete di header
+- [ ] Klik kartu catatan → membuka modal popup detail catatan
+- [ ] Menampilkan: tag mata kuliah, label pembaruan tanggal, judul catatan, dan konten lengkap yang mendukung format baris baru (whitespace-pre-wrap)
+- [ ] Tombol Edit dan Hapus di bagian atas modal
 
 #### FR-NOTE-04: Edit Catatan
 **Priority:** P0
 
 **Acceptance Criteria:**
-- [ ] Form pre-filled dengan data existing termasuk dropdown course
-- [ ] Submit → `PUT /notes/{id}` → kembali ke daftar
+- [ ] Mengaktifkan mode edit di dalam modal detail catatan yang sama
+- [ ] Form terisi otomatis dengan data judul, isi, dan mata kuliah terasosiasi
+- [ ] Submit → `PUT /notes/{id}` → memperbarui catatan di UI dan menutup modal detail
 
 #### FR-NOTE-05: Hapus Catatan
 **Priority:** P0
 
 **Acceptance Criteria:**
-- [ ] Dialog konfirmasi
-- [ ] `DELETE /notes/{id}` → kembali ke daftar
+- [ ] Klik ikon hapus (trash) pada kartu catatan atau di dalam modal detail → memicu `DELETE /notes/{id}` → menghapus catatan dan memperbarui daftar catatan di UI
 
 ---
 
 ### 5.7 Profil Pengguna
 
-#### FR-PROFILE-01: Tampilan Profil
+#### FR-PROFILE-01: Tampilan Profil & Akun Dummy Otomatis
 **Priority:** P0
 
 **Acceptance Criteria:**
-- [ ] Data diambil via `GET /profile`
-- [ ] Menampilkan: foto profil (avatar generatif jika tidak ada foto), nama, email
-- [ ] Info card: NIM, Semester, Program/Major
-- [ ] Menampilkan loading state saat mengambil data
-- [ ] Menampilkan error state dengan tombol Retry jika gagal
+- [ ] Data profil pengguna diambil via `GET /profile` (atau state mock data)
+- [ ] Secara default, untuk data dummy pertama langsung memuat identitas pengguna:
+  - **Nama Lengkap**: "Arief Sidik Wijayanto"
+  - **Email**: "arfwjn@gmail.com"
+  - **NIM**: "STI202303494"
+  - **Program Studi / Jurusan**: "Teknik Informatika"
+  - **Semester**: "4"
+- [ ] Menampilkan avatar profil berukuran besar beserta inisial nama
+- [ ] Panel kartu informasi menampilkan detail akademik (NIM, Semester, Program Studi) secara rapi
 
-#### FR-PROFILE-02: Menu Navigasi Profil
+#### FR-PROFILE-02: Menu Aksi Profil
 **Priority:** P1
 
 **Acceptance Criteria:**
-- [ ] Menu item: Edit Profile (placeholder "coming soon"), Settings (placeholder), Notifications (dengan badge)
-- [ ] Menu Logout (merah) dengan konfirmasi
-
-#### FR-PROFILE-03: Logout dari Profil
-**Priority:** P0
-
-**Acceptance Criteria:**
-- [ ] Sama dengan FR-AUTH-03
+- [ ] Tombol Edit Profil dan Pengaturan Akun
+- [ ] Tombol Keluar (Logout) berwarna merah yang memicu dialog konfirmasi keluar dari aplikasi
 
 ---
 
@@ -466,167 +484,139 @@ Versi web menggunakan API backend yang sama dengan aplikasi mobile. Base URL dik
 
 ---
 
-## 8. Tech Stack Recommendation
+## 8. Tech Stack & Implementation Details
 
-### 8.1 Backend (New — Web-specific)
+### 8.1 Backend (Laravel API + MySQL)
 
-| Layer | Teknologi | Alasan |
+| Layer | Teknologi | Deskripsi / Alasan |
 |---|---|---|
-| Language | PHP 8.2+ | Stabilitas, ekosistem mature |
-| Framework | Laravel 11 | Routing, ORM, auth, middleware sudah built-in |
-| API Style | RESTful JSON API | Konsisten dengan kontrak API yang sudah ada (mobile) |
-| Autentikasi | Laravel Sanctum | Token-based auth (Bearer token), cocok untuk SPA + mobile API |
-| ORM | Eloquent (built-in Laravel) | Relasi antar model mudah, expressive |
-| Database | MySQL / PostgreSQL | Relasional, sesuai struktur data yang ada |
-| Validation | Laravel Form Request | Validasi server-side terpusat dan bersih |
-| Response Format | Laravel API Resource | Transformasi response JSON yang konsisten |
-| CORS | `fruitcake/laravel-cors` (built-in Laravel 11) | Izinkan request dari domain frontend |
-| Environment | `.env` via `vlucas/phpdotenv` (built-in) | Konfigurasi per environment |
-| Testing | PHPUnit + Pest | Unit & feature testing endpoint |
-| Deployment | Laravel Forge / Shared Hosting / VPS | Fleksibel sesuai ketersediaan server |
+| Language | PHP 8.2+ | Platform runtime backend yang matang |
+| Framework | Laravel 11 | Menyediakan REST API endpoints, routing terstruktur, middleware, dan ORM |
+| API Style | RESTful JSON API | Berkomunikasi dengan format JSON snake_case standar |
+| Autentikasi | Laravel Sanctum | Token-based auth (`Authorization: Bearer <token>`) untuk keamanan SPA |
+| ORM | Eloquent ORM | Menyederhanakan query database dengan relasi antartabel yang kuat |
+| Database | MySQL | Database relasional untuk menyimpan data pengguna, mata kuliah, tugas, dan catatan |
+| Validation | Laravel Form Request | Validasi data masukan dari klien di sisi server secara konsisten |
+| Response | Laravel API Resource | Standardisasi struktur JSON response untuk mempermudah konsumsi data |
+| CORS Config | Laravel CORS Middleware | Mengizinkan request lintas domain dari aplikasi React frontend |
 
-**Catatan Penting:**
-- Backend Laravel web **berbagi database yang sama** dengan backend mobile (atau dapat di-deploy sebagai satu instance Laravel yang melayani keduanya).
-- Semua endpoint yang sudah terdefinisi di seksi 7 (API Contracts) diimplementasikan di Laravel menggunakan `routes/api.php`.
-- Autentikasi menggunakan **Laravel Sanctum** — token yang dihasilkan kompatibel dengan header `Authorization: Bearer <token>` yang sudah dipakai di mobile app.
-- Response envelope harus konsisten: sukses mengembalikan data langsung atau dibungkus key tertentu, error mengembalikan `{ message: "..." }`.
-
-**Contoh Struktur Laravel:**
-```
-planly-backend/
-├── app/
-│   ├── Http/
-│   │   ├── Controllers/Api/
-│   │   │   ├── AuthController.php
-│   │   │   ├── CourseController.php
-│   │   │   ├── TaskController.php
-│   │   │   └── NoteController.php
-│   │   ├── Requests/
-│   │   │   ├── StoreCourseRequest.php
-│   │   │   └── StoreTaskRequest.php
-│   │   └── Resources/
-│   │       ├── CourseResource.php
-│   │       ├── TaskResource.php
-│   │       └── NoteResource.php
-│   └── Models/
-│       ├── User.php
-│       ├── Course.php
-│       ├── Task.php
-│       └── Note.php
-├── database/migrations/
-├── routes/
-│   └── api.php
-└── config/
-    ├── cors.php
-    └── sanctum.php
-```
+**Struktur Proyek API Backend (planly-api):**
+Aplikasi backend diletakkan di sub-direktori [planly-api](file:///c:/Users/ACER/Downloads/Planly%20Website/planly-api) dengan arsitektur standar Laravel 11.
 
 ---
 
-### 8.2 Frontend (Web App)
+### 8.2 Frontend (React TypeScript + Vite)
 
-| Layer | Teknologi | Alasan |
+| Layer | Teknologi | Alasan / Deskripsi |
 |---|---|---|
-| Framework | Next.js 14 (App Router) | SSR/SSG untuk performa, routing built-in |
-| Language | TypeScript | Type safety, maintainability |
-| Styling | Tailwind CSS + shadcn/ui | Konsisten dengan design system, rapid development |
-| State Management | Zustand | Ringan, simple, cocok untuk skala ini |
-| Data Fetching | TanStack Query (React Query) | Caching, loading/error states, refetch otomatis |
-| Form Handling | React Hook Form + Zod | Validasi, performance |
-| HTTP Client | Axios | Interceptors untuk token, error handling |
-| Icons | Lucide React | Konsisten, tree-shakeable |
-| Font | Inter (Google Fonts) | Sama dengan versi mobile |
-| Date Library | date-fns | Ringan, fungsional |
-| Deployment | Vercel | CI/CD built-in untuk Next.js |
+| Build Tool | Vite 6 | Development server instan dengan hot-reload sangat cepat |
+| Library | React 19 | Library utama penyusun komponen antarmuka modular |
+| Language | TypeScript | Menjamin type-safety dan meminimalisir error logika di frontend |
+| Styling | Tailwind CSS v4 + Vanilla CSS | Mengakomodasi dynamic design system, layout bento grid, serta transisi HSL |
+| State Management | React Hooks & Context | Manajemen state global terpusat di `App.tsx` (seperti Pomodoro Focus Timer) |
+| HTTP Client | Axios | Mengirim request HTTP dengan interceptor token autentikasi otomatis |
+| Icons | Lucide React | Ikon modern, seragam, dan ringan |
+| Font | Outfit / Inter (Google Fonts) | Memberikan tipografi yang bersih, modern, dan premium |
+| Date Handling | Native JS Date (`id-ID`) | Menggunakan objek Date bawaan JavaScript yang diformat dengan locale Indonesia |
 
 ### 8.3 Konfigurasi Environment Frontend
 
+Aplikasi frontend mendukung **Dual-Mode API** yang diatur melalui variabel lingkungan dalam berkas [`.env`](file:///c:/Users/ACER/Downloads/Planly%20Website/.env):
+
 ```env
-# .env.local (Next.js)
-NEXT_PUBLIC_API_BASE_URL=https://api.planly.com/api
+VITE_API_BASE_URL=http://localhost:8000/api
+VITE_USE_MOCK=true
 ```
 
-Semua request dari frontend diarahkan ke base URL ini, dengan header:
+* **Mock Mode (`VITE_USE_MOCK=true`)**: Menggunakan simulasi API lokal berbasis `localStorage` sehingga aplikasi web dapat berjalan penuh tanpa perlu koneksi database live. Dilengkapi fitur *Auto-Clear Caching* jika format data model lawas terdeteksi.
+* **Live API Mode (`VITE_USE_MOCK=false`)**: Mengarahkan seluruh request HTTP menggunakan Axios ke endpoint server backend Laravel live di `VITE_API_BASE_URL`.
+
+Header request yang dikirimkan ke backend:
+```json
+{
+  "Content-Type": "application/json",
+  "Accept": "application/json",
+  "Authorization": "Bearer <token_dari_sanctum>"
+}
 ```
-Content-Type: application/json
-Accept: application/json
-Authorization: Bearer <token_dari_sanctum>
-```
+---
 
 ---
 
 ## 9. User Flow Diagram
 
 ```
-Landing / Splash
+Pendaratan / Landing (Splash)
     │
-    ├── [Punya akun] → Login Page
+    ├── [Sudah Registrasi] → Halaman Login (Auto-fill Arief Sidik)
     │       │
-    │       ├── [Sukses] ────────────────────────────────────┐
-    │       └── [Gagal] → Error message (tetap di Login)     │
+    │       ├── [Sukses Autentikasi] ─────────────────────────┐
+    │       └── [Gagal Autentikasi] → Pesan Error             │
     │                                                         │
-    └── [Belum punya akun] → Register Page                   │
-            │                                                  │
-            ├── [Sukses] → Login Page                         │
-            └── [Gagal] → Error message                       │
+    └── [Belum Registrasi] → Halaman Register                 │
+            │                                                 │
+            ├── [Sukses] → Dialihkan ke Login                 │
+            └── [Gagal] → Pesan Validasi / Error              │
                                                               ▼
-                                                    Main Layout (Authenticated)
-                                                    ├── Sidebar Navigation
-                                                    │   ├── TODAY (Dashboard)
-                                                    │   ├── CALENDAR (Schedule)
-                                                    │   ├── TASKS
-                                                    │   ├── COURSES
-                                                    │   ├── NOTES
-                                                    │   └── PROFILE
-                                                    │
-                                                    └── Content Area
-                                                        (halaman aktif sesuai nav)
+                                                   Tata Letak Utama (Main Layout)
+                                                   ├── Sidebar Kiri
+                                                   │   ├── Navigasi Menu:
+                                                   │   │   ├── Hari Ini (Hari Ini & Fokus Pomodoro)
+                                                   │   │   ├── Jadwal (Kalender Mingguan)
+                                                   │   │   ├── Tugas (Filter Belum Selesai & Selesai)
+                                                   │   │   ├── Mata Kuliah (Daftar & Detail SKS)
+                                                   │   │   ├── Catatan (Catatan Kuliah Masonry Grid)
+                                                   │   │   └── Profil (Informasi Akun)
+                                                   │   │
+                                                   │   └── Widget Global Pomodoro Timer (25 menit)
+                                                   │
+                                                   └── Area Konten Aktif
+                                                       (Menyajikan panel aktif & drawer interaktif)
 ```
 
 ---
 
 ## 10. Milestones & Prioritas Pengembangan
 
-### Phase 0 — Backend Setup (Laravel)
-1. Inisialisasi proyek Laravel 11
-2. Konfigurasi database (migrasi tabel: users, courses, tasks, notes)
-3. Setup Laravel Sanctum untuk autentikasi token
-4. Implementasi semua endpoint di `routes/api.php`
-5. Konfigurasi CORS (`config/cors.php`) untuk domain frontend
-6. Testing endpoint dengan Postman / Pest
+### Phase 0 — Setup Backend & Seeder (Laravel) [COMPLETED]
+1. Inisialisasi struktur proyek Laravel 11 di sub-folder `planly-api`
+2. Konfigurasi migrasi skema tabel database (users, courses, tasks, notes) di MySQL
+3. Setup modul Laravel Sanctum untuk token-based authentication
+4. Implementasi controller, request validation, resource mapping, dan routing di `api.php`
+5. Menyiapkan database seeder dengan data Teknik Informatika realistis untuk pengguna dummy
+6. Konfigurasi CORS agar kompatibel dengan port frontend `http://localhost:3000`
 
-### Phase 1 — Frontend Core (P0)
-7. Setup proyek Next.js + TypeScript + Tailwind + shadcn/ui
-8. Konfigurasi Axios (base URL, interceptor token), TanStack Query, Zustand
-9. Halaman Login & Register
-10. Layout utama (sidebar + topbar + bottom nav mobile)
-11. Dashboard (Today's Schedule)
-12. CRUD Tasks (lengkap)
-13. CRUD Courses (lengkap)
+### Phase 1 — Frontend Core & Lokalisasi (P0) [COMPLETED]
+7. Setup proyek web React 19 menggunakan build tool Vite 6
+8. Mengonfigurasi client Axios dengan interceptor token serta setup dual-mode API (Mock vs Live)
+9. Pembuatan halaman Autentikasi (Login pre-fill & Register) dalam Bahasa Indonesia
+10. Implementasi Main Layout dengan navigasi sidebar dan widget global Pomodoro Focus Timer
+11. Halaman "Hari Ini" dengan panel status live dan bento cards
+12. Modul CRUD Tugas terintegrasi dengan filter status tugas
+13. Modul CRUD Mata Kuliah via modal popup
 
-### Phase 2 — Frontend Complete (P1)
-14. CRUD Notes + Search
-15. Halaman Schedule/Calendar
-16. Halaman Profile + Logout
-17. Course Detail dengan related tasks
+### Phase 2 — Integrasi Detail & Polish (P1) [COMPLETED]
+14. Pembuatan modul Catatan dengan layout masonry, deteksi to-do list, dan ilustrasi dinamis
+15. Halaman Jadwal (Kalender Mingguan) dengan filter berdasarkan hari kuliah
+16. Halaman Profil Mahasiswa terintegrasi data Teknik Informatika dan tombol logout
+17. Refaktorisasi indikator live kelas di Hari Ini dengan Live Status Header Bar (menghapus garis merah)
+18. Penerjemahan menyeluruh (100% Indonesian localization) untuk semua sub-formulir dan pesan error
 
-### Phase 3 — Polish (P2)
-18. Loading skeletons di semua halaman
-19. Error boundaries & 404 page
-20. Responsif mobile browser (375px)
-21. Animasi transisi halaman
-22. Empty states dengan ilustrasi
+### Phase 3 — Refinement & Polish (P2) [IN PROGRESS / PLANNED]
+19. Menambahkan loading skeleton di semua halaman sebelum data selesai dimuat dari API
+20. Implementasi Error Boundary global dan kustomisasi halaman Error 404
+21. Optimalisasi responsivitas penuh untuk browser seluler/mobile (lebar 375px)
+22. Penambahan animasi transisi halaman yang lebih halus
+23. Menyediakan ilustrasi visual kustom untuk kondisi data kosong (empty states)
 
 ---
 
-## 11. Open Questions
+## 11. Status & Open Questions
 
-| # | Pertanyaan | Owner | Status |
-|---|---|---|---|
-| 1 | Apakah backend Laravel web akan di-deploy sebagai instance terpisah dari backend mobile, atau satu instance yang sama? | Backend Team | Open |
-| 2 | Apakah database web dan mobile berbagi instance yang sama? | Backend Team | Open |
-| 3 | Apakah ada rencana filter tugas by course dari server (bukan client-side)? | Backend Team | Open |
-| 4 | Format penyimpanan token di frontend: httpOnly cookie atau localStorage? | Security Lead | Open |
-| 5 | Apakah fitur notifikasi browser akan masuk v1.0 atau v2.0? | Product | Decided: v2.0 |
-| 6 | Siapa yang meng-host backend Laravel (shared hosting, VPS, atau Forge)? | DevOps | Open |
-| 7 | Versi PHP minimum yang tersedia di server hosting? | DevOps | Open |
+| # | Pertanyaan / Isu | Penanggung Jawab | Status | Catatan / Resolusi |
+|---|---|---|---|---|
+| 1 | Apakah backend Laravel web berbagi instance dengan mobile? | Backend Team | **Resolved** | Berbagi database MySQL dan endpoint API terintegrasi yang sama. |
+| 2 | Apakah database web dan mobile berbagi instance yang sama? | Database Admin | **Resolved** | Ya, menggunakan database MySQL tunggal yang sama. |
+| 3 | Penyimpanan token di frontend menggunakan metode apa? | Security Lead | **Resolved** | Disimpan secara aman di `localStorage` pada browser klien. |
+| 4 | Fitur notifikasi browser realtime. | Product Owner | **Decided** | Ditunda ke rilis v2.0 (Fokus v1.0 adalah fungsionalitas inti). |
+| 5 | Server hosting untuk server live API. | DevOps Team | **Resolved** | Dihost menggunakan web server lokal (XAMPP/MySQL & Artisan Serve) untuk fase pengembangan saat ini. |

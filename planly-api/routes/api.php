@@ -42,6 +42,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Rute untuk melihat dan memperbarui profil pengguna saat ini
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
+    Route::post('/profile/update', [ProfileController::class, 'update']);
 
     /*
     |--------------------------------------------------------------------------

@@ -34,7 +34,7 @@ export default function Header({
   };
 
   return (
-    <header className="flex justify-between items-center h-16 px-6 bg-white/85 backdrop-blur-md sticky top-0 z-40 border-b border-[#E2E8F0] w-full">
+    <header className="flex justify-between items-center h-16 px-4 sm:px-6 bg-white/85 backdrop-blur-md sticky top-0 z-40 border-b border-[#E2E8F0] w-full">
       {/* Search Input & Menu Toggle */}
       <div className="flex items-center gap-4 flex-1 max-w-md">
         <button

@@ -242,13 +242,18 @@ export default function App() {
             isFocusTimerRunning={isFocusTimerRunning}
             setIsFocusTimerRunning={setIsFocusTimerRunning}
             onResetFocusTimer={handleResetFocusTimer}
+            loading={loadingData}
           />
         );
       case 'calendar':
         return (
           <CalendarView
             courses={courses}
-            onOpenAddNewCourseModal={() => setIsEnrollCourseOpen(true)}
+            onOpenAddNewCourseModal={() => {
+              setActiveTab('courses');
+              setIsEnrollCourseOpen(true);
+            }}
+            loading={loadingData}
           />
         );
       case 'tasks':
@@ -263,6 +268,7 @@ export default function App() {
             isSlideOverOpen={isNewTaskOpen}
             onSetSlideOverOpen={setIsNewTaskOpen}
             searchQuery={searchQuery}
+            loading={loadingData}
           />
         );
       case 'courses':
@@ -277,6 +283,7 @@ export default function App() {
             isEnrollModalOpen={isEnrollCourseOpen}
             onSetEnrollModalOpen={setIsEnrollCourseOpen}
             searchQuery={searchQuery}
+            loading={loadingData}
           />
         );
       case 'notes':
@@ -288,6 +295,7 @@ export default function App() {
             onEditNote={handleEditNote}
             onDeleteNote={handleDeleteNote}
             searchQuery={searchQuery}
+            loading={loadingData}
           />
         );
       case 'profile':
@@ -339,15 +347,8 @@ export default function App() {
         />
 
         {/* Kontainer Utama Konten Dinamis */}
-        <div className="flex-1 w-full max-w-[1280px] mx-auto px-6 py-8 pb-24 lg:pb-12">
-          {loadingData ? (
-            <div className="flex flex-col items-center justify-center py-24 gap-3">
-              <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-              <span className="text-xs font-semibold text-on-surface-variant">Memuat data akademi...</span>
-            </div>
-          ) : (
-            renderTabContent()
-          )}
+        <div key={activeTab} className="flex-1 w-full max-w-[1280px] mx-auto px-4 sm:px-6 py-8 pb-24 lg:pb-12 animate-fade-in">
+          {renderTabContent()}
         </div>
 
         {/* Bilah Navigasi Bawah (Bottom Navigation Bar) khusus untuk viewport Mobile */}

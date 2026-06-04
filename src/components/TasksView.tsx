@@ -10,6 +10,7 @@
 import React, { useState } from 'react';
 import { CheckSquare, Clock, GraduationCap, Plus, X, Calendar, AlertCircle, Trash2, Edit2, Info } from 'lucide-react';
 import { Task, Course } from '../types';
+import Skeleton from './ui/Skeleton';
 
 interface TasksViewProps {
   tasks: Task[];
@@ -21,6 +22,7 @@ interface TasksViewProps {
   isSlideOverOpen: boolean;
   onSetSlideOverOpen: (open: boolean) => void;
   searchQuery: string;
+  loading?: boolean;
 }
 
 export default function TasksView({
@@ -32,8 +34,49 @@ export default function TasksView({
   onDeleteTask,
   isSlideOverOpen,
   onSetSlideOverOpen,
-  searchQuery
+  searchQuery,
+  loading = false
 }: TasksViewProps) {
+  if (loading) {
+    return (
+      <div className="max-w-[1000px] mx-auto w-full space-y-6">
+        {/* Header Halaman Skeleton */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div className="space-y-2">
+            <Skeleton className="w-24 h-8 rounded-lg" />
+            <Skeleton className="w-64 h-4 rounded-md" />
+          </div>
+          <Skeleton className="w-28 h-10 rounded-lg" />
+        </div>
+
+        {/* Tab Filter Skeleton */}
+        <div className="flex gap-6 border-b border-[#E2E8F0] pb-3">
+          <Skeleton className="w-24 h-5 rounded-md" />
+          <Skeleton className="w-20 h-5 rounded-md" />
+        </div>
+
+        {/* List Tugas Skeletons */}
+        <div className="space-y-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-white border border-[#E2E8F0] rounded-xl p-4 shadow-sm flex items-start gap-4 h-[94px]">
+              <Skeleton className="w-5 h-5 rounded mt-1 animate-pulse" />
+              <div className="flex-1 space-y-2.5">
+                <div className="flex justify-between items-center">
+                  <Skeleton className="w-1/3 h-4 rounded-md animate-pulse" />
+                  <Skeleton className="w-12 h-4 rounded-full animate-pulse" />
+                </div>
+                <Skeleton className="w-2/3 h-3 rounded-md animate-pulse" />
+                <div className="flex gap-4 pt-1">
+                  <Skeleton className="w-24 h-3.5 rounded-md animate-pulse" />
+                  <Skeleton className="w-28 h-3.5 rounded-md animate-pulse" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
   // State untuk menyaring tab aktif: 'pending' (tugas belum selesai) vs 'done' (tugas selesai)
   const [activeTab, setActiveTab] = useState<'pending' | 'done'>('pending');
 
@@ -244,11 +287,25 @@ export default function TasksView({
       {/* Daftar Tugas (Kanvas Daftar Tugas) */}
       <div className="space-y-3">
         {filteredTasks.length === 0 ? (
-          <div className="text-center py-12 bg-white border border-[#E2E8F0] rounded-2xl">
-            <CheckSquare className="w-12 h-12 text-[#94A3B8] mx-auto mb-3 opacity-60" />
-            <p className="text-sm font-semibold text-on-surface">Tidak ada tugas ditemukan</p>
-            <p className="text-xs text-on-surface-variant mt-1">
-              {searchQuery ? 'Sesuaikan kata kunci atau filter pencarian Anda.' : 'Kerja bagus! Semua tugas Anda telah selesai.'}
+          <div className="text-center py-12 bg-white border border-[#E2E8F0] rounded-2xl flex flex-col items-center justify-center p-6">
+            {/* Custom SVG Illustration for Empty Tasks */}
+            <div className="relative w-24 h-24 mb-4 flex items-center justify-center text-primary/30">
+              <svg className="w-20 h-20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M9 12L11 14L15 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M7 6H17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M7 18H17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              {/* Animated sparkles or check icons */}
+              <div className="absolute top-2 right-2 animate-bounce">
+                <svg className="w-6 h-6 text-green-500/60" viewBox="0 0 24 24" fill="none">
+                  <path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" fill="currentColor" />
+                </svg>
+              </div>
+            </div>
+            <p className="text-sm font-bold text-on-surface">Tidak ada tugas ditemukan</p>
+            <p className="text-xs text-on-surface-variant mt-1 max-w-sm font-medium">
+              {searchQuery ? 'Sesuaikan kata kunci atau filter pencarian Anda.' : 'Kerja bagus! Semua tugas akademik Anda saat ini telah diselesaikan.'}
             </p>
           </div>
         ) : (
@@ -260,7 +317,11 @@ export default function TasksView({
             return (
               <div
                 key={task.id}
-                className="bg-white border border-[#E2E8F0] rounded-xl p-4 shadow-sm hover:shadow-md transition-all group flex items-start gap-4 cursor-pointer"
+                className={`rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300 group flex items-start gap-4 cursor-pointer ${
+                  task.is_finished
+                    ? 'bg-slate-50/50 border border-slate-100'
+                    : 'bg-white border border-[#E2E8F0] hover:border-primary/20'
+                }`}
                 onClick={() => handleInspectTask(task)}
               >
                 {/* Checkbox untuk mengubah status tugas secara instan tanpa masuk drawer detail */}
@@ -325,7 +386,7 @@ export default function TasksView({
           onClick={() => onSetSlideOverOpen(false)}
         >
           <div
-            className="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl z-50 flex flex-col border-l border-[#E2E8F0] transform transition-transform duration-300"
+            className="fixed inset-y-0 right-0 w-full sm:max-w-md bg-white shadow-2xl z-50 flex flex-col border-l border-[#E2E8F0] transform transition-transform duration-300"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header Drawer */}
@@ -499,7 +560,7 @@ export default function TasksView({
           onClick={() => setSelectedTask(null)}
         >
           <div
-            className="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl z-50 flex flex-col border-l border-[#E2E8F0] transform transition-transform duration-300"
+            className="fixed inset-y-0 right-0 w-full sm:max-w-md bg-white shadow-2xl z-50 flex flex-col border-l border-[#E2E8F0] transform transition-transform duration-300"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header Detail / Edit */}

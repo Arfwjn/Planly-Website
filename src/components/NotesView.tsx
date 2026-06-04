@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Notebook, Search, Plus, X, MessageSquare, BookOpen, AlertCircle, Trash2, Edit2 } from 'lucide-react';
 import { Note, Course } from '../types';
+import Skeleton from './ui/Skeleton';
 
 interface NotesViewProps {
   notes: Note[];
@@ -9,6 +10,7 @@ interface NotesViewProps {
   onEditNote: (noteId: number, updatedNote: Note) => void;
   onDeleteNote: (noteId: number) => void;
   searchQuery: string;
+  loading?: boolean;
 }
 
 /**
@@ -25,8 +27,41 @@ export default function NotesView({
   onAddNote,
   onEditNote,
   onDeleteNote,
-  searchQuery
+  searchQuery,
+  loading = false
 }: NotesViewProps) {
+  if (loading) {
+    return (
+      <div className="max-w-[1000px] mx-auto w-full space-y-6">
+        {/* Header Halaman Skeleton */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="space-y-2">
+            <Skeleton className="w-32 h-8 rounded-lg" />
+            <Skeleton className="w-72 h-4 rounded-md" />
+          </div>
+          <Skeleton className="w-32 h-10 rounded-lg" />
+        </div>
+
+        {/* Masonry Columns Skeleton */}
+        <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-6 space-y-6">
+          {[120, 160, 200, 140, 180, 150].map((height, i) => (
+            <div key={i} className="break-inside-avoid bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-sm flex flex-col gap-3 relative overflow-hidden" style={{ height: `${height}px` }}>
+              <Skeleton className="w-3/4 h-5 rounded-md animate-pulse" />
+              <div className="space-y-2 flex-1">
+                <Skeleton className="w-full h-3 rounded-md animate-pulse" />
+                <Skeleton className="w-5/6 h-3 rounded-md animate-pulse" />
+                {height > 150 && <Skeleton className="w-4/5 h-3 rounded-md animate-pulse" />}
+              </div>
+              <div className="flex items-center gap-2 mt-auto pt-3 border-t border-[#F1F5F9]">
+                <Skeleton className="w-12 h-4 rounded-md animate-pulse" />
+                <Skeleton className="w-16 h-3 rounded-md ml-auto animate-pulse" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
   // Di sini kita menggunakan state untuk melacak apakah formulir tambah catatan baru sedang terbuka
   const [isAdding, setIsAdding] = useState(false);
   // State ini kita gunakan untuk menyimpan judul dan isi catatan baru yang sedang diinput oleh pengguna
@@ -243,10 +278,26 @@ export default function NotesView({
       {/* Tampilan Grid Masonry Catatan */}
       <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-6 space-y-6">
         {filteredNotes.length === 0 ? (
-          <div className="break-inside-avoid bg-white border border-[#E2E8F0] rounded-2xl p-6 text-center shadow-sm w-full">
-            <Notebook className="w-12 h-12 text-[#94A3B8] mx-auto mb-3 opacity-60" />
-            <p className="text-sm font-semibold text-on-surface">Tidak ada catatan yang cocok</p>
-            <p className="text-xs text-on-surface-variant mt-1">Coba cari dengan kata kunci lain.</p>
+          <div className="break-inside-avoid bg-white border border-[#E2E8F0] rounded-2xl p-6 text-center shadow-sm w-full flex flex-col items-center justify-center">
+            {/* Custom SVG Illustration for Empty Notes */}
+            <div className="relative w-20 h-20 mb-3 flex items-center justify-center text-primary/30">
+              <svg className="w-16 h-16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M7 7H17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M7 11H17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M7 15H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              {/* Floating element */}
+              <div className="absolute -top-1 -right-1 animate-pulse">
+                <svg className="w-5 h-5 text-yellow-500/60" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2L14.85 8.56L22 9.27L16.5 14L18.18 21L12 17.27L5.82 21L7.5 14L2 9.27L9.15 8.56L12 2Z" fill="currentColor" />
+                </svg>
+              </div>
+            </div>
+            <p className="text-sm font-bold text-on-surface">Tidak ada catatan ditemukan</p>
+            <p className="text-xs text-on-surface-variant mt-1 max-w-xs font-medium leading-relaxed">
+              {searchQuery ? 'Coba gunakan kata kunci pencarian yang berbeda.' : 'Mulai catat ide, rangkuman kuliah, atau rencana belajar Anda.'}
+            </p>
           </div>
         ) : (
           filteredNotes.map((note) => {

@@ -9,6 +9,7 @@
 import React, { useState } from 'react';
 import { Calendar, Clock, MapPin, User, GraduationCap, X, Plus, AlertCircle, BookOpen, Edit2, Trash2, CheckSquare } from 'lucide-react';
 import { Course, Task } from '../types';
+import Skeleton from './ui/Skeleton';
 
 interface CoursesViewProps {
   courses: Course[];
@@ -20,6 +21,7 @@ interface CoursesViewProps {
   isEnrollModalOpen: boolean;
   onSetEnrollModalOpen: (open: boolean) => void;
   searchQuery: string;
+  loading?: boolean;
 }
 
 export default function CoursesView({
@@ -31,8 +33,45 @@ export default function CoursesView({
   tasks,
   isEnrollModalOpen,
   onSetEnrollModalOpen,
-  searchQuery
+  searchQuery,
+  loading = false
 }: CoursesViewProps) {
+  if (loading) {
+    return (
+      <div className="max-w-[1000px] mx-auto w-full space-y-6">
+        {/* Header Halaman Skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div className="space-y-2">
+            <Skeleton className="w-56 h-8 rounded-lg" />
+            <Skeleton className="w-64 h-4 rounded-md" />
+          </div>
+          <Skeleton className="w-40 h-10 rounded-lg" />
+        </div>
+
+        {/* Grid Skeletons */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-white border border-[#E2E8F0] rounded-xl p-6 flex flex-col gap-4 relative overflow-hidden shadow-sm h-[250px]">
+              <Skeleton className="absolute left-0 top-0 bottom-0 w-1.5" />
+              <div className="flex justify-between items-start">
+                <Skeleton className="w-16 h-5 rounded-md animate-pulse" />
+                <Skeleton className="w-24 h-4 rounded-full animate-pulse" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="w-3/4 h-5 rounded-md animate-pulse" />
+                <Skeleton className="w-1/2 h-4 rounded-md animate-pulse" />
+              </div>
+              <div className="mt-auto pt-4 border-t border-[#F1F5F9] flex flex-col gap-2">
+                <Skeleton className="w-2/3 h-4 rounded-md animate-pulse" />
+                <Skeleton className="w-3/4 h-4 rounded-md animate-pulse" />
+                <Skeleton className="w-1/2 h-4 rounded-md animate-pulse" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
   // State untuk melacak mata kuliah yang sedang dipilih/diinspeksi detailnya oleh pengguna
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   
@@ -349,10 +388,27 @@ export default function CoursesView({
           cols-1 pada mobile, cols-2 pada tablet (md), dan cols-3 pada komputer (lg) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredCourses.length === 0 ? (
-          <div className="col-span-full text-center py-12 bg-white border border-[#E2E8F0] rounded-2xl">
-            <BookOpen className="w-12 h-12 text-[#94A3B8] mx-auto mb-3 opacity-60" />
-            <p className="text-sm font-semibold text-on-surface">Belum ada mata kuliah terdaftar</p>
-            <p className="text-xs text-on-surface-variant mt-1">Silakan tambah informasi mata kuliah baru.</p>
+          <div className="col-span-full text-center py-12 bg-white border border-[#E2E8F0] rounded-2xl flex flex-col items-center justify-center p-6">
+            {/* Custom SVG Illustration for Empty Courses */}
+            <div className="relative w-24 h-24 mb-4 flex items-center justify-center text-primary/30">
+              <svg className="w-20 h-20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Book stack */}
+                <path d="M4 19.5C4 18.6716 4.67157 18 5.5 18H20V22H5.5C4.67157 22 4 21.3284 4 19.5Z" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M4 19.5C4 18.6716 4.67157 18 5.5 18H20V4H5.5C4.67157 4 4 4.67157 4 5.5V19.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                <path d="M6 8H18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M6 12H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              {/* Dynamic decorative icon */}
+              <div className="absolute top-2 right-2 animate-bounce">
+                <svg className="w-6 h-6 text-indigo-500/60" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 3L1 9L12 15L21 10.09V17H23V9L12 3Z" fill="currentColor" />
+                </svg>
+              </div>
+            </div>
+            <p className="text-sm font-bold text-on-surface">Belum ada mata kuliah terdaftar</p>
+            <p className="text-xs text-on-surface-variant mt-1 max-w-sm font-medium">
+              {searchQuery ? 'Tidak ada mata kuliah yang cocok dengan pencarian Anda.' : 'Anda belum mendaftarkan mata kuliah apa pun untuk semester ini.'}
+            </p>
           </div>
         ) : (
           filteredCourses.map((course) => {

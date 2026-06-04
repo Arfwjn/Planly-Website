@@ -19,17 +19,85 @@ interface TodayViewProps {
   isFocusTimerRunning: boolean;
   setIsFocusTimerRunning: (running: boolean) => void;
   onResetFocusTimer: () => void;
+  loading?: boolean;
 }
 
 export default function TodayView({
+  user,
   courses,
   tasks,
   onTabChange,
   onOpenNotesWithCourse,
   focusTimeLeft,
   isFocusTimerRunning,
-  setIsFocusTimerRunning
+  setIsFocusTimerRunning,
+  onResetFocusTimer,
+  loading = false
 }: TodayViewProps) {
+
+  // Tampilkan loading skeleton jika data sedang dimuat
+  if (loading) {
+    return (
+      <div className="max-w-[1000px] mx-auto w-full space-y-6">
+        {/* Header Halaman Skeleton */}
+        <div className="space-y-2">
+          <div className="w-48 h-8 bg-slate-200 animate-pulse rounded-lg" />
+          <div className="w-32 h-4 bg-slate-200 animate-pulse rounded-md" />
+        </div>
+
+        {/* Bento Grid Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-sm flex flex-col justify-between h-[160px]">
+            <div className="flex items-center justify-between">
+              <div className="w-28 h-4 bg-slate-200 animate-pulse rounded-md" />
+              <div className="w-8 h-8 rounded-full bg-slate-100 animate-pulse" />
+            </div>
+            <div className="space-y-2">
+              <div className="w-12 h-10 bg-slate-200 animate-pulse rounded-lg" />
+              <div className="w-28 h-4 bg-slate-200 animate-pulse rounded-md" />
+            </div>
+          </div>
+          
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-sm md:col-span-2 flex flex-col justify-between h-[160px]">
+            <div className="flex items-center justify-between">
+              <div className="w-24 h-4 bg-slate-200 animate-pulse rounded-md" />
+              <div className="w-20 h-6 bg-slate-200 animate-pulse rounded-full" />
+            </div>
+            <div className="space-y-3">
+              <div className="w-2/3 h-6 bg-slate-200 animate-pulse rounded-md" />
+              <div className="w-full h-2 bg-slate-200 animate-pulse rounded-full" />
+            </div>
+          </div>
+        </div>
+
+        {/* Schedule List Skeleton */}
+        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-8 shadow-sm space-y-6">
+          <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-4">
+            <div className="w-32 h-6 bg-slate-200 animate-pulse rounded-md" />
+            <div className="w-24 h-6 bg-slate-200 animate-pulse rounded-full" />
+          </div>
+          <div className="space-y-6 relative pl-4 md:pl-8">
+            <div className="absolute left-[27px] md:left-[43px] top-4 bottom-4 w-px bg-[#E2E8F0]"></div>
+            {[1, 2].map((i) => (
+              <div key={i} className="flex gap-4 md:gap-6 relative">
+                <div className="w-[50px] md:w-[66px] space-y-1 pt-1.5 flex-shrink-0">
+                  <div className="w-10 h-4 bg-slate-200 animate-pulse rounded-md ml-auto" />
+                  <div className="w-8 h-3 bg-slate-200 animate-pulse rounded-md ml-auto" />
+                </div>
+                <div className="flex-1 bg-white border border-[#E2E8F0] rounded-xl p-4 md:p-5 space-y-3 shadow-sm h-[110px]">
+                  <div className="flex justify-between items-center">
+                    <div className="w-1/3 h-5 bg-slate-200 animate-pulse rounded-md" />
+                    <div className="w-16 h-4 bg-slate-200 animate-pulse rounded-md" />
+                  </div>
+                  <div className="w-2/3 h-4 bg-slate-200 animate-pulse rounded-md" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   /**
    * formatting time:
@@ -271,16 +339,7 @@ export default function TodayView({
                     <span className="text-[10px] font-semibold text-on-surface-variant block">
                       {parseInt(course.start_time) >= 12 ? 'WIB' : 'WIB'}
                     </span>
-                  </div>
-                  
-                  {/* Indikator Titik Status (Dot Indicator) pada Timeline */}
-                  <div className={`absolute top-5 rounded-full bg-white border-2 z-10 ${
-                    isInProgress 
-                      ? 'w-[15px] h-[15px] left-[20px] md:left-[36px] bg-primary border-white ring-4 ring-primary/20 animate-pulse' 
-                      : isCompleted 
-                        ? 'w-[9px] h-[9px] left-[23px] md:left-[39px] border-[#94A3B8]' 
-                        : 'w-[9px] h-[9px] left-[23px] md:left-[39px] border-primary'
-                  }`}></div>
+                  </div>                  
                   
                   {/* Kartu Informasi Kelas */}
                   <div className={`flex-1 bg-white border rounded-xl p-4 md:p-5 hover:border-primary transition-all shadow-sm ${

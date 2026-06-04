@@ -197,7 +197,7 @@ const profileService = {
       setStored('planly_user', updated);
       return updated;
     }
-    const { data } = await httpClient.put<User>('/profile', payload);
+    const { data } = await httpClient.post<User>('/profile/update', payload);
     return data;
   },
 };

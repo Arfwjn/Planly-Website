@@ -9,13 +9,74 @@
 import { useState, useEffect } from 'react';
 import { CalendarDays, Clock, MapPin, User, Info } from 'lucide-react';
 import { Course } from '../types';
+import Skeleton from './ui/Skeleton';
 
 interface CalendarViewProps {
   courses: Course[];
   onOpenAddNewCourseModal: () => void;
+  loading?: boolean;
 }
 
-export default function CalendarView({ courses, onOpenAddNewCourseModal }: CalendarViewProps) {
+export default function CalendarView({ courses, onOpenAddNewCourseModal, loading = false }: CalendarViewProps) {
+  if (loading) {
+    return (
+      <div className="max-w-[1000px] mx-auto w-full space-y-6">
+        {/* Header Halaman Skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+          <div className="space-y-2">
+            <Skeleton className="w-48 h-8 rounded-lg" />
+            <Skeleton className="w-32 h-4 rounded-md" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="w-16 h-8 rounded-lg" />
+            <Skeleton className="w-36 h-8 rounded-lg" />
+          </div>
+        </div>
+
+        {/* Date Selector Strip Skeleton */}
+        <div className="w-full bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-sm">
+          <div className="flex justify-between items-center gap-3 overflow-x-auto no-scrollbar pb-1 w-full">
+            {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+              <div key={i} className="flex-1 min-w-[64px] max-w-[130px] flex flex-col items-center justify-between h-[84px] py-2.5 px-2 rounded-xl border border-slate-100 bg-slate-50/50">
+                <Skeleton className="w-8 h-3 rounded-md animate-pulse" />
+                <Skeleton className="w-6 h-6 rounded-md mt-1 animate-pulse" />
+                <Skeleton className="w-10 h-3 rounded-md mt-1 animate-pulse" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Live Status Bar Skeleton */}
+        <div className="bg-[#F8FAFC] border border-slate-100 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <Skeleton className="w-48 h-4 rounded-md animate-pulse" />
+          <Skeleton className="w-56 h-4 rounded-md animate-pulse" />
+        </div>
+
+        {/* Timeline Schedule Skeleton */}
+        <div className="relative pt-2 space-y-6">
+          {[1, 2].map((i) => (
+            <div key={i} className="flex gap-4 lg:gap-6 relative">
+              <div className="w-[50px] lg:w-[60px] flex-shrink-0 text-right pt-4 space-y-1">
+                <Skeleton className="w-10 h-4 rounded-md ml-auto animate-pulse" />
+                <Skeleton className="w-8 h-3 rounded-md ml-auto animate-pulse" />
+              </div>
+              <div className="flex-1 bg-white border border-[#E2E8F0] rounded-2xl p-5 space-y-3 shadow-sm h-[130px]">
+                <div className="flex justify-between items-center">
+                  <Skeleton className="w-1/3 h-5 rounded-md animate-pulse" />
+                  <Skeleton className="w-16 h-4 rounded-md animate-pulse" />
+                </div>
+                <Skeleton className="w-1/2 h-4 rounded-md animate-pulse" />
+                <div className="flex gap-4 pt-2">
+                  <Skeleton className="w-24 h-4 rounded-md animate-pulse" />
+                  <Skeleton className="w-20 h-4 rounded-md animate-pulse" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
   /**
    * dynamic 7-day strip generation:
    * Fungsi ini menghasilkan daftar 7 hari ke depan secara dinamis terhitung dari hari ini.
@@ -127,10 +188,11 @@ export default function CalendarView({ courses, onOpenAddNewCourseModal }: Calen
     <div className="max-w-[1000px] mx-auto w-full space-y-6">
       
       {/* Header Halaman */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+        <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight text-on-surface">Jadwal Kuliah</h1>
-          <p className="text-sm text-on-surface-variant font-semibold mt-1">
+          <p className="text-sm text-on-surface-variant font-semibold flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
             {getSelectedMonthName()}
           </p>
         </div>
@@ -154,25 +216,61 @@ export default function CalendarView({ courses, onOpenAddNewCourseModal }: Calen
 
       {/* Date Selector Strip Horizontal (Daftar 7 hari dinamis) */}
       <div className="w-full bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-sm">
-        <div className="flex justify-between items-center gap-2 overflow-x-auto no-scrollbar pb-2">
-          {daysInWeek.map((day) => {
+        <div className="flex justify-between items-center gap-3 overflow-x-auto no-scrollbar pb-1 w-full">
+          {daysInWeek.map((day, index) => {
             const isSelected = selectedDayObj.fullName === day.fullName;
+            const dayCoursesList = courses.filter((c) => c.day_of_week === day.fullName);
+            const isToday = index === 0;
+
             return (
               <button
                 key={day.fullName}
                 onClick={() => setSelectedDayObj(day)}
-                className={`flex-shrink-0 flex flex-col items-center justify-center w-[64px] h-[78px] rounded-xl transition-all cursor-pointer ${
+                className={`group flex-1 min-w-[64px] max-w-[130px] flex flex-col items-center justify-between h-[84px] py-2.5 px-2 rounded-xl border transition-all duration-200 cursor-pointer select-none ${
                   isSelected
-                    ? 'bg-primary text-white shadow-md ring-2 ring-primary ring-offset-2'
-                    : 'border border-[#E2E8F0] bg-white text-on-surface-variant hover:bg-slate-50'
+                    ? 'bg-gradient-to-br from-primary to-indigo-600 text-white border-transparent shadow-md shadow-primary/20'
+                    : 'border-slate-100 bg-slate-50/50 text-on-surface-variant hover:bg-primary/[0.04] hover:border-primary/30 hover:text-primary'
                 }`}
               >
-                <span className={`text-[10px] font-bold uppercase tracking-wider ${isSelected ? 'opacity-90' : 'text-[#94A3B8]'}`}>
+                <span className={`text-[9px] font-extrabold uppercase tracking-widest transition-colors duration-200 ${
+                  isSelected ? 'text-white/85' : 'text-[#94A3B8] group-hover:text-primary/70'
+                }`}>
                   {day.dayName}
                 </span>
-                <span className="text-lg font-bold mt-1">
+                
+                <span className="text-lg font-black tracking-tight leading-none mt-0.5">
                   {day.dateNum}
                 </span>
+
+                {/* Indikator Hari Ini atau Titik Mata Kuliah */}
+                {isToday ? (
+                  <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md leading-none transition-colors duration-200 ${
+                    isSelected ? 'bg-white/20 text-white' : 'bg-primary/10 text-primary border border-primary/10 group-hover:bg-primary/20'
+                  }`}>
+                    KINI
+                  </span>
+                ) : (
+                  <div className="flex gap-1 justify-center items-center h-2 mt-0.5">
+                    {dayCoursesList.slice(0, 3).map((c) => (
+                      <span
+                        key={c.id}
+                        className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                          isSelected ? 'bg-white' : ''
+                        }`}
+                        style={isSelected ? {} : { backgroundColor: c.color_hex }}
+                        title={c.course_name}
+                      />
+                    ))}
+                    {dayCoursesList.length > 3 && (
+                      <span className={`text-[8px] font-black ${isSelected ? 'text-white' : 'text-[#94A3B8] group-hover:text-primary'}`}>
+                        +
+                      </span>
+                    )}
+                    {dayCoursesList.length === 0 && (
+                      <span className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white/30' : 'bg-[#E2E8F0]'}`} />
+                    )}
+                  </div>
+                )}
               </button>
             );
           })}
@@ -223,15 +321,35 @@ export default function CalendarView({ courses, onOpenAddNewCourseModal }: Calen
 
           {dayCourses.length === 0 ? (
             /* Tampilan fallback apabila tidak ada mata kuliah yang terjadwal di hari terpilih */
-            <div className="text-center py-12 bg-white border border-dashed border-[#C7C4D8] rounded-xl">
-              <CalendarDays className="w-12 h-12 text-[#94A3B8] mx-auto mb-3 opacity-60" />
-              <h3 className="text-sm font-semibold text-on-surface">Tidak Ada Kelas Terjadwal</h3>
-              <p className="text-xs text-on-surface-variant mt-1 mb-4">
+            <div className="text-center py-12 bg-white border border-[#E2E8F0] rounded-2xl flex flex-col items-center justify-center p-6">
+              {/* Custom SVG Illustration for Empty Calendar */}
+              <div className="relative w-24 h-24 mb-4 flex items-center justify-center text-primary/30">
+                <svg className="w-20 h-20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="3" y="4" width="18" height="16" rx="3" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="M3 10H21" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="M8 2V5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  <path d="M16 2V5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  <circle cx="8" cy="14" r="1" fill="currentColor" />
+                  <circle cx="12" cy="14" r="1" fill="currentColor" />
+                  <circle cx="16" cy="14" r="1" fill="currentColor" />
+                  <circle cx="8" cy="17" r="1" fill="currentColor" />
+                  <circle cx="12" cy="17" r="1" fill="currentColor" />
+                  <circle cx="16" cy="17" r="1" fill="currentColor" />
+                </svg>
+                {/* Floating elements to make it dynamic */}
+                <div className="absolute top-2 right-2 animate-bounce">
+                  <svg className="w-6 h-6 text-yellow-500/60" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor" />
+                  </svg>
+                </div>
+              </div>
+              <h3 className="text-sm font-bold text-on-surface">Tidak Ada Kelas Terjadwal</h3>
+              <p className="text-xs text-on-surface-variant mt-1 mb-6 max-w-sm font-medium">
                 Tidak ada mata kuliah yang dijadwalkan untuk hari {getIndonesianDayName(selectedDayObj.fullName)}.
               </p>
               <button
                 onClick={onOpenAddNewCourseModal}
-                className="px-4 py-2 border border-[#E2E8F0] bg-white text-on-surface text-xs font-semibold rounded-lg hover:bg-slate-50 cursor-pointer"
+                className="px-4 py-2 bg-primary hover:bg-[#4F46E5] text-white text-xs font-semibold rounded-lg shadow-sm transition-colors cursor-pointer font-sans"
               >
                 Tambah Mata Kuliah Baru
               </button>
