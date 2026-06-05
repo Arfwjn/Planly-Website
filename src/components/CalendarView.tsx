@@ -37,7 +37,7 @@ export default function CalendarView({ courses, onOpenAddNewCourseModal, loading
         <div className="w-full bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-sm">
           <div className="flex justify-between items-center gap-3 overflow-x-auto no-scrollbar pb-1 w-full">
             {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-              <div key={i} className="flex-1 min-w-[64px] max-w-[130px] flex flex-col items-center justify-between h-[84px] py-2.5 px-2 rounded-xl border border-slate-100 bg-slate-50/50">
+              <div key={i} className="flex-1 min-w-[64px] max-w-[130px] flex flex-col items-center justify-between h-[84px] py-2.5 px-2 rounded-xl border border-date-btn-border bg-date-btn-bg">
                 <Skeleton className="w-8 h-3 rounded-md animate-pulse" />
                 <Skeleton className="w-6 h-6 rounded-md mt-1 animate-pulse" />
                 <Skeleton className="w-10 h-3 rounded-md mt-1 animate-pulse" />
@@ -229,7 +229,7 @@ export default function CalendarView({ courses, onOpenAddNewCourseModal, loading
                 className={`group flex-1 min-w-[64px] max-w-[130px] flex flex-col items-center justify-between h-[84px] py-2.5 px-2 rounded-xl border transition-all duration-200 cursor-pointer select-none ${
                   isSelected
                     ? 'bg-gradient-to-br from-primary to-indigo-600 text-white border-transparent shadow-md shadow-primary/20'
-                    : 'border-slate-100 bg-slate-50/50 text-on-surface-variant hover:bg-primary/[0.04] hover:border-primary/30 hover:text-primary'
+                    : 'border-date-btn-border bg-date-btn-bg text-on-surface-variant hover:bg-primary/[0.04] hover:border-primary/30 hover:text-primary'
                 }`}
               >
                 <span className={`text-[9px] font-extrabold uppercase tracking-widest transition-colors duration-200 ${

@@ -7,7 +7,7 @@
  * serta menghapus tugas yang ada.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CheckSquare, Clock, GraduationCap, Plus, X, Calendar, AlertCircle, Trash2, Edit2, Info } from 'lucide-react';
 import { Task, Course } from '../types';
 import Skeleton from './ui/Skeleton';
@@ -23,6 +23,8 @@ interface TasksViewProps {
   onSetSlideOverOpen: (open: boolean) => void;
   searchQuery: string;
   loading?: boolean;
+  autoInspectTaskId?: number | null;
+  onClearAutoInspect?: () => void;
 }
 
 export default function TasksView({
@@ -35,7 +37,9 @@ export default function TasksView({
   isSlideOverOpen,
   onSetSlideOverOpen,
   searchQuery,
-  loading = false
+  loading = false,
+  autoInspectTaskId = null,
+  onClearAutoInspect
 }: TasksViewProps) {
   if (loading) {
     return (
@@ -119,6 +123,21 @@ export default function TasksView({
     setEditDescription(task.description || '');
     setEditValidationError('');
   };
+
+  // Effect untuk otomatis membuka inspeksi detail tugas jika dipicu dari luar (misal notifikasi)
+  useEffect(() => {
+    if (autoInspectTaskId) {
+      const task = tasks.find((t) => t.id === autoInspectTaskId);
+      if (task) {
+        // Otomatis arahkan ke tab yang sesuai dengan status tugas (selesai/belum selesai)
+        setActiveTab(task.is_finished ? 'done' : 'pending');
+        handleInspectTask(task);
+        if (onClearAutoInspect) {
+          onClearAutoInspect();
+        }
+      }
+    }
+  }, [autoInspectTaskId, tasks, onClearAutoInspect]);
 
   // Fungsi untuk menangani pengiriman form pembuatan tugas baru
   const handleCreateTaskSubmit = (e: React.FormEvent) => {
@@ -319,7 +338,7 @@ export default function TasksView({
                 key={task.id}
                 className={`rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300 group flex items-start gap-4 cursor-pointer ${
                   task.is_finished
-                    ? 'bg-slate-50/50 border border-slate-100'
+                    ? 'bg-date-btn-bg border border-date-btn-border'
                     : 'bg-white border border-[#E2E8F0] hover:border-primary/20'
                 }`}
                 onClick={() => handleInspectTask(task)}

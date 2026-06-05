@@ -33,8 +33,10 @@ export default function Header({
     }
   };
 
+  const isSearchSupported = activeTab === 'tasks' || activeTab === 'courses' || activeTab === 'notes';
+
   return (
-    <header className="flex justify-between items-center h-16 px-4 sm:px-6 bg-white/85 backdrop-blur-md sticky top-0 z-40 border-b border-[#E2E8F0] w-full">
+    <header className="flex justify-between items-center h-16 px-4 sm:px-6 bg-header-bg backdrop-blur-md sticky top-0 z-40 border-b border-header-border w-full">
       {/* Search Input & Menu Toggle */}
       <div className="flex items-center gap-4 flex-1 max-w-md">
         <button
@@ -45,16 +47,18 @@ export default function Header({
           <Menu className="w-5 h-5" />
         </button>
 
-        <div className="relative w-full group hidden sm:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] group-focus-within:text-primary transition-colors" />
-          <input
-            className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-full py-1.5 pl-10 pr-4 text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-            type="text"
-            placeholder={getSearchPlaceholder()}
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-          />
-        </div>
+        {isSearchSupported && (
+          <div className="relative w-full group hidden sm:block">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] group-focus-within:text-primary transition-colors" />
+            <input
+              className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-full py-1.5 pl-10 pr-4 text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              type="text"
+              placeholder={getSearchPlaceholder()}
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+            />
+          </div>
+        )}
       </div>
 
       {/* Trailing Controls & Profile */}

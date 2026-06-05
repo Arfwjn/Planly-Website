@@ -12,6 +12,7 @@ import TasksView from './components/TasksView';
 import CoursesView from './components/CoursesView';
 import NotesView from './components/NotesView';
 import ProfileView from './components/ProfileView';
+import useDeadlineMonitor from './hooks/useDeadlineMonitor';
 
 // Impor ikon untuk navigasi bawah pada perangkat mobile
 import { LayoutDashboard, CalendarDays, CheckSquare, FileText, User as UserIcon, Menu } from 'lucide-react';
@@ -49,6 +50,31 @@ export default function App() {
   // --- KONTROL MODAL OVERLAY ---
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
   const [isEnrollCourseOpen, setIsEnrollCourseOpen] = useState(false);
+
+  // --- STATE PENGINGAT DEADLINE & AUTO INSPECT ---
+  const [autoInspectTaskId, setAutoInspectTaskId] = useState<number | null>(null);
+
+  // Mengaktifkan monitoring deadline batas waktu tugas di latar belakang
+  useDeadlineMonitor({
+    tasks,
+    courses,
+    setActiveTab,
+    setAutoInspectTaskId
+  });
+
+  // --- STATE TEMA GLOBAL (MODE TERANG / GELAP) ---
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    return (localStorage.getItem('planly_theme') as 'light' | 'dark') || 'light';
+  });
+
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('planly_theme', theme);
+  }, [theme]);
 
   // --- STATE TIMER FOKUS GLOBAL (POMODORO) ---
   // Default waktu fokus disetel ke 1500 detik (25 menit)
@@ -269,6 +295,8 @@ export default function App() {
             onSetSlideOverOpen={setIsNewTaskOpen}
             searchQuery={searchQuery}
             loading={loadingData}
+            autoInspectTaskId={autoInspectTaskId}
+            onClearAutoInspect={() => setAutoInspectTaskId(null)}
           />
         );
       case 'courses':
@@ -304,6 +332,8 @@ export default function App() {
             user={currentUser}
             onUserUpdate={handleUserUpdate}
             onSignOut={handleSignOut}
+            theme={theme}
+            onThemeChange={setTheme}
           />
         );
       default:

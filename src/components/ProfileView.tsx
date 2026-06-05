@@ -6,6 +6,8 @@ interface ProfileViewProps {
   user: User;
   onUserUpdate: (updatedUser: User) => void;
   onSignOut: () => void;
+  theme: 'light' | 'dark';
+  onThemeChange: (theme: 'light' | 'dark') => void;
 }
 
 /**
@@ -14,7 +16,13 @@ interface ProfileViewProps {
  * Komponen ini digunakan untuk menampilkan profil pengguna (mahasiswa), mengelola formulir akun,
  * menyalakan/menonaktifkan notifikasi, memilih tema tampilan, serta melakukan konfirmasi log out (keluar).
  */
-export default function ProfileView({ user, onUserUpdate, onSignOut }: ProfileViewProps) {
+export default function ProfileView({
+  user,
+  onUserUpdate,
+  onSignOut,
+  theme,
+  onThemeChange
+}: ProfileViewProps) {
   // State untuk melacak apakah formulir pengeditan profil sedang aktif
   const [isEditingAccount, setIsEditingAccount] = useState(false);
   // State untuk menyimpan nilai input formulir pengeditan akun (nama, NIM, program studi)
@@ -23,11 +31,18 @@ export default function ProfileView({ user, onUserUpdate, onSignOut }: ProfileVi
   const [editMajor, setEditMajor] = useState(user.major || '');
 
   // State untuk melacak status saklar notifikasi pengingat & email rangkuman harian (notifications toggles)
-  const [reminders, setReminders] = useState(true);
+  const [reminders, setReminders] = useState(() => {
+    return localStorage.getItem('planly_notifications_enabled') !== 'false';
+  });
   const [dailyDigest, setDailyDigest] = useState(false);
 
-  // State untuk melacak pilihan tema tampilan (theme switcher triggers)
-  const [themeMode, setThemeMode] = useState<'light' | 'dark'>('light');
+  const handleToggleReminders = () => {
+    const nextVal = !reminders;
+    setReminders(nextVal);
+    localStorage.setItem('planly_notifications_enabled', String(nextVal));
+  };
+
+
 
   // Menangani pengiriman formulir akun. Fungsi ini memperbarui data profil pengguna
   // melalui callback onUserUpdate dan menonaktifkan mode edit setelah selesai.
@@ -186,7 +201,7 @@ export default function ProfileView({ user, onUserUpdate, onSignOut }: ProfileVi
                 <span>Pengingat Tugas & Jadwal</span>
                 <button
                   type="button"
-                  onClick={() => setReminders(!reminders)}
+                  onClick={handleToggleReminders}
                   className={`w-10 h-6 rounded-full relative cursor-pointer block transition-colors ${
                     reminders ? 'bg-primary' : 'bg-[#E2E8F0]'
                   }`}
@@ -231,9 +246,9 @@ export default function ProfileView({ user, onUserUpdate, onSignOut }: ProfileVi
           <div className="grid grid-cols-2 gap-3 mt-2">
             {/* Pemicu Mode Terang */}
             <div
-              onClick={() => setThemeMode('light')}
+              onClick={() => onThemeChange('light')}
               className={`border-2 rounded-xl p-3 flex flex-col items-center gap-2 cursor-pointer transition-all ${
-                themeMode === 'light'
+                theme === 'light'
                   ? 'border-primary bg-primary/5'
                   : 'border-[#E2E8F0] bg-white hover:bg-slate-50'
               }`}
@@ -242,17 +257,17 @@ export default function ProfileView({ user, onUserUpdate, onSignOut }: ProfileVi
               <span className="text-xs font-bold text-primary">Mode Terang</span>
             </div>
             
-            {/* Pemicu Mode Gelap. Di sini ada alert untuk menginfokan bahwa fitur masih dijadwalkan pada rilis mendatang */}
+            {/* Pemicu Mode Gelap */}
             <div
-              onClick={() => {
-                setThemeMode('dark');
-                alert('Tema Gelap Planly: dijadwalkan untuk implementasi pada pembaruan v2.0 mendatang.');
-                setThemeMode('light');
-              }}
-              className="border border-[#E2E8F0] bg-white hover:bg-slate-50 rounded-xl p-3 flex flex-col items-center gap-2 cursor-pointer transition-all"
+              onClick={() => onThemeChange('dark')}
+              className={`border-2 rounded-xl p-3 flex flex-col items-center gap-2 cursor-pointer transition-all ${
+                theme === 'dark'
+                  ? 'border-primary bg-primary/5'
+                  : 'border-[#E2E8F0] bg-white hover:bg-slate-50'
+              }`}
             >
               <Palette className="w-6 h-6 text-on-surface-variant" />
-              <span className="text-xs font-semibold text-on-surface-variant">Mode Gelap</span>
+              <span className="text-xs font-bold text-on-surface-variant">Mode Gelap</span>
             </div>
           </div>
         </div>

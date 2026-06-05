@@ -8,6 +8,7 @@
 import { useState, useEffect } from 'react';
 import { Clock, Play, Pause, AlertTriangle, MapPin, Users, Notebook } from 'lucide-react';
 import { Course, Task, SidebarTab } from '../types';
+import NotificationBanner from './ui/NotificationBanner';
 
 interface TodayViewProps {
   user: { name: string };
@@ -212,6 +213,9 @@ export default function TodayView({
           {getTodayDateString()}
         </p>
       </div>
+
+      {/* Banner Permintaan Izin Notifikasi */}
+      <NotificationBanner />
 
       {/* 
         bento layout grid:
