@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { GraduationCap, Mail, Lock, User as UserIcon, ShieldAlert } from 'lucide-react';
 import { LoginResponse } from '../types';
 import { api } from '../services/api';
+import { useToast } from './ui/Toast';
+
 
 interface AuthViewProps {
   onLoginSuccess: (loginResponse: LoginResponse) => void;
@@ -12,6 +14,7 @@ interface AuthViewProps {
  * termasuk masuk ke akun lama (login) dan pendaftaran akun baru (register).
  */
 export default function AuthView({ onLoginSuccess }: AuthViewProps) {
+  const toast = useToast();
   // --- STATE UNTUK TOGGLE LOGIN ATAU REGISTER ---
   // Menentukan form mana yang aktif (true untuk pendaftaran/register, false untuk masuk/login)
   const [isRegister, setIsRegister] = useState(false);
@@ -75,7 +78,7 @@ export default function AuthView({ onLoginSuccess }: AuthViewProps) {
         nim: nim || undefined,
       })
         .then(() => {
-          alert('Pendaftaran berhasil! Silakan masuk.');
+          toast.success('Pendaftaran berhasil! Silakan masuk.');
           setIsRegister(false); // Kembalikan ke form masuk setelah pendaftaran berhasil
           setError(null);
           setLoading(false);
@@ -190,7 +193,7 @@ export default function AuthView({ onLoginSuccess }: AuthViewProps) {
               {!isRegister && (
                 <a
                   href="#"
-                  onClick={(e) => { e.preventDefault(); alert('Tautan pemulihan kata sandi telah dikirim.'); }}
+                  onClick={(e) => { e.preventDefault(); toast.success('Tautan pemulihan kata sandi telah dikirim.'); }}
                   className="text-xs text-primary hover:text-primary-container-high transition-colors font-medium"
                 >
                   Lupa kata sandi?

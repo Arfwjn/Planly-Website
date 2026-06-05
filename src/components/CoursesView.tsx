@@ -10,6 +10,20 @@ import React, { useState } from 'react';
 import { Calendar, Clock, MapPin, User, GraduationCap, X, Plus, AlertCircle, BookOpen, Edit2, Trash2, CheckSquare } from 'lucide-react';
 import { Course, Task } from '../types';
 import Skeleton from './ui/Skeleton';
+import CustomSelect from './ui/CustomSelect';
+import type { SelectOption } from './ui/CustomSelect';
+import TimePicker from './ui/TimePicker';
+
+const dayOfWeekOptions: SelectOption[] = [
+  { value: 'Monday', label: 'Senin' },
+  { value: 'Tuesday', label: 'Selasa' },
+  { value: 'Wednesday', label: 'Rabu' },
+  { value: 'Thursday', label: 'Kamis' },
+  { value: 'Friday', label: 'Jumat' },
+  { value: 'Saturday', label: 'Sabtu' },
+  { value: 'Sunday', label: 'Minggu' },
+];
+
 
 interface CoursesViewProps {
   courses: Course[];
@@ -589,42 +603,32 @@ export default function CoursesView({
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
                     Hari Kuliah
                   </label>
-                  <select
+                  <CustomSelect
                     value={dayOfWeek}
-                    onChange={(e) => setDayOfWeek(e.target.value)}
-                    className="w-full h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-on-surface font-semibold"
-                  >
-                    <option value="Monday">Senin</option>
-                    <option value="Tuesday">Selasa</option>
-                    <option value="Wednesday">Rabu</option>
-                    <option value="Thursday">Kamis</option>
-                    <option value="Friday">Jumat</option>
-                    <option value="Saturday">Sabtu</option>
-                    <option value="Sunday">Minggu</option>
-                  </select>
+                    onChange={setDayOfWeek}
+                    options={dayOfWeekOptions}
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
                     Jam Mulai
                   </label>
-                  <input
-                    type="time"
-                    required
+                  <TimePicker
                     value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    className="w-full h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-on-surface focus:outline-none"
+                    onChange={setStartTime}
+                    required
+                    position="up"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
                     Jam Selesai
                   </label>
-                  <input
-                    type="time"
-                    required
+                  <TimePicker
                     value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                    className="w-full h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-on-surface focus:outline-none"
+                    onChange={setEndTime}
+                    required
+                    position="up"
                   />
                 </div>
               </div>
@@ -782,42 +786,32 @@ export default function CoursesView({
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
                     Hari Kuliah
                   </label>
-                  <select
+                  <CustomSelect
                     value={dayOfWeek}
-                    onChange={(e) => setDayOfWeek(e.target.value)}
-                    className="w-full h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-on-surface font-semibold"
-                  >
-                    <option value="Monday">Senin</option>
-                    <option value="Tuesday">Selasa</option>
-                    <option value="Wednesday">Rabu</option>
-                    <option value="Thursday">Kamis</option>
-                    <option value="Friday">Jumat</option>
-                    <option value="Saturday">Sabtu</option>
-                    <option value="Sunday">Minggu</option>
-                  </select>
+                    onChange={setDayOfWeek}
+                    options={dayOfWeekOptions}
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
                     Jam Mulai
                   </label>
-                  <input
-                    type="time"
-                    required
+                  <TimePicker
                     value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    className="w-full h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-on-surface focus:outline-none"
+                    onChange={setStartTime}
+                    required
+                    position="up"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
                     Jam Selesai
                   </label>
-                  <input
-                    type="time"
-                    required
+                  <TimePicker
                     value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                    className="w-full h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-on-surface focus:outline-none"
+                    onChange={setEndTime}
+                    required
+                    position="up"
                   />
                 </div>
               </div>

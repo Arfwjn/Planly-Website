@@ -12,7 +12,10 @@ import TasksView from './components/TasksView';
 import CoursesView from './components/CoursesView';
 import NotesView from './components/NotesView';
 import ProfileView from './components/ProfileView';
+import WorkspaceView from './components/WorkspaceView';
 import useDeadlineMonitor from './hooks/useDeadlineMonitor';
+import { useToast } from './components/ui/Toast';
+
 
 // Impor ikon untuk navigasi bawah pada perangkat mobile
 import { LayoutDashboard, CalendarDays, CheckSquare, FileText, User as UserIcon, Menu } from 'lucide-react';
@@ -22,6 +25,7 @@ import { LayoutDashboard, CalendarDays, CheckSquare, FileText, User as UserIcon,
  * sinkronisasi data dari API, serta timer fokus global (Pomodoro).
  */
 export default function App() {
+  const toast = useToast();
   // --- STATE AUTENTIKASI ---
   // Menentukan status login pengguna dengan membaca nilai dari localStorage
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -77,25 +81,92 @@ export default function App() {
   }, [theme]);
 
   // --- STATE TIMER FOKUS GLOBAL (POMODORO) ---
-  // Default waktu fokus disetel ke 1500 detik (25 menit)
   const [focusTimeLeft, setFocusTimeLeft] = useState(1500);
   const [isFocusTimerRunning, setIsFocusTimerRunning] = useState(false);
+  const [pomodoroStage, setPomodoroStage] = useState<'work' | 'short-break' | 'long-break'>('work');
+  const [pomodoroTaskId, setPomodoroTaskId] = useState<number | null>(null);
+  const [completedPomodoroCount, setCompletedPomodoroCount] = useState(0);
 
-  // Effect untuk mengontrol jalannya timer fokus setiap detiknya
+  // --- STATE TIMER RUANG BELAJAR LAINNYA ---
+  const [workspaceMode, setWorkspaceMode] = useState<'pomodoro' | 'lecture'>('pomodoro');
+  
+  // 1. Sesi Kuliah Live (Lecture)
+  const [lectureTime, setLectureTime] = useState(0);
+  const [isLectureRunning, setIsLectureRunning] = useState(false);
+  const [activeLectureCourseId, setActiveLectureCourseId] = useState<number | null>(null);
+  const [lectureNoteContent, setLectureNoteContent] = useState('');
+
+  // Audio Beep generator saat timer Pomodoro habis
+  const playChimeSound = () => {
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      const ctx = new AudioContextClass();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // Nada D5
+      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.15); // Nada A5
+      gain.gain.setValueAtTime(0.5, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.45);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.5);
+    } catch (e) {
+      console.warn("Autoplay audio blocked or not supported", e);
+    }
+  };
+
+  // Effect untuk mengontrol jalannya timer fokus Pomodoro setiap detiknya
   useEffect(() => {
     let interval: any = null;
-    if (isFocusTimerRunning && focusTimeLeft > 0) {
-      interval = setInterval(() => {
-        setFocusTimeLeft((prev) => prev - 1);
-      }, 1000);
-    } else {
-      setIsFocusTimerRunning(false);
+    if (isFocusTimerRunning) {
+      if (focusTimeLeft > 0) {
+        interval = setInterval(() => {
+          setFocusTimeLeft((prev) => prev - 1);
+        }, 1000);
+      } else {
+        // Timer habis (Mencapai 0)
+        setIsFocusTimerRunning(false);
+        playChimeSound();
+
+        if (pomodoroStage === 'work') {
+          const nextCount = completedPomodoroCount + 1;
+          setCompletedPomodoroCount(nextCount);
+          if (nextCount > 0 && nextCount % 4 === 0) {
+            setPomodoroStage('long-break');
+            setFocusTimeLeft(900); // 15 menit
+            toast.success('Luar biasa! 4 sesi fokus selesai. Nikmati istirahat panjang (15 menit) Anda!');
+          } else {
+            setPomodoroStage('short-break');
+            setFocusTimeLeft(300); // 5 menit
+            toast.info('Sesi fokus selesai! Ambil napas dan istirahat pendek (5 menit).');
+          }
+        } else {
+          // Dari break kembali ke work
+          setPomodoroStage('work');
+          setFocusTimeLeft(1500); // 25 menit
+          toast.info('Istirahat selesai! Mari kembali fokus.');
+        }
+      }
     }
     return () => clearInterval(interval);
-  }, [isFocusTimerRunning, focusTimeLeft]);
+  }, [isFocusTimerRunning, focusTimeLeft, pomodoroStage, completedPomodoroCount]);
+
+  // Effect untuk mengontrol Sesi Kuliah Live
+  useEffect(() => {
+    let interval: any = null;
+    if (isLectureRunning) {
+      interval = setInterval(() => {
+        setLectureTime((prev) => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isLectureRunning]);
 
   const handleResetFocusTimer = () => {
-    setFocusTimeLeft(1500);
+    setFocusTimeLeft(pomodoroStage === 'work' ? 1500 : pomodoroStage === 'short-break' ? 300 : 900);
     setIsFocusTimerRunning(false);
   };
 
@@ -151,7 +222,7 @@ export default function App() {
     api.profile.update(payload).then((savedUser) => {
       setCurrentUser(savedUser);
       localStorage.setItem('planly_user', JSON.stringify(savedUser));
-    }).catch(err => alert(err.message));
+    }).catch(err => toast.error(err.message));
   };
 
   // --- HANDLER TUGAS (TASKS) ---
@@ -161,30 +232,36 @@ export default function App() {
       setTasks((prev) =>
         prev.map((t) => (t.id === taskId ? updatedTask : t))
       );
-    }).catch(err => alert(err.message));
+    }).catch(err => toast.error(err.message));
   };
 
   // Menambahkan tugas baru ke dalam daftar
-  const handleAddTask = (newTask: Omit<Task, 'id' | 'user_id'>) => {
-    api.tasks.create(newTask).then((createdTask) => {
+  const handleAddTask = (newTask: Omit<Task, 'id' | 'user_id'>, silent = false) => {
+    return api.tasks.create(newTask).then((createdTask) => {
       setTasks((prev) => [createdTask, ...prev]);
-      alert('Tugas baru berhasil ditambahkan.');
-    }).catch(err => alert(err.message));
+      if (!silent) {
+        toast.success('Tugas baru berhasil ditambahkan.');
+      }
+      return createdTask;
+    }).catch(err => {
+      toast.error(err.message);
+      throw err;
+    });
   };
 
   // Memperbarui detail informasi tugas
   const handleEditTask = (taskId: number, updatedTask: Partial<Task>) => {
     api.tasks.update(taskId, updatedTask).then((savedTask) => {
       setTasks((prev) => prev.map((t) => (t.id === taskId ? savedTask : t)));
-      alert('Tugas berhasil diperbarui.');
-    }).catch(err => alert(err.message));
+      toast.success('Tugas berhasil diperbarui.');
+    }).catch(err => toast.error(err.message));
   };
 
   // Menghapus tugas berdasarkan ID
   const handleDeleteTask = (taskId: number) => {
     api.tasks.delete(taskId).then(() => {
       setTasks((prev) => prev.filter((t) => t.id !== taskId));
-    }).catch(err => alert(err.message));
+    }).catch(err => toast.error(err.message));
   };
 
   // --- HANDLER MATA KULIAH (COURSES) ---
@@ -192,8 +269,8 @@ export default function App() {
   const handleAddCourse = (newCourse: Omit<Course, 'id' | 'user_id'>) => {
     api.courses.create(newCourse).then((createdCourse) => {
       setCourses((prev) => [...prev, createdCourse]);
-      alert('Mata Kuliah berhasil didaftarkan.');
-    }).catch(err => alert(err.message));
+      toast.success('Mata Kuliah berhasil didaftarkan.');
+    }).catch(err => toast.error(err.message));
   };
 
   // Memperbarui detail mata kuliah dan memuat ulang tugas serta catatan terkait untuk menjaga sinkronisasi data
@@ -202,8 +279,8 @@ export default function App() {
       setCourses((prev) => prev.map((c) => (c.id === courseId ? savedCourse : c)));
       api.tasks.getAll().then(setTasks);
       api.notes.getAll().then(setNotes);
-      alert('Mata Kuliah berhasil diperbarui.');
-    }).catch(err => alert(err.message));
+      toast.success('Mata Kuliah berhasil diperbarui.');
+    }).catch(err => toast.error(err.message));
   };
 
   // Menghapus mata kuliah beserta data terkait
@@ -212,7 +289,7 @@ export default function App() {
       setCourses((prev) => prev.filter((c) => c.id !== courseId));
       api.tasks.getAll().then(setTasks);
       api.notes.getAll().then(setNotes);
-    }).catch(err => alert(err.message));
+    }).catch(err => toast.error(err.message));
   };
 
   // --- HANDLER CATATAN (NOTES) ---
@@ -220,23 +297,23 @@ export default function App() {
   const handleAddNote = (newNote: Omit<Note, 'id' | 'user_id'>) => {
     api.notes.create(newNote).then((createdNote) => {
       setNotes((prev) => [createdNote, ...prev]);
-      alert('Catatan baru berhasil disimpan.');
-    }).catch(err => alert(err.message));
+      toast.success('Catatan baru berhasil disimpan.');
+    }).catch(err => toast.error(err.message));
   };
 
   // Memperbarui isi catatan kuliah
   const handleEditNote = (noteId: number, updatedNote: Partial<Note>) => {
     api.notes.update(noteId, updatedNote).then((savedNote) => {
       setNotes((prev) => prev.map((n) => (n.id === noteId ? savedNote : n)));
-      alert('Catatan berhasil diperbarui.');
-    }).catch(err => alert(err.message));
+      toast.success('Catatan berhasil diperbarui.');
+    }).catch(err => toast.error(err.message));
   };
 
   // Menghapus catatan kuliah
   const handleDeleteNote = (noteId: number) => {
     api.notes.delete(noteId).then(() => {
       setNotes((prev) => prev.filter((n) => n.id !== noteId));
-    }).catch(err => alert(err.message));
+    }).catch(err => toast.error(err.message));
   };
 
   // Berpindah ke tab catatan dan otomatis memfilter berdasarkan kode mata kuliah yang dipilih
@@ -326,6 +403,37 @@ export default function App() {
             loading={loadingData}
           />
         );
+      case 'workspace':
+        return (
+          <WorkspaceView
+            courses={courses}
+            tasks={tasks}
+            onAddNote={handleAddNote}
+            onAddTask={handleAddTask}
+            onTabChange={setActiveTab}
+            workspaceMode={workspaceMode}
+            setWorkspaceMode={setWorkspaceMode}
+            focusTimeLeft={focusTimeLeft}
+            setFocusTimeLeft={setFocusTimeLeft}
+            isFocusTimerRunning={isFocusTimerRunning}
+            setIsFocusTimerRunning={setIsFocusTimerRunning}
+            onResetFocusTimer={handleResetFocusTimer}
+            pomodoroStage={pomodoroStage}
+            setPomodoroStage={setPomodoroStage}
+            pomodoroTaskId={pomodoroTaskId}
+            setPomodoroTaskId={setPomodoroTaskId}
+            completedPomodoroCount={completedPomodoroCount}
+            setCompletedPomodoroCount={setCompletedPomodoroCount}
+            lectureTime={lectureTime}
+            setLectureTime={setLectureTime}
+            isLectureRunning={isLectureRunning}
+            setIsLectureRunning={setIsLectureRunning}
+            activeLectureCourseId={activeLectureCourseId}
+            setActiveLectureCourseId={setActiveLectureCourseId}
+            lectureNoteContent={lectureNoteContent}
+            setLectureNoteContent={setLectureNoteContent}
+          />
+        );
       case 'profile':
         return (
           <ProfileView
@@ -362,6 +470,8 @@ export default function App() {
         isFocusTimerRunning={isFocusTimerRunning}
         setIsFocusTimerRunning={setIsFocusTimerRunning}
         onResetFocusTimer={handleResetFocusTimer}
+        lectureTime={lectureTime}
+        isLectureRunning={isLectureRunning}
       />
 
       {/* Area Konten Utama Core View */}
@@ -374,6 +484,12 @@ export default function App() {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           activeTab={activeTab}
+          tasks={tasks}
+          courses={courses}
+          onTabChange={setActiveTab}
+          theme={theme}
+          onThemeChange={setTheme}
+          onUserUpdate={handleUserUpdate}
         />
 
         {/* Kontainer Utama Konten Dinamis */}

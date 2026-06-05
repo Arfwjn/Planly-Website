@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Notebook, Search, Plus, X, MessageSquare, BookOpen, AlertCircle, Trash2, Edit2 } from 'lucide-react';
 import { Note, Course } from '../types';
 import Skeleton from './ui/Skeleton';
+import CustomSelect from './ui/CustomSelect';
+import type { SelectOption } from './ui/CustomSelect';
 
 interface NotesViewProps {
   notes: Note[];
@@ -81,6 +83,12 @@ export default function NotesView({
   const [editContent, setEditContent] = useState('');
   const [editCourseId, setEditCourseId] = useState<string>('');
   const [editErrorMsg, setEditErrorMsg] = useState('');
+
+  // Build course select options dynamically from courses prop
+  const courseSelectOptions: SelectOption[] = [
+    { value: '', label: 'Catatan Umum' },
+    ...courses.map(c => ({ value: String(c.id), label: `${c.course_code} - ${c.course_name}` }))
+  ];
 
   // Fungsi ini berguna untuk menangani pemilihan salah satu catatan agar kita bisa melihat detailnya.
   // Di sini, kita memuat data catatan tersebut ke dalam state penyuntingan dan menutup mode edit terlebih dahulu.
@@ -227,18 +235,13 @@ export default function NotesView({
                 <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1">
                   Kaitkan Mata Kuliah (Opsional)
                 </label>
-                <select
+                <CustomSelect
                   value={courseId}
-                  onChange={(e) => setCourseId(e.target.value)}
-                  className="w-full h-10 px-3 bg-white border border-[#E2E8F0] rounded-lg text-sm text-on-surface"
-                >
-                  <option value="">Catatan Umum</option>
-                  {courses.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.course_code} - {c.course_name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setCourseId(val)}
+                  options={courseSelectOptions}
+                  placeholder="Catatan Umum"
+                  position="down"
+                />
               </div>
             </div>
 
@@ -454,18 +457,12 @@ export default function NotesView({
                     <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1">
                       Kaitan Mata Kuliah
                     </label>
-                    <select
+                    <CustomSelect
                       value={editCourseId}
-                      onChange={(e) => setEditCourseId(e.target.value)}
-                      className="w-full h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-on-surface"
-                    >
-                      <option value="">Catatan Umum</option>
-                      {courses.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.course_code} - {c.course_name}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(val) => setEditCourseId(val)}
+                      options={courseSelectOptions}
+                      placeholder="Catatan Umum"
+                    />
                   </div>
                 </div>
 

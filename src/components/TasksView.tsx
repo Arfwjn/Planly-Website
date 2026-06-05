@@ -11,6 +11,10 @@ import React, { useState, useEffect } from 'react';
 import { CheckSquare, Clock, GraduationCap, Plus, X, Calendar, AlertCircle, Trash2, Edit2, Info } from 'lucide-react';
 import { Task, Course } from '../types';
 import Skeleton from './ui/Skeleton';
+import CustomSelect from './ui/CustomSelect';
+import type { SelectOption } from './ui/CustomSelect';
+import TimePicker from './ui/TimePicker';
+
 
 interface TasksViewProps {
   tasks: Task[];
@@ -41,6 +45,14 @@ export default function TasksView({
   autoInspectTaskId = null,
   onClearAutoInspect
 }: TasksViewProps) {
+  const courseOptions: SelectOption[] = [
+    { value: '', label: 'Tugas Umum / Pribadi' },
+    ...courses.map((c) => ({
+      value: String(c.id),
+      label: `${c.course_code} - ${c.course_name}`,
+    })),
+  ];
+
   if (loading) {
     return (
       <div className="max-w-[1000px] mx-auto w-full space-y-6">
@@ -448,18 +460,12 @@ export default function TasksView({
                 <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
                   Mata Kuliah Terkait
                 </label>
-                <select
-                  value={newCourseId === null ? '' : newCourseId}
-                  onChange={(e) => setNewCourseId(e.target.value === '' ? null : Number(e.target.value))}
-                  className="w-full h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-semibold"
-                >
-                  <option value="">Tugas Umum / Pribadi</option>
-                  {courses.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.course_code} - {c.course_name}
-                    </option>
-                  ))}
-                </select>
+                <CustomSelect
+                  value={newCourseId === null ? '' : String(newCourseId)}
+                  onChange={(val) => setNewCourseId(val === '' ? null : Number(val))}
+                  options={courseOptions}
+                  position="down"
+                />
               </div>
 
               {/* Batas Waktu (Tanggal & Jam) */}
@@ -480,12 +486,10 @@ export default function TasksView({
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
                     Waktu
                   </label>
-                  <input
-                    type="time"
-                    required
+                  <TimePicker
                     value={newDeadlineTime}
-                    onChange={(e) => setNewDeadlineTime(e.target.value)}
-                    className="w-full h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-medium"
+                    onChange={setNewDeadlineTime}
+                    required
                   />
                 </div>
               </div>
@@ -647,18 +651,11 @@ export default function TasksView({
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
                     Mata Kuliah Terkait
                   </label>
-                  <select
-                    value={editCourseId === null ? '' : editCourseId}
-                    onChange={(e) => setEditCourseId(e.target.value === '' ? null : Number(e.target.value))}
-                    className="w-full h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-semibold"
-                  >
-                    <option value="">Tugas Umum / Pribadi</option>
-                    {courses.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.course_code} - {c.course_name}
-                      </option>
-                    ))}
-                  </select>
+                  <CustomSelect
+                    value={editCourseId === null ? '' : String(editCourseId)}
+                    onChange={(val) => setEditCourseId(val === '' ? null : Number(val))}
+                    options={courseOptions}
+                  />
                 </div>
 
                 {/* Edit Tanggal & Waktu Deadline */}
@@ -679,12 +676,10 @@ export default function TasksView({
                     <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
                       Waktu
                     </label>
-                    <input
-                      type="time"
-                      required
+                    <TimePicker
                       value={editDeadlineTime}
-                      onChange={(e) => setEditDeadlineTime(e.target.value)}
-                      className="w-full h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-medium"
+                      onChange={setEditDeadlineTime}
+                      required
                     />
                   </div>
                 </div>
