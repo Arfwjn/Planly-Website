@@ -4,6 +4,8 @@ import { Course, Task, Note, SidebarTab } from '../types';
 import { useToast } from './ui/Toast';
 import CustomSelect from './ui/CustomSelect';
 import type { SelectOption } from './ui/CustomSelect';
+import { synthAudio } from '../services/synthAudio';
+
 
 
 interface WorkspaceViewProps {
@@ -40,12 +42,17 @@ interface WorkspaceViewProps {
   setLectureNoteContent: (val: string) => void;
 }
 
-// URL Audio Musik Instrumen / Efek Ambient Royalty-Free
+// Pilihan Efek Suara Latar Belajar Kualitas Premium (Sintetis Real-Time)
 const AMBIENT_SOUNDS = [
-  { id: 'none', name: 'Hening (Tanpa Suara)', url: '' },
-  { id: 'rain', name: 'Suara Rintik Hujan', url: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-84.wav' },
-  { id: 'lofi', name: 'Musik Fokus Lo-Fi', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
-  { id: 'nature', name: 'Kebisingan Alam (White Noise)', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3' }
+  { id: 'none', name: 'Hening (Tanpa Suara)' },
+  { id: 'rain', name: 'Rintik Hujan Syahdu (Rain)' },
+  { id: 'lofi', name: 'Musik Fokus Lo-Fi (Lofi Synth)' },
+  { id: 'nature', name: 'Kebisingan Alam (Nature Wind)' },
+  { id: 'ocean', name: 'Deburan Ombak Pantai (Ocean)' },
+  { id: 'fireplace', name: 'Perapian Kayu Hangat (Fireplace)' },
+  { id: 'crickets', name: 'Jangkrik Malam Pedesaan (Crickets)' },
+  { id: 'cafe', name: 'Suasana Kafe Tenang (Coffee Shop)' },
+  { id: 'train', name: 'Perjalanan Kereta Malam (Night Train)' }
 ];
 
 export default function WorkspaceView({
@@ -78,7 +85,6 @@ export default function WorkspaceView({
   const toast = useToast();
   const [selectedSound, setSelectedSound] = useState('none');
   const [isAudioMuted, setIsAudioMuted] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // State lokal untuk pengelolaan Tugas Baru selama kuliah live
   const [localTasks, setLocalTasks] = useState<{ title: string; deadline: string }[]>([]);
@@ -128,51 +134,29 @@ export default function WorkspaceView({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Efek perpindahan audio ambient
+  // Efek perpindahan audio ambient dan kontrol play/pause seirama status timer
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-    }
+    const isAnyTimerRunning = isFocusTimerRunning || isLectureRunning;
     
-    const activeSound = AMBIENT_SOUNDS.find(s => s.id === selectedSound);
-    if (activeSound && activeSound.url) {
-      const audio = new Audio(activeSound.url);
-      audio.loop = true;
-      audio.muted = isAudioMuted;
-      audioRef.current = audio;
-      
-      const isAnyTimerRunning = isFocusTimerRunning || isLectureRunning;
-      if (isAnyTimerRunning) {
-        audio.play().catch(err => console.log('Audio autoplay blocked', err));
-      }
+    if (selectedSound !== 'none' && isAnyTimerRunning) {
+      synthAudio.play(selectedSound);
+      synthAudio.setVolume(isAudioMuted ? 0 : 0.4);
     } else {
-      audioRef.current = null;
+      synthAudio.stop();
     }
 
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
+      synthAudio.stop();
     };
-  }, [selectedSound]);
+  }, [selectedSound, isFocusTimerRunning, isLectureRunning]);
 
-  // Efek kontrol play/pause audio seirama dengan status timer
+  // Efek sinkronisasi volume / mute
   useEffect(() => {
-    if (audioRef.current) {
-      const isAnyTimerRunning = isFocusTimerRunning || isLectureRunning;
-      if (isAnyTimerRunning) {
-        audioRef.current.play().catch(err => console.log('Audio play error', err));
-      } else {
-        audioRef.current.pause();
-      }
-    }
-  }, [isFocusTimerRunning, isLectureRunning]);
+    synthAudio.setVolume(isAudioMuted ? 0 : 0.4);
+  }, [isAudioMuted]);
 
   const handleMuteToggle = () => {
-    if (audioRef.current) {
-      audioRef.current.muted = !isAudioMuted;
-    }
-    setIsAudioMuted(!isAudioMuted);
+    setIsAudioMuted(prev => !prev);
   };
 
   // Kalkulasi persentase Progress Ring melingkar
