@@ -1,4 +1,4 @@
-import { BookOpen, CalendarDays, CheckSquare, FileText, LayoutDashboard, User as UserIcon, GraduationCap, Play, Pause, RotateCcw, Timer } from 'lucide-react';
+import { BookOpen, CalendarDays, Calendar, CheckSquare, FileText, LayoutDashboard, User as UserIcon, GraduationCap, Play, Pause, RotateCcw, Timer } from 'lucide-react';
 import { SidebarTab } from '../types';
 
 interface SidebarProps {
@@ -31,6 +31,7 @@ export default function Sidebar({
   const menuItems = [
     { id: 'today' as SidebarTab, label: 'Hari Ini', icon: LayoutDashboard },
     { id: 'calendar' as SidebarTab, label: 'Jadwal', icon: CalendarDays },
+    { id: 'events' as SidebarTab, label: 'Event Kampus', icon: Calendar },
     { id: 'workspace' as SidebarTab, label: 'Ruang Belajar', icon: Timer },
     { id: 'tasks' as SidebarTab, label: 'Tugas', icon: CheckSquare },
     { id: 'courses' as SidebarTab, label: 'Mata Kuliah', icon: BookOpen },

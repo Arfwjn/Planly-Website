@@ -54,13 +54,13 @@ export default function TimePicker({ value, onChange, required, className, id, p
         type="button"
         id={id}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full h-10 px-3 bg-[#F8FAFC] dark:bg-input-bg border border-[#E2E8F0] dark:border-card-border rounded-lg text-sm text-on-surface font-semibold flex items-center justify-between gap-2 hover:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all cursor-pointer"
+        className="w-full h-10 px-3 bg-[#F8FAFC] dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-slate-100 font-semibold flex items-center justify-between gap-2 hover:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all cursor-pointer"
       >
         <span className="flex items-center gap-2">
           <Clock className="w-4 h-4 text-primary" />
           <span className="tabular-nums tracking-wider">{pad(hours)}:{pad(minutes)}</span>
         </span>
-        <span className="text-xs text-on-surface-variant font-medium">
+        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
           {hours >= 12 ? 'PM' : 'AM'}
         </span>
       </button>
@@ -76,14 +76,14 @@ export default function TimePicker({ value, onChange, required, className, id, p
 
       {/* Dropdown Clock Picker */}
       {isOpen && (
-        <div className={`absolute z-50 left-0 bg-white dark:bg-card-bg border border-card-border rounded-xl shadow-xl p-4 animate-fade-in min-w-[180px] ${position === 'up' ? 'bottom-full mb-2' : 'mt-2'}`}>
+        <div className={`absolute z-50 left-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-4 animate-fade-in min-w-[180px] ${position === 'up' ? 'bottom-full mb-2' : 'mt-2'}`}>
           <div className="flex items-center justify-center gap-4">
             {/* Hours Column */}
             <div className="flex flex-col items-center gap-1">
               <button
                 type="button"
                 onClick={incHour}
-                className="p-1 rounded-lg hover:bg-primary/10 text-on-surface-variant hover:text-primary transition-colors cursor-pointer"
+                className="p-1 rounded-lg hover:bg-primary/10 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors cursor-pointer"
               >
                 <ChevronUp className="w-5 h-5" />
               </button>
@@ -93,11 +93,11 @@ export default function TimePicker({ value, onChange, required, className, id, p
               <button
                 type="button"
                 onClick={decHour}
-                className="p-1 rounded-lg hover:bg-primary/10 text-on-surface-variant hover:text-primary transition-colors cursor-pointer"
+                className="p-1 rounded-lg hover:bg-primary/10 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors cursor-pointer"
               >
                 <ChevronDown className="w-5 h-5" />
               </button>
-              <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mt-0.5">Jam</span>
+              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-0.5">Jam</span>
             </div>
 
             {/* Separator */}
@@ -108,7 +108,7 @@ export default function TimePicker({ value, onChange, required, className, id, p
               <button
                 type="button"
                 onClick={incMin}
-                className="p-1 rounded-lg hover:bg-primary/10 text-on-surface-variant hover:text-primary transition-colors cursor-pointer"
+                className="p-1 rounded-lg hover:bg-primary/10 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors cursor-pointer"
               >
                 <ChevronUp className="w-5 h-5" />
               </button>
@@ -118,16 +118,16 @@ export default function TimePicker({ value, onChange, required, className, id, p
               <button
                 type="button"
                 onClick={decMin}
-                className="p-1 rounded-lg hover:bg-primary/10 text-on-surface-variant hover:text-primary transition-colors cursor-pointer"
+                className="p-1 rounded-lg hover:bg-primary/10 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors cursor-pointer"
               >
                 <ChevronDown className="w-5 h-5" />
               </button>
-              <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mt-0.5">Menit</span>
+              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-0.5">Menit</span>
             </div>
           </div>
 
           {/* Quick Time Presets */}
-          <div className="mt-3 pt-3 border-t border-card-border">
+          <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-800">
             <div className="grid grid-cols-4 gap-1.5">
               {['07:00', '08:00', '09:00', '10:00', '13:00', '14:00', '15:00', '16:00'].map(t => (
                 <button
@@ -137,7 +137,7 @@ export default function TimePicker({ value, onChange, required, className, id, p
                   className={`px-1 py-1 rounded-md text-[9px] font-semibold transition-all cursor-pointer ${
                     value === t
                       ? 'bg-primary text-white shadow-sm'
-                      : 'bg-slate-100 dark:bg-input-bg text-on-surface-variant hover:bg-primary/10 hover:text-primary'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-650 dark:text-slate-350 hover:bg-primary/10 hover:text-primary'
                   }`}
                 >
                   {t}

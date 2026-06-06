@@ -6,9 +6,10 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Clock, Play, Pause, AlertTriangle, MapPin, Users, Notebook } from 'lucide-react';
-import { Course, Task, SidebarTab } from '../types';
+import { Clock, Play, Pause, AlertTriangle, MapPin, Users, Notebook, Calendar, Info, Undo2 } from 'lucide-react';
+import { Course, Task, SidebarTab, CampusEvent, RescheduledSession } from '../types';
 import NotificationBanner from './ui/NotificationBanner';
+import { getCoursesForDate } from '../utils/reschedule';
 
 interface TodayViewProps {
   user: { name: string };
@@ -21,6 +22,8 @@ interface TodayViewProps {
   setIsFocusTimerRunning: (running: boolean) => void;
   onResetFocusTimer: () => void;
   loading?: boolean;
+  events?: CampusEvent[];
+  rescheduledSessions: RescheduledSession[];
 }
 
 export default function TodayView({
@@ -33,7 +36,9 @@ export default function TodayView({
   isFocusTimerRunning,
   setIsFocusTimerRunning,
   onResetFocusTimer,
-  loading = false
+  loading = false,
+  events = [],
+  rescheduledSessions
 }: TodayViewProps) {
 
   // Tampilkan loading skeleton jika data sedang dimuat
@@ -149,13 +154,25 @@ export default function TodayView({
     return map[day] || day;
   };
 
-  // Mendapatkan hari ini dalam format bahasa Inggris (misalnya "Thursday")
-  const todayDay = getTodayDayOfWeek(); // e.g. "Wednesday"
+  const todayDay = getTodayDayOfWeek();
 
-  // Memfilter daftar mata kuliah yang dijadwalkan hanya untuk hari ini dan mengurutkannya secara kronologis
-  const todayCourses = courses
-    .filter((c) => c.day_of_week === todayDay)
-    .sort((a, b) => a.start_time.localeCompare(b.start_time));
+  // Mendapatkan tanggal hari ini dalam format ISO "YYYY-MM-DD"
+  const todayISODate = (() => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  })();
+
+  // Filter & proses override untuk hari ini menggunakan reschedule helper
+  const { dayCoursesProcessed } = getCoursesForDate(
+    todayISODate,
+    courses,
+    rescheduledSessions
+  );
+
+  const todayCourses = dayCoursesProcessed;
 
   // Menentukan apakah ada jadwal kuliah untuk hari ini
   const hasCoursesToday = todayCourses.length > 0;
@@ -332,50 +349,66 @@ export default function TodayView({
             /* Merender setiap mata kuliah hari ini */
             todayCourses.map((course) => {
               const status = getCourseStatus(course);
-              const isCompleted = status === 'completed';
-              const isInProgress = status === 'in-progress';
+              const c = course as any;
+              const isCanceled = c.is_canceled;
+              const isRescheduledIn = c.is_rescheduled_in;
+              const isCompleted = status === 'completed' && !isCanceled;
+              const isInProgress = status === 'in-progress' && !isCanceled;
 
               return (
-                <div key={course.id} className={`relative flex gap-6 md:gap-8 mb-8 transition-opacity duration-300 ${isCompleted ? 'opacity-50' : ''}`}>
+                <div key={course.id} className={`relative flex gap-6 md:gap-8 mb-8 transition-opacity duration-300 ${isCompleted || isCanceled ? 'opacity-60' : ''}`}>
                   {/* Kolom Waktu Mulai */}
                   <div className="w-16 flex-shrink-0 text-right pt-4">
-                    <span className={`text-sm font-bold block ${isInProgress ? 'text-primary' : 'text-on-surface'}`}>{course.start_time}</span>
+                    <span className={`text-sm font-bold block ${isInProgress ? 'text-primary' : 'text-on-surface'}`}>
+                      {isCanceled ? '-' : course.start_time}
+                    </span>
                     <span className="text-[10px] font-semibold text-on-surface-variant block">
-                      {parseInt(course.start_time) >= 12 ? 'WIB' : 'WIB'}
+                      {isCanceled ? 'BATAL' : 'WIB'}
                     </span>
                   </div>                  
                   
                   {/* Kartu Informasi Kelas */}
                   <div className={`flex-1 bg-white border rounded-xl p-4 md:p-5 hover:border-primary transition-all shadow-sm ${
-                    isInProgress ? 'border-primary/45 bg-primary/[0.02] ring-1 ring-primary/5' : 'border-[#E2E8F0]'
+                    isInProgress 
+                      ? 'border-primary/45 bg-primary/[0.02] ring-1 ring-primary/5' 
+                      : isCanceled 
+                        ? 'border-red-200 bg-red-50/10' 
+                        : 'border-[#E2E8F0]'
                   }`}>
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-2">
                       <div className="flex flex-wrap items-center gap-2">
                         {/* Kode Mata Kuliah dengan warna kustom */}
                         <span
                           className="text-[10px] font-bold px-2 py-0.5 rounded text-white shadow-2xs"
-                          style={{ backgroundColor: course.color_hex }}
+                          style={{ backgroundColor: isCanceled ? '#94A3B8' : course.color_hex }}
                         >
                           {course.course_code}
                         </span>
                         {/* Nama Mata Kuliah */}
-                        <h4 className={`text-base font-bold text-on-surface inline ${isCompleted ? 'line-through text-on-surface-variant/80' : ''}`}>
+                        <h4 className={`text-base font-bold text-on-surface inline ${isCompleted || isCanceled ? 'line-through text-on-surface-variant/80' : ''}`}>
                           {course.course_name}
                         </h4>
                       </div>
                       
                       {/* Label Status Kelas */}
-                      {isInProgress && (
+                      {isCanceled ? (
+                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold border border-red-200">
+                          Batal Sesi
+                        </span>
+                      ) : isRescheduledIn ? (
+                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold border border-blue-200">
+                          Kuliah Pengganti
+                        </span>
+                      ) : isInProgress ? (
                         <span className="inline-flex items-center gap-1 px-3 py-1 bg-primary text-white rounded-full text-xs font-bold shadow-sm">
                           <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
                           Sedang Berlangsung
                         </span>
-                      )}
-                      {isCompleted && (
+                      ) : isCompleted ? (
                         <span className="inline-flex items-center gap-1 px-3 py-1 bg-slate-100 text-on-surface-variant rounded-full text-xs font-bold border border-slate-200">
                           Selesai
                         </span>
-                      )}
+                      ) : null}
                     </div>
                     
                     {/* Detail Ruangan & Dosen */}
@@ -387,6 +420,14 @@ export default function TodayView({
                         <Users className="w-3.5 h-3.5 text-[#94A3B8]" /> {course.lecturer_name}
                       </p>
                     </div>
+
+                    {/* Catatan Reschedule */}
+                    {c.reschedule_note && (
+                      <div className="mt-2.5 p-2 bg-[#F8FAFC] border border-slate-100 rounded-lg text-[10px] text-on-surface-variant flex items-start gap-1.5 font-medium">
+                        <Info className="w-3.5 h-3.5 text-primary flex-shrink-0 mt-0.5" />
+                        <span>Catatan: {c.reschedule_note}</span>
+                      </div>
+                    )}
 
                     {/* Tombol Interaktif: Membuka Catatan Khusus untuk Mata Kuliah ini */}
                     <div className="flex items-center gap-4 pt-3 mt-3 border-t border-slate-100 text-xs">
@@ -403,6 +444,65 @@ export default function TodayView({
             })
           )}
         </div>
+      </div>
+
+      {/* Section Event Hari Ini */}
+      <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-sm mt-6">
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-6 bg-primary rounded-full"></div>
+            <h3 className="text-lg font-bold text-on-surface">Event Hari Ini</h3>
+          </div>
+          <button
+            onClick={() => onTabChange('events')}
+            className="text-xs font-bold text-primary hover:underline bg-transparent border-none p-0 cursor-pointer"
+          >
+            Lihat Semua Event
+          </button>
+        </div>
+
+        {(() => {
+          const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+          const todayEvents = events.filter(e => e.event_date === todayStr);
+
+          if (todayEvents.length === 0) {
+            return (
+              <div className="text-center py-6 text-on-surface-variant text-xs font-medium">
+                Tidak ada event non-kuliah yang terjadwal untuk hari ini.
+              </div>
+            );
+          }
+
+          return (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {todayEvents.map(event => (
+                <div
+                  key={event.id}
+                  style={{ borderLeftColor: event.color_hex, borderLeftWidth: '4px' }}
+                  className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        {event.category.replace('_', ' ')}
+                      </span>
+                      {event.is_important && (
+                        <span className="text-xs text-yellow-500">⭐</span>
+                      )}
+                    </div>
+                    <h4 className="font-bold text-sm text-on-surface mb-1">{event.event_name}</h4>
+                    <p className="text-xs text-on-surface-variant line-clamp-2 mb-3">{event.description || 'Tidak ada deskripsi.'}</p>
+                  </div>
+                  <div className="space-y-1.5 text-[10px] text-on-surface-variant font-medium pt-2 border-t border-slate-50">
+                    <p className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-slate-400" /> {event.start_time} - {event.end_time} WIB</p>
+                    <p className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-slate-400" /> {event.location}</p>
+                    <p className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5 text-slate-400" /> {event.organizer}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
       </div>
     </div>
   );

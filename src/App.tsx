@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Course, Task, Note, SidebarTab, LoginResponse } from './types';
+import { User, Course, Task, Note, SidebarTab, LoginResponse, CampusEvent, RescheduledSession } from './types';
 import { api } from './services/api';
 
 // Impor komponen-komponen view utama aplikasi
@@ -8,6 +8,7 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import TodayView from './components/TodayView';
 import CalendarView from './components/CalendarView';
+import EventsView from './components/EventsView';
 import TasksView from './components/TasksView';
 import CoursesView from './components/CoursesView';
 import NotesView from './components/NotesView';
@@ -43,6 +44,8 @@ export default function App() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
+  const [events, setEvents] = useState<CampusEvent[]>([]);
+  const [rescheduledSessions, setRescheduledSessions] = useState<RescheduledSession[]>([]);
   const [loadingData, setLoadingData] = useState(false); // Indikator ketika mengambil data dari API
 
   // --- STATE NAVIGASI GLOBAL & PENCARIAN ---
@@ -172,18 +175,22 @@ export default function App() {
 
 
   // --- SINKRONISASI DATA DARI API ---
-  // Mengambil semua data pengguna (mata kuliah, tugas, catatan) secara paralel saat berhasil login
+  // Mengambil semua data pengguna (mata kuliah, tugas, catatan, event) secara paralel saat berhasil login
   useEffect(() => {
     if (isAuthenticated) {
       setLoadingData(true);
       Promise.all([
         api.courses.getAll(),
         api.tasks.getAll(),
-        api.notes.getAll()
-      ]).then(([c, t, n]) => {
+        api.notes.getAll(),
+        api.events.getAll(),
+        api.reschedules.getAll()
+      ]).then(([c, t, n, e, r]) => {
         setCourses(c);
         setTasks(t);
         setNotes(n);
+        setEvents(e);
+        setRescheduledSessions(r);
         setLoadingData(false);
       }).catch(err => {
         console.error("Error loading data from api", err);
@@ -316,6 +323,49 @@ export default function App() {
     }).catch(err => toast.error(err.message));
   };
 
+  // --- HANDLER EVENT KAMPUS ---
+  // Menambahkan event kampus baru
+  const handleAddEvent = (newEvent: Omit<CampusEvent, 'id' | 'user_id'>) => {
+    api.events.create(newEvent).then((createdEvent) => {
+      setEvents((prev) => [createdEvent, ...prev]);
+      toast.success('Event baru berhasil ditambahkan.');
+    }).catch(err => toast.error(err.message));
+  };
+
+  // Memperbarui event kampus
+  const handleEditEvent = (eventId: number, updatedEvent: Partial<CampusEvent>) => {
+    api.events.update(eventId, updatedEvent).then((savedEvent) => {
+      setEvents((prev) => prev.map((e) => (e.id === eventId ? savedEvent : e)));
+      toast.success('Event berhasil diperbarui.');
+    }).catch(err => toast.error(err.message));
+  };
+
+  // Menghapus event kampus
+  const handleDeleteEvent = (eventId: number) => {
+    api.events.delete(eventId).then(() => {
+      setEvents((prev) => prev.filter((e) => e.id !== eventId));
+      toast.success('Event berhasil dihapus.');
+    }).catch(err => toast.error(err.message));
+  };
+
+  // Menambahkan pemindahan jadwal (reschedule) kuliah
+  const handleAddReschedule = (session: Omit<RescheduledSession, 'id'>) => {
+    api.reschedules.create(session).then((created) => {
+      setRescheduledSessions((prev) => [created, ...prev]);
+      toast.success(session.is_canceled ? 'Sesi kuliah berhasil dibatalkan.' : 'Sesi kuliah berhasil dipindahkan.');
+    }).catch(err => toast.error(err.message));
+  };
+
+  // Menghapus pemindahan jadwal kuliah (mengembalikan ke semula)
+  const handleDeleteReschedule = (courseId: number, originalDate: string) => {
+    api.reschedules.delete(courseId, originalDate).then(() => {
+      setRescheduledSessions((prev) =>
+        prev.filter((r) => !(r.course_id === courseId && r.original_date === originalDate))
+      );
+      toast.success('Jadwal kuliah dikembalikan ke sesi normal.');
+    }).catch(err => toast.error(err.message));
+  };
+
   // Berpindah ke tab catatan dan otomatis memfilter berdasarkan kode mata kuliah yang dipilih
   const handleOpenNotesWithCourse = (courseId: number | null) => {
     setActiveTab('notes');
@@ -346,6 +396,8 @@ export default function App() {
             setIsFocusTimerRunning={setIsFocusTimerRunning}
             onResetFocusTimer={handleResetFocusTimer}
             loading={loadingData}
+            events={events}
+            rescheduledSessions={rescheduledSessions}
           />
         );
       case 'calendar':
@@ -356,6 +408,20 @@ export default function App() {
               setActiveTab('courses');
               setIsEnrollCourseOpen(true);
             }}
+            loading={loadingData}
+            rescheduledSessions={rescheduledSessions}
+            onAddReschedule={handleAddReschedule}
+            onDeleteReschedule={handleDeleteReschedule}
+          />
+        );
+      case 'events':
+        return (
+          <EventsView
+            events={events}
+            onAddEvent={handleAddEvent}
+            onEditEvent={handleEditEvent}
+            onDeleteEvent={handleDeleteEvent}
+            searchQuery={searchQuery}
             loading={loadingData}
           />
         );

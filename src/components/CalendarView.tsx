@@ -6,18 +6,30 @@
  * serta menambahkan mata kuliah baru melalui modal terintegrasi.
  */
 
-import { useState, useEffect } from 'react';
-import { CalendarDays, Clock, MapPin, User, Info } from 'lucide-react';
-import { Course } from '../types';
+import React, { useState, useEffect } from 'react';
+import { CalendarDays, Clock, MapPin, User, Info, X, Calendar as CalendarIcon, Undo2 } from 'lucide-react';
+import { Course, RescheduledSession } from '../types';
 import Skeleton from './ui/Skeleton';
+import TimePicker from './ui/TimePicker';
+import { getCoursesForDate, ProcessedCourse } from '../utils/reschedule';
 
 interface CalendarViewProps {
   courses: Course[];
   onOpenAddNewCourseModal: () => void;
   loading?: boolean;
+  rescheduledSessions: RescheduledSession[];
+  onAddReschedule: (session: Omit<RescheduledSession, 'id'>) => void;
+  onDeleteReschedule: (courseId: number, originalDate: string) => void;
 }
 
-export default function CalendarView({ courses, onOpenAddNewCourseModal, loading = false }: CalendarViewProps) {
+export default function CalendarView({
+  courses,
+  onOpenAddNewCourseModal,
+  loading = false,
+  rescheduledSessions,
+  onAddReschedule,
+  onDeleteReschedule
+}: CalendarViewProps) {
   if (loading) {
     return (
       <div className="max-w-[1000px] mx-auto w-full space-y-6">
@@ -109,6 +121,112 @@ export default function CalendarView({ courses, onOpenAddNewCourseModal, loading
   // State untuk waktu sekarang, digunakan untuk melacak keaktifan kelas secara real-time
   const [currentTime, setCurrentTime] = useState(new Date());
 
+  // State untuk melacak mode tampilan (Tampilan Mingguan vs Bulanan)
+  const [isMonthView, setIsMonthView] = useState(false);
+  // State untuk melacak bulan yang sedang dilihat di Tampilan Bulanan
+  const [viewedMonth, setViewedMonth] = useState(() => new Date());
+
+  // State untuk modal reschedule
+  const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
+  const [selectedCourseForReschedule, setSelectedCourseForReschedule] = useState<Course | null>(null);
+  const [rescheduleDate, setRescheduleDate] = useState('');
+  const [rescheduleStartTime, setRescheduleStartTime] = useState('');
+  const [rescheduleEndTime, setRescheduleEndTime] = useState('');
+  const [rescheduleNote, setRescheduleNote] = useState('');
+
+  // Menyelaraskan viewedMonth saat selectedDayObj berubah agar kalender bulanan sinkron
+  useEffect(() => {
+    setViewedMonth(new Date(selectedDayObj.dateObject));
+  }, [selectedDayObj]);
+
+  // Format Date ke "YYYY-MM-DD"
+  const formatDateYYYYMMDD = (date: Date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+
+  const selectedISODate = formatDateYYYYMMDD(selectedDayObj.dateObject);
+
+  // Membuat DayObj baru berdasarkan objek tanggal
+  const getDayObjFromDate = (date: Date) => {
+    const daysNameShort = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+    const daysFullName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    return {
+      dayName: daysNameShort[date.getDay()],
+      fullName: daysFullName[date.getDay()],
+      dateNum: date.getDate(),
+      dateObject: date
+    };
+  };
+
+  // Menghasilkan daftar 42 hari untuk grid kalender bulanan (6 baris x 7 kolom)
+  const getMonthGridDays = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth(); // 0-indexed
+
+    // Hari pertama pada bulan yang bersangkutan
+    const firstDayOfMonth = new Date(year, month, 1);
+    // Hari pertama dalam baris pertama kalender grid (minggu sebelumnya jika hari pertama bukan hari Minggu)
+    const startDay = new Date(firstDayOfMonth);
+    const dayOfWeek = firstDayOfMonth.getDay(); // 0 = Minggu, 1 = Senin, dst.
+    startDay.setDate(startDay.getDate() - dayOfWeek);
+
+    const gridDays = [];
+    for (let i = 0; i < 42; i++) {
+      const current = new Date(startDay);
+      current.setDate(startDay.getDate() + i);
+      gridDays.push({
+        date: current,
+        isCurrentMonth: current.getMonth() === month
+      });
+    }
+    return gridDays;
+  };
+
+  // Handler simpan reschedule
+  const handleSubmitReschedule = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCourseForReschedule || !rescheduleDate || !rescheduleStartTime || !rescheduleEndTime) {
+      alert('Harap lengkapi seluruh formulir pemindahan sesi.');
+      return;
+    }
+
+    onAddReschedule({
+      course_id: selectedCourseForReschedule.id,
+      original_date: selectedISODate,
+      new_date: rescheduleDate,
+      new_start_time: rescheduleStartTime,
+      new_end_time: rescheduleEndTime,
+      is_canceled: false,
+      note: rescheduleNote || null
+    });
+
+    setIsRescheduleModalOpen(false);
+    setSelectedCourseForReschedule(null);
+    setRescheduleDate('');
+    setRescheduleStartTime('');
+    setRescheduleEndTime('');
+    setRescheduleNote('');
+  };
+
+  // Handler batal sesi kuliah
+  const handleCancelSession = (course: Course) => {
+    const reason = prompt('Masukkan alasan pembatalan sesi perkuliahan (opsional):');
+    if (reason === null) return; // Batal klik cancel
+
+    onAddReschedule({
+      course_id: course.id,
+      original_date: selectedISODate,
+      new_date: null,
+      new_start_time: null,
+      new_end_time: null,
+      is_canceled: true,
+      note: reason || 'Kelas dibatalkan'
+    });
+  };
+
   /**
    * Interval timer pembaruan waktu (focus timer ticks / system updates):
    * Kita memperbarui state currentTime setiap 30 detik untuk memastikan pembaruan
@@ -121,14 +239,14 @@ export default function CalendarView({ courses, onOpenAddNewCourseModal, loading
     return () => clearInterval(timer);
   }, []);
 
-  /**
-   * selected day filter:
-   * Memfilter mata kuliah yang sesuai dengan nama hari yang sedang dipilih oleh user,
-   * kemudian mengurutkannya secara kronologis dari jam paling awal ke yang paling akhir.
-   */
-  const dayCourses = courses
-    .filter((c) => c.day_of_week === selectedDayObj.fullName)
-    .sort((a, b) => a.start_time.localeCompare(b.start_time));
+  // Memproses jadwal harian menggunakan utility helper reschedule
+  const { dayCoursesProcessed, rescheduledOutCourses } = getCoursesForDate(
+    selectedISODate,
+    courses,
+    rescheduledSessions
+  );
+
+  const dayCourses = dayCoursesProcessed;
 
   /**
    * Mendapatkan nama bulan dan tahun berdasarkan objek tanggal dari hari yang sedang dipilih.
@@ -199,13 +317,28 @@ export default function CalendarView({ courses, onOpenAddNewCourseModal, loading
         <div className="flex gap-2 items-center">
           {/* Tombol pintasan untuk langsung kembali ke hari ini */}
           <button
+            type="button"
             onClick={() => setSelectedDayObj(daysInWeek[0])}
             className="px-3 py-2 border border-[#E2E8F0] hover:bg-slate-50 text-on-surface-variant text-xs font-semibold rounded-lg hover:text-on-surface transition-colors cursor-pointer bg-white"
           >
             Hari Ini
           </button>
+          {/* Tombol toggle tampilan mingguan vs bulanan */}
+          <button
+            type="button"
+            onClick={() => setIsMonthView(!isMonthView)}
+            className={`px-3 py-2 border rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
+              isMonthView
+                ? 'bg-primary border-primary text-white hover:bg-primary/90'
+                : 'border-[#E2E8F0] hover:bg-slate-50 text-on-surface-variant hover:text-on-surface bg-white'
+            }`}
+          >
+            <CalendarDays className="w-4 h-4" />
+            <span>{isMonthView ? 'Tampilan Mingguan' : 'Tampilan Bulanan'}</span>
+          </button>
           {/* Tombol aksi membuka modal penambahan mata kuliah baru */}
           <button
+            type="button"
             onClick={onOpenAddNewCourseModal}
             className="px-4 py-2 bg-primary hover:bg-[#4F46E5] text-white rounded-lg text-xs font-semibold flex items-center gap-2 shadow-sm cursor-pointer transition-colors"
           >
@@ -214,68 +347,177 @@ export default function CalendarView({ courses, onOpenAddNewCourseModal, loading
         </div>
       </div>
 
-      {/* Date Selector Strip Horizontal (Daftar 7 hari dinamis) */}
-      <div className="w-full bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-sm">
-        <div className="flex justify-between items-center gap-3 overflow-x-auto no-scrollbar pb-1 w-full">
-          {daysInWeek.map((day, index) => {
-            const isSelected = selectedDayObj.fullName === day.fullName;
-            const dayCoursesList = courses.filter((c) => c.day_of_week === day.fullName);
-            const isToday = index === 0;
-
-            return (
+      {/* Month Grid View */}
+      {isMonthView && (
+        <div className="w-full bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-sm space-y-4">
+          <div className="flex justify-between items-center px-2">
+            <h2 className="text-sm font-bold text-on-surface uppercase tracking-wider">
+              {viewedMonth.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+            </h2>
+            <div className="flex gap-1">
               <button
-                key={day.fullName}
-                onClick={() => setSelectedDayObj(day)}
-                className={`group flex-1 min-w-[64px] max-w-[130px] flex flex-col items-center justify-between h-[84px] py-2.5 px-2 rounded-xl border transition-all duration-200 cursor-pointer select-none ${
-                  isSelected
-                    ? 'bg-gradient-to-br from-primary to-indigo-600 text-white border-transparent shadow-md shadow-primary/20'
-                    : 'border-date-btn-border bg-date-btn-bg text-on-surface-variant hover:bg-primary/[0.04] hover:border-primary/30 hover:text-primary'
-                }`}
+                type="button"
+                onClick={() => {
+                  const prev = new Date(viewedMonth);
+                  prev.setMonth(prev.getMonth() - 1);
+                  setViewedMonth(prev);
+                }}
+                className="p-1.5 border border-[#E2E8F0] hover:bg-slate-50 rounded-lg text-on-surface-variant cursor-pointer transition-colors"
               >
-                <span className={`text-[9px] font-extrabold uppercase tracking-widest transition-colors duration-200 ${
-                  isSelected ? 'text-white/85' : 'text-[#94A3B8] group-hover:text-primary/70'
-                }`}>
-                  {day.dayName}
-                </span>
-                
-                <span className="text-lg font-black tracking-tight leading-none mt-0.5">
-                  {day.dateNum}
-                </span>
+                &larr;
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const next = new Date(viewedMonth);
+                  next.setMonth(next.getMonth() + 1);
+                  setViewedMonth(next);
+                }}
+                className="p-1.5 border border-[#E2E8F0] hover:bg-slate-50 rounded-lg text-on-surface-variant cursor-pointer transition-colors"
+              >
+                &rarr;
+              </button>
+            </div>
+          </div>
 
-                {/* Indikator Hari Ini atau Titik Mata Kuliah */}
-                {isToday ? (
-                  <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md leading-none transition-colors duration-200 ${
-                    isSelected ? 'bg-white/20 text-white' : 'bg-primary/10 text-primary border border-primary/10 group-hover:bg-primary/20'
-                  }`}>
-                    KINI
+          <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider pb-2 border-b border-[#F1F5F9]">
+            <div>Min</div>
+            <div>Sen</div>
+            <div>Sel</div>
+            <div>Rab</div>
+            <div>Kam</div>
+            <div>Jum</div>
+            <div>Sab</div>
+          </div>
+
+          <div className="grid grid-cols-7 gap-1.5">
+            {getMonthGridDays(viewedMonth).map((gridDay, idx) => {
+              const gridDateStr = formatDateYYYYMMDD(gridDay.date);
+              const isToday = formatDateYYYYMMDD(new Date()) === gridDateStr;
+              const isSelected = selectedISODate === gridDateStr;
+              
+              // Hitung kelas untuk hari ini menggunakan helper reschedule
+              const { dayCoursesProcessed } = getCoursesForDate(
+                gridDateStr,
+                courses,
+                rescheduledSessions
+              );
+
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setSelectedDayObj(getDayObjFromDate(gridDay.date));
+                    setIsMonthView(false);
+                  }}
+                  className={`min-h-[60px] flex flex-col justify-between p-1.5 border rounded-xl transition-all cursor-pointer ${
+                    gridDay.isCurrentMonth
+                      ? isSelected
+                        ? 'bg-[#F5F2FF] border-primary text-primary font-bold shadow-xs'
+                        : isToday
+                          ? 'border-primary/45 bg-primary/[0.02] text-on-surface hover:bg-slate-50'
+                          : 'border-[#F1F5F9] bg-slate-50/30 text-on-surface hover:bg-slate-50'
+                      : 'border-[#F8FAFC] bg-white text-on-surface-variant/40 hover:bg-slate-50'
+                  }`}
+                >
+                  <span className={`text-[10px] font-bold self-start ${isToday && !isSelected ? 'text-primary' : ''}`}>
+                    {gridDay.date.getDate()}
                   </span>
-                ) : (
-                  <div className="flex gap-1 justify-center items-center h-2 mt-0.5">
-                    {dayCoursesList.slice(0, 3).map((c) => (
+
+                  {/* Dots for course load */}
+                  <div className="flex flex-wrap gap-0.5 mt-1 self-stretch items-center min-h-[8px]">
+                    {dayCoursesProcessed.slice(0, 4).map((c) => (
                       <span
                         key={c.id}
-                        className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                          isSelected ? 'bg-white' : ''
-                        }`}
-                        style={isSelected ? {} : { backgroundColor: c.color_hex }}
+                        className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: c.is_canceled ? '#94A3B8' : c.color_hex }}
                         title={c.course_name}
                       />
                     ))}
-                    {dayCoursesList.length > 3 && (
-                      <span className={`text-[8px] font-black ${isSelected ? 'text-white' : 'text-[#94A3B8] group-hover:text-primary'}`}>
-                        +
-                      </span>
-                    )}
-                    {dayCoursesList.length === 0 && (
-                      <span className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white/30' : 'bg-[#E2E8F0]'}`} />
+                    {dayCoursesProcessed.length > 4 && (
+                      <span className="text-[7px] font-extrabold text-[#94A3B8] leading-none">+</span>
                     )}
                   </div>
-                )}
-              </button>
-            );
-          })}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Date Selector Strip Horizontal (Daftar 7 hari dinamis) */}
+      {!isMonthView && (
+        <div className="w-full bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-sm">
+          <div className="flex justify-between items-center gap-3 overflow-x-auto no-scrollbar pb-1 w-full">
+            {daysInWeek.map((day, index) => {
+              const isSelected = selectedDayObj.fullName === day.fullName;
+              const isToday = index === 0;
+              const dateStr = formatDateYYYYMMDD(day.dateObject);
+
+              // Ambil kelas untuk tanggal strip ini
+              const { dayCoursesProcessed } = getCoursesForDate(
+                dateStr,
+                courses,
+                rescheduledSessions
+              );
+
+              return (
+                <button
+                  key={day.fullName}
+                  type="button"
+                  onClick={() => setSelectedDayObj(day)}
+                  className={`group flex-1 min-w-[64px] max-w-[130px] flex flex-col items-center justify-between h-[84px] py-2.5 px-2 rounded-xl border transition-all duration-200 cursor-pointer select-none ${
+                    isSelected
+                      ? 'bg-gradient-to-br from-primary to-indigo-600 text-white border-transparent shadow-md shadow-primary/20'
+                      : 'border-date-btn-border bg-date-btn-bg text-on-surface-variant hover:bg-primary/[0.04] hover:border-primary/30 hover:text-primary'
+                  }`}
+                >
+                  <span className={`text-[9px] font-extrabold uppercase tracking-widest transition-colors duration-200 ${
+                    isSelected ? 'text-white/85' : 'text-[#94A3B8] group-hover:text-primary/70'
+                  }`}>
+                    {day.dayName}
+                  </span>
+                  
+                  <span className="text-lg font-black tracking-tight leading-none mt-0.5">
+                    {day.dateNum}
+                  </span>
+
+                  {/* Indikator Hari Ini atau Titik Mata Kuliah */}
+                  {isToday ? (
+                    <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md leading-none transition-colors duration-200 ${
+                      isSelected ? 'bg-white/20 text-white' : 'bg-primary/10 text-primary border border-primary/10 group-hover:bg-primary/20'
+                    }`}>
+                      KINI
+                    </span>
+                  ) : (
+                    <div className="flex gap-1 justify-center items-center h-2 mt-0.5">
+                      {dayCoursesProcessed.slice(0, 3).map((c) => (
+                        <span
+                          key={c.id}
+                          className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                            isSelected ? 'bg-white' : ''
+                          }`}
+                          style={isSelected ? {} : { backgroundColor: c.is_canceled ? '#94A3B8' : c.color_hex }}
+                          title={c.course_name}
+                        />
+                      ))}
+                      {dayCoursesProcessed.length > 3 && (
+                        <span className={`text-[8px] font-black ${isSelected ? 'text-white' : 'text-[#94A3B8] group-hover:text-primary'}`}>
+                          +
+                        </span>
+                      )}
+                      {dayCoursesProcessed.length === 0 && (
+                        <span className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white/30' : 'bg-[#E2E8F0]'}`} />
+                      )}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* 
         Live status header bar:
@@ -348,6 +590,7 @@ export default function CalendarView({ courses, onOpenAddNewCourseModal, loading
                 Tidak ada mata kuliah yang dijadwalkan untuk hari {getIndonesianDayName(selectedDayObj.fullName)}.
               </p>
               <button
+                type="button"
                 onClick={onOpenAddNewCourseModal}
                 className="px-4 py-2 bg-primary hover:bg-[#4F46E5] text-white text-xs font-semibold rounded-lg shadow-sm transition-colors cursor-pointer font-sans"
               >
@@ -358,30 +601,35 @@ export default function CalendarView({ courses, onOpenAddNewCourseModal, loading
             /* Memetakan mata kuliah yang terjadwal */
             dayCourses.map((course) => {
               const status = getCourseStatus(course);
-              const isCompleted = status === 'completed';
-              const isInProgress = status === 'in-progress';
+              const c = course as any;
+              const isCanceled = c.is_canceled;
+              const isRescheduledIn = c.is_rescheduled_in;
+              const isCompleted = status === 'completed' && !isCanceled;
+              const isInProgress = status === 'in-progress' && !isCanceled;
 
               return (
-                <div key={course.id} className={`flex gap-4 lg:gap-6 relative group transition-opacity duration-300 ${isCompleted ? 'opacity-60' : ''}`}>
+                <div key={course.id} className={`flex gap-4 lg:gap-6 relative group transition-opacity duration-300 ${isCompleted || isCanceled ? 'opacity-60' : ''}`}>
                   
                   {/* Indikator Waktu di sebelah kiri */}
                   <div className="w-[50px] lg:w-[60px] flex-shrink-0 text-right pt-4">
                     <span className={`text-xs font-bold block ${isInProgress ? 'text-primary' : 'text-on-surface'}`}>
-                      {course.start_time}
+                      {isCanceled ? '-' : course.start_time}
                     </span>
                     <span className="text-[9px] text-[#94A3B8] font-bold uppercase tracking-widest block">
-                      WIB
+                      {isCanceled ? 'BATAL' : 'WIB'}
                     </span>
                   </div>
 
                   {/* Titik indikator pada timeline (Timeline Dot Indicator) */}
                   <div className="relative flex items-start justify-center z-10 pt-4.5">
                     <div className={`w-[12px] h-[12px] rounded-full bg-white border-2 ${
-                      isInProgress 
-                        ? 'border-primary ring-4 ring-primary/20 animate-pulse bg-primary' 
-                        : isCompleted 
-                          ? 'border-[#94A3B8] bg-[#94A3B8]' 
-                          : 'border-primary bg-white'
+                      isCanceled
+                        ? 'border-red-400 bg-red-400'
+                        : isInProgress 
+                          ? 'border-primary ring-4 ring-primary/20 animate-pulse bg-primary' 
+                          : isCompleted 
+                            ? 'border-[#94A3B8] bg-[#94A3B8]' 
+                            : 'border-primary bg-white'
                     }`}></div>
                   </div>
 
@@ -389,39 +637,50 @@ export default function CalendarView({ courses, onOpenAddNewCourseModal, loading
                   <div className={`flex-1 bg-white rounded-2xl border p-5 relative overflow-hidden transition-all shadow-sm ${
                     isInProgress 
                       ? 'border-primary shadow-[0_0_20px_rgba(79,70,229,0.15)] ring-1 ring-primary/35 bg-primary/[0.01]' 
-                      : 'border-[#E2E8F0] hover:border-primary/50 hover:shadow-md'
+                      : isCanceled 
+                        ? 'border-red-200 bg-red-50/10'
+                        : 'border-[#E2E8F0] hover:border-primary/50 hover:shadow-md'
                   }`}>
                     {/* Pita dekoratif vertikal di sisi kiri kartu berdasarkan warna kustom mata kuliah */}
                     <div
                       className="absolute left-0 top-0 bottom-0 w-1.5"
-                      style={{ backgroundColor: course.color_hex }}
+                      style={{ backgroundColor: isCanceled ? '#E2E8F0' : course.color_hex }}
                     ></div>
 
                     <div className="flex justify-between items-start mb-3 pl-2">
                       <div>
-                        <h3 className="text-base font-bold text-on-surface">
+                        <h3 className={`text-base font-bold text-on-surface ${isCanceled ? 'line-through text-[#94A3B8]' : ''}`}>
                           {course.course_name}
                         </h3>
-                        {/* Status kelas dinamis (Sedang Berlangsung / Selesai / Upcoming) */}
-                        {isInProgress && (
+                        {/* Status kelas dinamis (Sedang Berlangsung / Selesai / Upcoming / Batal) */}
+                        {isCanceled ? (
+                          <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-red-500 uppercase tracking-wider mt-0.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                            Batal Sesi
+                          </span>
+                        ) : isRescheduledIn ? (
+                          <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-blue-600 uppercase tracking-wider mt-0.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                            Kuliah Pengganti
+                          </span>
+                        ) : isInProgress ? (
                           <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-primary uppercase tracking-wider animate-pulse mt-0.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
                             Sedang Berlangsung
                           </span>
-                        )}
-                        {isCompleted && (
+                        ) : isCompleted ? (
                           <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider mt-0.5">
                             Selesai
                           </span>
-                        )}
+                        ) : null}
                       </div>
                       {/* Kode mata kuliah */}
                       <span
                         className="text-[10px] font-bold px-2 py-0.5 rounded border shadow-2xs"
                         style={{
-                          color: course.color_hex,
-                          backgroundColor: `${course.color_hex}10`,
-                          borderColor: `${course.color_hex}25`
+                          color: isCanceled ? '#94A3B8' : course.color_hex,
+                          backgroundColor: isCanceled ? '#F1F5F9' : `${course.color_hex}10`,
+                          borderColor: isCanceled ? '#E2E8F0' : `${course.color_hex}25`
                         }}
                       >
                         {course.course_code}
@@ -447,6 +706,53 @@ export default function CalendarView({ courses, onOpenAddNewCourseModal, loading
                           <span>{course.room}</span>
                         </div>
                       </div>
+
+                      {/* Catatan Reschedule */}
+                      {c.reschedule_note && (
+                        <div className="mt-2.5 p-2 bg-[#F8FAFC] border border-slate-100 rounded-lg text-[10px] text-on-surface-variant flex items-start gap-1.5 font-medium">
+                          <Info className="w-3.5 h-3.5 text-primary flex-shrink-0 mt-0.5" />
+                          <span>Catatan: {c.reschedule_note}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action buttons for rescheduling/cancellation */}
+                    <div className="mt-4 pt-3 border-t border-[#F1F5F9] flex justify-end gap-2 text-[10px] font-bold">
+                      {c.is_canceled || c.is_rescheduled_in ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onDeleteReschedule(c.id, c.reschedule_original_date || selectedISODate);
+                          }}
+                          className="px-2.5 py-1 text-primary hover:bg-primary/5 rounded border border-primary/20 cursor-pointer transition-colors flex items-center gap-1"
+                        >
+                          <Undo2 className="w-3.5 h-3.5" />
+                          <span>Pulihkan Sesi Normal</span>
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedCourseForReschedule(course);
+                              setRescheduleDate(selectedISODate);
+                              setRescheduleStartTime(course.start_time);
+                              setRescheduleEndTime(course.end_time);
+                              setIsRescheduleModalOpen(true);
+                            }}
+                            className="px-2.5 py-1 border border-[#E2E8F0] hover:bg-slate-50 text-on-surface-variant hover:text-on-surface rounded cursor-pointer transition-colors"
+                          >
+                            Pindahkan Sesi
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleCancelSession(course)}
+                            className="px-2.5 py-1 border border-red-100 hover:bg-red-50 text-red-500 rounded cursor-pointer transition-colors"
+                          >
+                            Batalkan Sesi
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -455,8 +761,139 @@ export default function CalendarView({ courses, onOpenAddNewCourseModal, loading
             })
           )}
 
+          {/* Timeline untuk kelas yang dipindahkan ke hari lain */}
+          {rescheduledOutCourses.length > 0 && (
+            <div className="mt-8 pt-6 border-t border-[#F1F5F9] space-y-4">
+              <h3 className="text-xs font-bold text-[#94A3B8] uppercase tracking-wider flex items-center gap-1.5 pl-2">
+                <Undo2 className="w-4 h-4 text-primary" />
+                <span>Kelas yang Dipindahkan dari Hari Ini</span>
+              </h3>
+              <div className="space-y-3 pl-2">
+                {rescheduledOutCourses.map((c) => {
+                  const override = rescheduledSessions.find(
+                    (s) => s.course_id === c.id && s.original_date === selectedISODate
+                  );
+                  const newDateFormatted = override?.new_date
+                    ? new Date(override.new_date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' })
+                    : '';
+                  return (
+                    <div key={c.id} className="bg-slate-50 border border-slate-200/60 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                      <div>
+                        <h4 className="font-bold text-xs text-on-surface">{c.course_name}</h4>
+                        <p className="text-[10px] text-on-surface-variant font-medium mt-1">
+                          Dipindahkan ke: <strong className="text-primary">{newDateFormatted} ({override?.new_start_time} - {override?.new_end_time} WIB)</strong>
+                        </p>
+                        {override?.note && (
+                          <p className="text-[9px] text-[#94A3B8] italic mt-0.5">Alasan: "{override.note}"</p>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => onDeleteReschedule(c.id, selectedISODate)}
+                        className="px-2.5 py-1 text-primary hover:bg-primary/5 rounded border border-primary/20 text-[10px] font-bold cursor-pointer transition-colors"
+                      >
+                        Pulihkan Sesi Normal
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
+
+      {/* Modal Reschedule Sesi Kuliah */}
+      {isRescheduleModalOpen && selectedCourseForReschedule && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-lg rounded-2xl shadow-xl overflow-visible p-6 space-y-4 text-slate-900 dark:text-slate-100">
+            <div className="flex justify-between items-center pb-2 border-b border-slate-200 dark:border-slate-800">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <CalendarIcon className="w-5 h-5 text-primary" />
+                <span>Pindahkan Sesi Kuliah</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsRescheduleModalOpen(false);
+                  setSelectedCourseForReschedule(null);
+                }}
+                className="text-slate-500 dark:text-slate-400 hover:text-slate-850 dark:hover:text-slate-100 p-1 rounded-full cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="bg-slate-50 dark:bg-slate-800/40 p-3 rounded-xl border border-slate-200 dark:border-slate-800 text-xs">
+              <p className="font-bold text-slate-900 dark:text-white">{selectedCourseForReschedule.course_name}</p>
+              <p className="text-slate-500 dark:text-slate-400 mt-0.5">{selectedCourseForReschedule.course_code} &bull; Sesi normal hari {getIndonesianDayName(selectedCourseForReschedule.day_of_week)}</p>
+            </div>
+
+            <form onSubmit={handleSubmitReschedule} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Tanggal Baru</label>
+                <input
+                  type="date"
+                  required
+                  value={rescheduleDate}
+                  onChange={(e) => setRescheduleDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-xs bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Jam Mulai Baru</label>
+                  <TimePicker
+                    value={rescheduleStartTime}
+                    onChange={setRescheduleStartTime}
+                    position="up"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Jam Selesai Baru</label>
+                  <TimePicker
+                    value={rescheduleEndTime}
+                    onChange={setRescheduleEndTime}
+                    position="up"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Alasan Pemindahan (Opsional)</label>
+                <textarea
+                  value={rescheduleNote}
+                  onChange={(e) => setRescheduleNote(e.target.value)}
+                  placeholder="Contoh: Dosen ada tugas luar kota, kelas diganti malam hari"
+                  rows={2}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-xs bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary resize-none placeholder-slate-400 dark:placeholder-slate-500"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsRescheduleModalOpen(false);
+                    setSelectedCourseForReschedule(null);
+                  }}
+                  className="px-4 py-2 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-primary hover:bg-[#4F46E5] text-white rounded-lg text-xs font-semibold cursor-pointer transition-colors shadow-sm"
+                >
+                  Simpan Jadwal Baru
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );

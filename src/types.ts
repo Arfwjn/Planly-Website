@@ -160,7 +160,7 @@ export interface ProfileUpdatePayload {
 /**
  * Menentukan tab aktif pada sidebar navigasi utama aplikasi Planly.
  */
-export type SidebarTab = 'today' | 'calendar' | 'tasks' | 'courses' | 'notes' | 'profile' | 'workspace';
+export type SidebarTab = 'today' | 'calendar' | 'tasks' | 'courses' | 'notes' | 'profile' | 'workspace' | 'events';
 
 // --- Event Kampus ---
 
@@ -191,3 +191,18 @@ export interface CampusEvent {
  * Payload untuk membuat event baru.
  */
 export type CampusEventCreatePayload = Omit<CampusEvent, 'id' | 'user_id'>;
+
+/**
+ * Interface RescheduledSession merepresentasikan pemindahan atau pembatalan sesi kelas tertentu.
+ * Menghindari duplikasi atau modifikasi pada data permanen Course.
+ */
+export interface RescheduledSession {
+  id: number;
+  course_id: number;
+  original_date: string; // Format "YYYY-MM-DD"
+  new_date: string | null; // "YYYY-MM-DD" (null jika dibatalkan sepenuhnya)
+  new_start_time: string | null; // "HH:MM"
+  new_end_time: string | null; // "HH:MM"
+  is_canceled: boolean;
+  note: string | null; // Alasan reschedule, e.g. "Dosen ada seminar"
+}

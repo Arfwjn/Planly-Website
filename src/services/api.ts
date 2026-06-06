@@ -17,6 +17,8 @@ import {
   TaskCreatePayload, TaskUpdatePayload,
   NoteCreatePayload, NoteUpdatePayload,
   ProfileUpdatePayload,
+  CampusEvent, CampusEventCreatePayload,
+  RescheduledSession,
 } from '../types';
 import { initialUser, initialCourses, initialTasks, initialNotes } from '../mockData';
 import httpClient from './httpClient';
@@ -514,6 +516,147 @@ const notesService = {
 };
 
 // =============================================================================
+// CAMPUS EVENTS SERVICE SECTION
+// =============================================================================
+const initialEvents: CampusEvent[] = [
+  {
+    id: 1,
+    user_id: 1,
+    event_name: 'Seminar Nasional AI & Web Development',
+    category: 'seminar',
+    description: 'Seminar nasional mengenai masa depan Web Development di era kecerdasan buatan.',
+    event_date: new Date().toLocaleDateString('en-CA'), // Hari ini
+    start_time: '09:00',
+    end_time: '12:00',
+    location: 'Auditorium SWU Lantai 3',
+    organizer: 'Himpunan Mahasiswa Informatika',
+    color_hex: '#6366F1',
+    is_important: true
+  },
+  {
+    id: 2,
+    user_id: 1,
+    event_name: 'Workshop Flutter Advanced',
+    category: 'workshop',
+    description: 'Belajar State Management Bloc dan Clean Architecture di Flutter.',
+    event_date: (() => {
+      const d = new Date();
+      d.setDate(d.getDate() + 2);
+      return d.toLocaleDateString('en-CA');
+    })(), // 2 hari lagi
+    start_time: '13:00',
+    end_time: '16:00',
+    location: 'Lab Komputer 3',
+    organizer: 'Google Developer Student Clubs SWU',
+    color_hex: '#F59E0B',
+    is_important: false
+  }
+];
+
+const eventsService = {
+  getAll: async (): Promise<CampusEvent[]> => {
+    if (USE_MOCK) {
+      await delay(300);
+      return getStored<CampusEvent[]>('planly_events', initialEvents);
+    }
+    const { data } = await httpClient.get<CampusEvent[]>('/events');
+    return data;
+  },
+  create: async (payload: CampusEventCreatePayload): Promise<CampusEvent> => {
+    if (USE_MOCK) {
+      await delay(400);
+      const events = getStored<CampusEvent[]>('planly_events', initialEvents);
+      const newEvent: CampusEvent = {
+        ...payload,
+        id: ++mockIdCounter,
+        user_id: 1,
+      };
+      setStored('planly_events', [newEvent, ...events]);
+      return newEvent;
+    }
+    const { data } = await httpClient.post<CampusEvent>('/events', payload);
+    return data;
+  },
+  update: async (id: number, payload: Partial<CampusEventCreatePayload>): Promise<CampusEvent> => {
+    if (USE_MOCK) {
+      await delay(400);
+      const events = getStored<CampusEvent[]>('planly_events', initialEvents);
+      const index = events.findIndex(e => e.id === id);
+      if (index === -1) throw new Error('Event tidak ditemukan.');
+      const updated = [...events];
+      updated[index] = { ...updated[index], ...payload };
+      setStored('planly_events', updated);
+      return updated[index];
+    }
+    const { data } = await httpClient.put<CampusEvent>(`/events/${id}`, payload);
+    return data;
+  },
+  delete: async (id: number): Promise<void> => {
+    if (USE_MOCK) {
+      await delay(300);
+      const events = getStored<CampusEvent[]>('planly_events', initialEvents);
+      setStored('planly_events', events.filter(e => e.id !== id));
+      return;
+    }
+    await httpClient.delete(`/events/${id}`);
+  }
+};
+
+// =============================================================================
+// RESCHEDULED SESSIONS SERVICE SECTION
+// =============================================================================
+const initialReschedules: RescheduledSession[] = [
+  {
+    id: 1,
+    course_id: 1,
+    original_date: (() => {
+      const d = new Date();
+      return d.toLocaleDateString('en-CA');
+    })(),
+    new_date: null,
+    new_start_time: null,
+    new_end_time: null,
+    is_canceled: true,
+    note: 'Pertemuan perdana dibatalkan karena dosen rapat rektorat'
+  }
+];
+
+const reschedulesService = {
+  getAll: async (): Promise<RescheduledSession[]> => {
+    if (USE_MOCK) {
+      await delay(300);
+      return getStored<RescheduledSession[]>('planly_reschedules', initialReschedules);
+    }
+    const { data } = await httpClient.get<RescheduledSession[]>('/reschedules');
+    return data;
+  },
+  create: async (payload: Omit<RescheduledSession, 'id'>): Promise<RescheduledSession> => {
+    if (USE_MOCK) {
+      await delay(400);
+      const reschedules = getStored<RescheduledSession[]>('planly_reschedules', initialReschedules);
+      const newReschedule: RescheduledSession = {
+        ...payload,
+        id: ++mockIdCounter,
+      };
+      setStored('planly_reschedules', [newReschedule, ...reschedules]);
+      return newReschedule;
+    }
+    const { data } = await httpClient.post<RescheduledSession>('/reschedules', payload);
+    return data;
+  },
+  delete: async (courseId: number, originalDate: string): Promise<void> => {
+    if (USE_MOCK) {
+      await delay(300);
+      const reschedules = getStored<RescheduledSession[]>('planly_reschedules', initialReschedules);
+      const filtered = reschedules.filter(r => !(r.course_id === courseId && r.original_date === originalDate));
+      setStored('planly_reschedules', filtered);
+      return;
+    }
+    await httpClient.delete(`/reschedules/${courseId}/${originalDate}`);
+  }
+};
+
+// =============================================================================
 // EXPORT — unified API object
 // Kita menyatukan semua service section di atas ke dalam satu objek 'api'
 // agar lebih rapi dan mudah diimpor di bagian aplikasi lainnya.
@@ -525,4 +668,6 @@ export const api = {
   courses: coursesService,
   tasks: tasksService,
   notes: notesService,
+  events: eventsService,
+  reschedules: reschedulesService,
 };
