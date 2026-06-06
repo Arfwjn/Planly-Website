@@ -389,6 +389,7 @@ export default function App() {
             user={currentUser}
             courses={courses}
             tasks={tasks}
+            onToggleTaskState={handleToggleTaskState}
             onTabChange={setActiveTab}
             onOpenNotesWithCourse={handleOpenNotesWithCourse}
             focusTimeLeft={focusTimeLeft}
@@ -407,6 +408,8 @@ export default function App() {
         return (
           <CalendarView
             courses={courses}
+            tasks={tasks}
+            onToggleTaskState={handleToggleTaskState}
             onOpenAddNewCourseModal={() => {
               setActiveTab('courses');
               setIsEnrollCourseOpen(true);
@@ -506,11 +509,14 @@ export default function App() {
       case 'profile':
         return (
           <ProfileView
-            user={currentUser}
+            user={currentUser!}
             onUserUpdate={handleUserUpdate}
             onSignOut={handleSignOut}
             theme={theme}
             onThemeChange={setTheme}
+            courses={courses}
+            tasks={tasks}
+            notesCount={notes.length}
           />
         );
       default:

@@ -8,8 +8,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { CheckSquare, Clock, GraduationCap, Plus, X, Calendar, AlertCircle, Trash2, Edit2, Info } from 'lucide-react';
-import { Task, Course } from '../types';
+import { CheckSquare, Clock, GraduationCap, Plus, X, Calendar, AlertCircle, Trash2, Edit2, Info, Paperclip, Download } from 'lucide-react';
+import { Task, Course, AttachmentFile } from '../types';
 import Skeleton from './ui/Skeleton';
 import CustomSelect from './ui/CustomSelect';
 import type { SelectOption } from './ui/CustomSelect';
@@ -111,6 +111,7 @@ export default function TasksView({
   const [newIsPriority, setNewIsPriority] = useState(false);
   const [newIsFinished, setNewIsFinished] = useState(false);
   const [newDescription, setNewDescription] = useState('');
+  const [newAttachments, setNewAttachments] = useState<AttachmentFile[]>([]);
   const [validationError, setValidationError] = useState('');
 
   // State Manajemen Form untuk Mengedit Tugas (Edit Task)
@@ -122,6 +123,7 @@ export default function TasksView({
   const [editIsPriority, setEditIsPriority] = useState(false);
   const [editIsFinished, setEditIsFinished] = useState(false);
   const [editDescription, setEditDescription] = useState('');
+  const [editAttachments, setEditAttachments] = useState<AttachmentFile[]>([]);
   const [editValidationError, setEditValidationError] = useState('');
 
   // Fungsi untuk memuat data tugas ke dalam form edit saat pengguna membuka detail tugas
@@ -135,6 +137,7 @@ export default function TasksView({
     setEditIsPriority(task.is_priority);
     setEditIsFinished(task.is_finished);
     setEditDescription(task.description || '');
+    setEditAttachments(task.attachments || []);
     setEditValidationError('');
   };
 
@@ -152,6 +155,51 @@ export default function TasksView({
       }
     }
   }, [autoInspectTaskId, tasks, onClearAutoInspect]);
+
+  // Helper untuk memproses unggah file ke Base64
+  const handleFileUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    currentAttachments: AttachmentFile[],
+    setAttachments: React.Dispatch<React.SetStateAction<AttachmentFile[]>>,
+    setError: (msg: string) => void
+  ) => {
+    setError('');
+    const files = e.target.files;
+    if (!files) return;
+
+    const limitBytes = 1.5 * 1024 * 1024; // 1.5MB
+    const loadedList: AttachmentFile[] = [...currentAttachments];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (file.size > limitBytes) {
+        setError(`Berkas "${file.name}" melebihi batas ukuran 1.5MB.`);
+        return;
+      }
+
+      try {
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = (err) => reject(err);
+        });
+
+        loadedList.push({
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          data_url: dataUrl
+        });
+      } catch (err) {
+        setError('Gagal membaca berkas.');
+        return;
+      }
+    }
+
+    setAttachments(loadedList);
+    e.target.value = '';
+  };
 
   // Fungsi untuk menangani pengiriman form pembuatan tugas baru
   const handleCreateTaskSubmit = (e: React.FormEvent) => {
@@ -176,7 +224,8 @@ export default function TasksView({
       is_finished: newIsFinished,
       is_priority: newIsPriority,
       course_id: newCourseId,
-      user_id: 0
+      user_id: 0,
+      attachments: newAttachments
     });
 
     // Reset seluruh field form setelah berhasil dikirim
@@ -187,6 +236,7 @@ export default function TasksView({
     setNewIsPriority(false);
     setNewIsFinished(false);
     setNewDescription('');
+    setNewAttachments([]);
     // Menutup slide-over drawer tugas baru
     onSetSlideOverOpen(false);
   };
@@ -214,12 +264,14 @@ export default function TasksView({
       deadline: `${editDeadlineDate} ${editDeadlineTime}:00`,
       is_finished: editIsFinished,
       is_priority: editIsPriority,
-      course_id: editCourseId
+      course_id: editCourseId,
+      attachments: editAttachments
     });
 
     // Mereset state inspeksi setelah selesai mengedit
     setSelectedTask(null);
     setIsEditing(false);
+    setEditAttachments([]);
   };
 
   // Fungsi untuk menangani penghapusan tugas dan menutup panel detail/inspeksi
@@ -406,6 +458,13 @@ export default function TasksView({
                       <Clock className="w-3.5 h-3.5" />
                       {formatRelDeadline(deadlineDate, deadlineTime, task.is_finished)}
                     </span>
+                    {/* Menampilkan jumlah lampiran berkas */}
+                    {task.attachments && task.attachments.length > 0 && (
+                      <span className="flex items-center gap-1 text-[10px] bg-[#F1F5F9] dark:bg-slate-800 px-1.5 py-0.5 rounded-md border border-[#E2E8F0] dark:border-slate-700/80">
+                        <Paperclip className="w-3 h-3 text-primary" />
+                        <span>{task.attachments.length} Lampiran</span>
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -554,8 +613,49 @@ export default function TasksView({
                   rows={4}
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
-                  className="w-full p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-none"
+                  className="w-full p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-none font-medium"
                 ></textarea>
+              </div>
+
+              {/* Lampiran Berkas */}
+              <div>
+                <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
+                  Lampiran Berkas (Maks 1.5MB)
+                </label>
+                <div className="flex flex-col gap-2">
+                  <label className="flex items-center justify-center gap-2 w-full h-10 border border-dashed border-[#C7C4D8] hover:border-primary rounded-lg text-xs text-on-surface-variant hover:text-primary font-bold cursor-pointer transition-colors bg-[#F8FAFC]">
+                    <Paperclip className="w-4 h-4" />
+                    <span>Pilih Berkas</span>
+                    <input
+                      type="file"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => handleFileUpload(e, newAttachments, setNewAttachments, setValidationError)}
+                    />
+                  </label>
+                  {newAttachments.length > 0 && (
+                    <div className="space-y-1.5 mt-1">
+                      {newAttachments.map((file, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-850 rounded-lg text-[11px] font-sans">
+                          <div className="flex items-center gap-1.5 truncate flex-1 pr-2">
+                            <Paperclip className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                            <span className="font-semibold truncate text-on-surface">{file.name}</span>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <span className="text-slate-400">({(file.size / 1024).toFixed(1)} KB)</span>
+                            <button
+                              type="button"
+                              onClick={() => setNewAttachments(newAttachments.filter((_, i) => i !== idx))}
+                              className="text-red-500 hover:text-red-700 font-bold px-1 py-0.5 rounded cursor-pointer"
+                            >
+                              Hapus
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Aksi Tambah Tugas */}
@@ -747,6 +847,47 @@ export default function TasksView({
                   ></textarea>
                 </div>
 
+                {/* Lampiran Berkas Edit */}
+                <div>
+                  <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
+                    Lampiran Berkas (Maks 1.5MB)
+                  </label>
+                  <div className="flex flex-col gap-2">
+                    <label className="flex items-center justify-center gap-2 w-full h-10 border border-dashed border-[#C7C4D8] hover:border-primary rounded-lg text-xs text-on-surface-variant hover:text-primary font-bold cursor-pointer transition-colors bg-[#F8FAFC]">
+                      <Paperclip className="w-4 h-4" />
+                      <span>Pilih Berkas</span>
+                      <input
+                        type="file"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => handleFileUpload(e, editAttachments, setEditAttachments, setEditValidationError)}
+                      />
+                    </label>
+                    {editAttachments.length > 0 && (
+                      <div className="space-y-1.5 mt-1">
+                        {editAttachments.map((file, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-850 rounded-lg text-[11px] font-sans">
+                            <div className="flex items-center gap-1.5 truncate flex-1 pr-2">
+                              <Paperclip className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                              <span className="font-semibold truncate text-on-surface">{file.name}</span>
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <span className="text-slate-400">({(file.size / 1024).toFixed(1)} KB)</span>
+                              <button
+                                type="button"
+                                onClick={() => setEditAttachments(editAttachments.filter((_, i) => i !== idx))}
+                                className="text-red-500 hover:text-red-700 font-bold px-1 py-0.5 rounded cursor-pointer"
+                              >
+                                Hapus
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 {/* Aksi Perubahan Edit */}
                 <div className="pt-4 border-t border-[#E2E8F0] flex justify-end gap-3">
                   <button
@@ -817,6 +958,44 @@ export default function TasksView({
                     {selectedTask.description || 'Tidak ada catatan tambahan yang diberikan untuk tugas ini.'}
                   </div>
                 </div>
+
+                {/* Lampiran Berkas Detail */}
+                {selectedTask.attachments && selectedTask.attachments.length > 0 && (
+                  <div className="pt-4 border-t border-slate-100">
+                    <p className="text-[11px] text-on-surface-variant uppercase font-bold tracking-wider mb-2">Lampiran Berkas ({selectedTask.attachments.length})</p>
+                    <div className="grid grid-cols-1 gap-2">
+                      {selectedTask.attachments.map((file, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-850 rounded-xl text-xs font-sans hover:bg-slate-100 dark:hover:bg-slate-800/40 transition-colors"
+                        >
+                          <div className="flex items-center gap-2 truncate pr-2 flex-1">
+                            <Paperclip className="w-4 h-4 text-primary flex-shrink-0" />
+                            <span className="font-bold truncate text-on-surface">{file.name}</span>
+                          </div>
+                          <div className="flex items-center gap-3 flex-shrink-0">
+                            <span className="text-slate-400">({(file.size / 1024).toFixed(1)} KB)</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = file.data_url;
+                                link.download = file.name;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                              }}
+                              className="text-primary hover:text-indigo-700 font-extrabold flex items-center gap-1 cursor-pointer"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              <span>Unduh</span>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Tombol Utama Toggle Status Tugas (Tandai Belum Selesai / Tandai Selesai) */}
                 <div className="pt-6 border-t border-slate-100">

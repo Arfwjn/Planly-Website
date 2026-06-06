@@ -7,8 +7,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { CalendarDays, Clock, MapPin, User, Info, X, Calendar as CalendarIcon, Undo2 } from 'lucide-react';
-import { Course, RescheduledSession } from '../types';
+import { CalendarDays, Clock, MapPin, User, Info, X, Calendar as CalendarIcon, Undo2, CheckSquare } from 'lucide-react';
+import { Course, RescheduledSession, Task } from '../types';
 import Skeleton from './ui/Skeleton';
 import TimePicker from './ui/TimePicker';
 import DatePicker from './ui/DatePicker';
@@ -17,6 +17,8 @@ import { hexToRgb } from '../utils/color';
 
 interface CalendarViewProps {
   courses: Course[];
+  tasks: Task[];
+  onToggleTaskState: (taskId: number) => void;
   onOpenAddNewCourseModal: () => void;
   loading?: boolean;
   rescheduledSessions: RescheduledSession[];
@@ -26,6 +28,8 @@ interface CalendarViewProps {
 
 export default function CalendarView({
   courses,
+  tasks,
+  onToggleTaskState,
   onOpenAddNewCourseModal,
   loading = false,
   rescheduledSessions,
@@ -699,6 +703,43 @@ export default function CalendarView({
                         </div>
                       )}
                     </div>
+
+                    {/* Tugas Terkait */}
+                    {(() => {
+                      const courseTasks = tasks.filter(t => t.course_id === course.id && !t.is_finished);
+                      if (courseTasks.length === 0) return null;
+                      return (
+                        <div className="mt-4 pt-3 border-t border-[#F1F5F9] dark:border-slate-800/50 space-y-2 pl-2">
+                          <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-primary uppercase tracking-wider">
+                            <CheckSquare className="w-3.5 h-3.5" />
+                            <span>Tugas Terkait ({courseTasks.length})</span>
+                          </div>
+                          <div className="space-y-1.5">
+                            {courseTasks.map((task) => (
+                              <div
+                                key={task.id}
+                                className="flex items-center gap-2.5 text-[11px] text-on-surface-variant font-medium bg-slate-50/50 dark:bg-slate-800/20 p-2 rounded-xl border border-slate-100/50 dark:border-slate-800/40 hover:bg-slate-100/50 dark:hover:bg-slate-800/35 transition-all"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={task.is_finished}
+                                  onChange={() => onToggleTaskState(task.id)}
+                                  className="w-3.5 h-3.5 rounded border-[#C7C4D8] text-primary focus:ring-primary cursor-pointer accent-primary"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-bold text-on-surface truncate">
+                                    {task.task_title}
+                                  </p>
+                                  <p className="text-[9px] text-slate-400 mt-0.5">
+                                    Tenggat: {task.deadline.split(' ')[0]} {task.deadline.split(' ')[1]?.slice(0, 5) || '23:59'}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {/* Action buttons for rescheduling/cancellation */}
                     <div className="mt-4 pt-3 border-t border-[#F1F5F9] flex justify-end gap-2 text-[10px] font-bold">

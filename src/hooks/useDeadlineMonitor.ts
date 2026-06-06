@@ -11,9 +11,10 @@ interface UseDeadlineMonitorProps {
 /**
  * Custom Hook: useDeadlineMonitor
  * 
- * Hook ini memantau deadline tugas-tugas kuliah yang belum selesai dalam latar belakang (background process).
- * Setiap 60 detik, hook akan memeriksa sisa waktu pengerjaan tugas dan menembakkan notifikasi
- * browser sistem jika tugas mendekati deadline (24 jam, 1 jam, atau 15 menit).
+ * Hook ini memantau deadline tugas-tugas kuliah yang belum selesai serta jadwal kuliah harian
+ * dalam latar belakang (background process).
+ * Setiap 60 detik, hook akan memeriksa sisa waktu pengerjaan tugas dan waktu mulai kuliah,
+ * lalu menembakkan notifikasi browser sistem jika mendekati batas waktu.
  */
 export default function useDeadlineMonitor({
   tasks,
@@ -25,7 +26,7 @@ export default function useDeadlineMonitor({
     // Pastikan browser mendukung notifikasi
     if (!('Notification' in window)) return;
 
-    const checkDeadlines = () => {
+    const checkDeadlinesAndSchedules = () => {
       // 1. Periksa apakah notifikasi aktif di setelan profil user
       const isEnabled = localStorage.getItem('planly_notifications_enabled') !== 'false';
       if (!isEnabled) return;
@@ -34,7 +35,9 @@ export default function useDeadlineMonitor({
       if (Notification.permission !== 'granted') return;
 
       const notifiedRecords = getNotifiedRecords();
+      const notifiedSchedules = getNotifiedSchedules();
 
+      // --- MONITOR TUGAS ---
       tasks.forEach((task) => {
         // Hanya pantau tugas yang belum selesai
         if (task.is_finished) return;
@@ -93,13 +96,51 @@ export default function useDeadlineMonitor({
           }
         }
       });
+
+      // --- MONITOR JADWAL KULIAH ---
+      const today = new Date();
+      const ENGLISH_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const todayEnglishDay = ENGLISH_DAYS[today.getDay()];
+      const todayCourses = courses.filter((c) => c.day_of_week === todayEnglishDay);
+
+      todayCourses.forEach((course) => {
+        const [hours, minutes] = course.start_time.split(':').map(Number);
+        const startTime = new Date();
+        startTime.setHours(hours, minutes, 0, 0);
+
+        const diffMs = startTime.getTime() - Date.now();
+        const diffMins = Math.round(diffMs / 60000);
+
+        // Jika kuliah akan dimulai dalam waktu 10 hingga 15 menit ke depan
+        if (diffMins > 0 && diffMins <= 15) {
+          const dateStr = today.toISOString().split('T')[0];
+          const scheduleKey = `${course.id}-${dateStr}`;
+
+          if (!notifiedSchedules.includes(scheduleKey)) {
+            const notification = new Notification(`Planly: Kuliah Akan Dimulai`, {
+              body: `Mata kuliah "${course.course_name}" akan dimulai pada pukul ${course.start_time} di Ruang ${course.room}. Jangan terlambat!`,
+              icon: '/assets/logo.png',
+              tag: `course-schedule-${scheduleKey}`,
+            });
+
+            notification.onclick = (e) => {
+              e.preventDefault();
+              window.focus();
+              setActiveTab('courses');
+              notification.close();
+            };
+
+            markScheduleAsNotified(scheduleKey, notifiedSchedules);
+          }
+        }
+      });
     };
 
     // Jalankan cek pertama saat mount
-    checkDeadlines();
+    checkDeadlinesAndSchedules();
 
     // Jalankan cek berkala setiap 60 detik
-    const interval = setInterval(checkDeadlines, 60000);
+    const interval = setInterval(checkDeadlinesAndSchedules, 60000);
 
     return () => clearInterval(interval);
   }, [tasks, courses, setActiveTab, setAutoInspectTaskId]);
@@ -128,4 +169,30 @@ function markAsNotified(taskId: number, intervalType: string, currentRecords: Re
     currentRecords[taskId].push(intervalType);
   }
   localStorage.setItem('planly_notified_deadlines', JSON.stringify(currentRecords));
+}
+
+/**
+ * Mengambil rekam data notifikasi jadwal kuliah dari localStorage
+ */
+function getNotifiedSchedules(): string[] {
+  try {
+    const saved = localStorage.getItem('planly_notified_schedules');
+    return saved ? JSON.parse(saved) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+/**
+ * Menyimpan tanda bahwa jadwal kuliah telah dikirimkan notifikasi hari ini
+ */
+function markScheduleAsNotified(scheduleKey: string, currentRecords: string[]) {
+  if (!currentRecords.includes(scheduleKey)) {
+    currentRecords.push(scheduleKey);
+    // Batasi histori simpanan agar tidak membesar tanpa batas (simpan 100 item terakhir)
+    if (currentRecords.length > 100) {
+      currentRecords.shift();
+    }
+    localStorage.setItem('planly_notified_schedules', JSON.stringify(currentRecords));
+  }
 }

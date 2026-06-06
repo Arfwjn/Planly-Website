@@ -21,6 +21,10 @@ export interface User {
   major: string | null;
   semester: number | null;
   profile_photo_url: string | null;
+  gpa_current?: number | null;
+  gpa_target?: number | null;
+  target_study_hours?: number | null;
+  address?: string | null;
 }
 
 /**
@@ -42,6 +46,13 @@ export interface Course {
   color_hex: string;
 }
 
+export interface AttachmentFile {
+  name: string;
+  type: string;
+  size: number;
+  data_url: string; // Base64 representation
+}
+
 /**
  * Interface Task merepresentasikan tugas kuliah atau catatan tugas user.
  * Tugas ini opsional dikaitkan dengan mata kuliah tertentu (course_id),
@@ -56,6 +67,7 @@ export interface Task {
   deadline: string;     // format "YYYY-MM-DD HH:MM:SS"
   is_finished: boolean;
   is_priority: boolean;
+  attachments?: AttachmentFile[];
 }
 
 /**
@@ -68,6 +80,7 @@ export interface Note {
   course_id: number | null;
   title: string;
   content: string;
+  attachments?: AttachmentFile[];
 }
 
 // --- Auth DTOs (Data Transfer Objects untuk proses autentikasi Laravel) ---

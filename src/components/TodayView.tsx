@@ -19,6 +19,7 @@ interface TodayViewProps {
   user: { name: string };
   courses: Course[];
   tasks: Task[];
+  onToggleTaskState: (taskId: number) => void;
   onTabChange: (tab: SidebarTab) => void;
   onOpenNotesWithCourse: (courseId: number | null) => void;
   focusTimeLeft: number;
@@ -37,6 +38,7 @@ export default function TodayView({
   user,
   courses,
   tasks,
+  onToggleTaskState,
   onTabChange,
   onOpenNotesWithCourse,
   focusTimeLeft,
@@ -545,6 +547,43 @@ export default function TodayView({
                         <span>Catatan: {c.reschedule_note}</span>
                       </div>
                     )}
+
+                    {/* Tugas Terkait */}
+                    {(() => {
+                      const courseTasks = tasks.filter(t => t.course_id === course.id && !t.is_finished);
+                      if (courseTasks.length === 0) return null;
+                      return (
+                        <div className="mt-4 pt-3 border-t border-[#F1F5F9] dark:border-slate-800/50 space-y-2">
+                          <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-primary uppercase tracking-wider pl-1">
+                            <CheckSquare className="w-3.5 h-3.5" />
+                            <span>Tugas Terkait ({courseTasks.length})</span>
+                          </div>
+                          <div className="space-y-1.5">
+                            {courseTasks.map((task) => (
+                              <div
+                                key={task.id}
+                                className="flex items-center gap-2.5 text-[11px] text-on-surface-variant font-medium bg-slate-50/50 dark:bg-slate-800/20 p-2 rounded-xl border border-slate-100/50 dark:border-slate-800/40 hover:bg-slate-100/50 dark:hover:bg-slate-800/35 transition-all"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={task.is_finished}
+                                  onChange={() => onToggleTaskState(task.id)}
+                                  className="w-3.5 h-3.5 rounded border-[#C7C4D8] text-primary focus:ring-primary cursor-pointer accent-primary"
+                                />
+                                <div className="flex-1 min-w-0 text-left">
+                                  <p className="font-bold text-on-surface truncate">
+                                    {task.task_title}
+                                  </p>
+                                  <p className="text-[9px] text-slate-400 mt-0.5">
+                                    Tenggat: {task.deadline.split(' ')[0]} {task.deadline.split(' ')[1]?.slice(0, 5) || '23:59'}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {/* Tombol Interaktif: Membuka Catatan Khusus untuk Mata Kuliah ini */}
                     <div className="flex items-center gap-4 pt-3 mt-3 border-t border-slate-100 text-xs">
