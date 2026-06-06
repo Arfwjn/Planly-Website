@@ -37,6 +37,15 @@ export default function Header({
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [hasBadge, setHasBadge] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 0);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
   
   const notificationRef = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
@@ -52,6 +61,8 @@ export default function Header({
         return 'Cari catatan & perkuliahan...';
       case 'calendar':
         return 'Cari jadwal kegiatan...';
+      case 'events':
+        return 'Cari kegiatan & event kampus...';
       default:
         return 'Cari tugas, catatan, atau mata kuliah...';
     }
@@ -135,10 +146,14 @@ export default function Header({
     sessionStorage.setItem('planly_badge_cleared', 'true');
   };
 
-  const isSearchSupported = activeTab === 'tasks' || activeTab === 'courses' || activeTab === 'notes';
+  const isSearchSupported = activeTab === 'tasks' || activeTab === 'courses' || activeTab === 'notes' || activeTab === 'events';
 
   return (
-    <header className="flex justify-between items-center h-16 px-4 sm:px-6 bg-header-bg backdrop-blur-md sticky top-0 z-40 border-b border-header-border w-full">
+    <header className={`flex justify-between items-center h-16 px-4 sm:px-6 bg-header-bg backdrop-blur-md sticky top-0 z-40 border-b w-full transition-all duration-300 ${
+      isScrolled 
+        ? 'border-header-border shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.25)]' 
+        : 'border-transparent'
+    }`}>
       {/* Kolom Pencarian & Menu burger untuk perangkat mobile */}
       <div className="flex items-center gap-4 flex-1 max-w-md">
         <button

@@ -97,7 +97,7 @@ export default function ProfileView({
       />
 
       {/* Profile Header Block */}
-      <section className="flex flex-col items-center text-center bg-white dark:bg-card-bg border border-card-border rounded-2xl p-8 shadow-sm">
+      <section className="flex flex-col items-center text-center bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-8 shadow-sm hover:shadow-md transition-all duration-300">
         <div className="relative w-32 h-32 md:w-36 md:h-36 rounded-full mb-4 group">
           <div className="absolute inset-0 rounded-full border-4 border-white dark:border-card-bg shadow-md z-15"></div>
           {user.profile_photo_url ? (
@@ -145,7 +145,7 @@ export default function ProfileView({
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
         {/* Formulir Profil Akun (Account Details Form) */}
-        <div className="bg-white dark:bg-card-bg border border-card-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+        <div className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-6 shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300 flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-9 h-9 rounded-full bg-[#F5F2FF] dark:bg-input-bg flex items-center justify-center text-primary">
@@ -230,7 +230,7 @@ export default function ProfileView({
         </div>
  
         {/* Pengaturan Saklar Notifikasi (Notifications Toggle Settings) */}
-        <div className="bg-white dark:bg-card-bg border border-card-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+        <div className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-6 shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300 flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-9 h-9 rounded-full bg-[#F5F2FF] dark:bg-input-bg flex items-center justify-center text-primary">
@@ -279,7 +279,7 @@ export default function ProfileView({
         </div>
  
         {/* Pengaturan Pilihan Tema (Theme Switcher Triggers) */}
-        <div className="bg-white dark:bg-card-bg border border-card-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-6 shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-9 h-9 rounded-full bg-[#F5F2FF] dark:bg-input-bg flex items-center justify-center text-primary">
               <Palette className="w-4.5 h-4.5" />
@@ -291,10 +291,10 @@ export default function ProfileView({
             {/* Pemicu Mode Terang */}
             <div
               onClick={() => onThemeChange('light')}
-              className={`border-2 rounded-xl p-3 flex flex-col items-center gap-2 cursor-pointer transition-all ${
+              className={`border rounded-xl p-3 flex flex-col items-center gap-2 cursor-pointer transition-all ${
                 theme === 'light'
-                  ? 'border-primary bg-primary/5'
-                  : 'border-card-border bg-white dark:bg-input-bg hover:bg-slate-50'
+                  ? 'border-primary bg-primary/5 text-primary shadow-[0_2px_8px_rgba(79,70,229,0.08)]'
+                  : 'border-white/60 dark:border-slate-800/40 bg-white/60 dark:bg-slate-900/60 hover:bg-white/80 dark:hover:bg-slate-900/80 text-on-surface-variant'
               }`}
             >
               <Palette className="w-6 h-6 text-primary" />
@@ -304,10 +304,10 @@ export default function ProfileView({
             {/* Pemicu Mode Gelap */}
             <div
               onClick={() => onThemeChange('dark')}
-              className={`border-2 rounded-xl p-3 flex flex-col items-center gap-2 cursor-pointer transition-all ${
+              className={`border rounded-xl p-3 flex flex-col items-center gap-2 cursor-pointer transition-all ${
                 theme === 'dark'
-                  ? 'border-primary bg-primary/5'
-                  : 'border-card-border bg-white dark:bg-input-bg hover:bg-slate-50'
+                  ? 'border-primary bg-primary/5 text-primary shadow-[0_2px_8px_rgba(79,70,229,0.08)]'
+                  : 'border-white/60 dark:border-slate-800/40 bg-white/60 dark:bg-slate-900/60 hover:bg-white/80 dark:hover:bg-slate-900/80 text-on-surface-variant'
               }`}
             >
               <Palette className="w-6 h-6 text-on-surface-variant" />
@@ -317,7 +317,7 @@ export default function ProfileView({
         </div>
  
         {/* Tombol Keluar Sesi & Konfirmasi Log Out */}
-        <div className="bg-red-50/50 dark:bg-red-950/10 border border-red-200 dark:border-red-900 rounded-2xl p-6 text-center flex flex-col justify-center items-center">
+        <div className="bg-red-50/20 dark:bg-red-950/5 border border-red-100/50 dark:border-red-900/20 backdrop-blur-md rounded-2xl p-6 text-center flex flex-col justify-center items-center hover:-translate-y-1 hover:shadow-md transition-all duration-300">
           <LogOut className="w-8 h-8 text-red-600 mb-2" />
           <h3 className="text-base font-bold text-red-600 mb-1">Keluar dengan Aman</h3>
           <p className="text-xs text-on-surface-variant max-w-[280px] mb-4 font-semibold">

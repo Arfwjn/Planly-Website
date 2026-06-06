@@ -14,6 +14,8 @@ import Skeleton from './ui/Skeleton';
 import CustomSelect from './ui/CustomSelect';
 import type { SelectOption } from './ui/CustomSelect';
 import TimePicker from './ui/TimePicker';
+import DatePicker from './ui/DatePicker';
+import { hexToRgb } from '../utils/color';
 
 
 interface TasksViewProps {
@@ -345,16 +347,18 @@ export default function TasksView({
             const deadlineDate = deadlineParts[0];
             const deadlineTime = deadlineParts[1]?.slice(0, 5) || '23:59';
             const isOverdue = !task.is_finished && new Date(`${deadlineDate}T${deadlineTime}`) < new Date();
-            return (
-              <div
-                key={task.id}
-                className={`rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-300 group flex items-start gap-4 cursor-pointer ${
-                  task.is_finished
-                    ? 'bg-date-btn-bg border border-date-btn-border'
-                    : 'bg-white border border-[#E2E8F0] hover:border-primary/20'
-                }`}
-                onClick={() => handleInspectTask(task)}
-              >
+              const courseColor = courses.find((c) => c.id === task.course_id)?.color_hex || '#3525cd';
+              return (
+                <div
+                  key={task.id}
+                  style={{ '--glow-color': hexToRgb(courseColor) } as React.CSSProperties}
+                  className={`border backdrop-blur-md rounded-2xl p-4 shadow-[0_8px_30px_rgba(var(--glow-color),0.04)] dark:shadow-[0_8px_30px_rgba(var(--glow-color),0.06)] hover:-translate-y-1 hover:shadow-[0_15px_30px_rgba(var(--glow-color),0.1)] transition-all duration-300 group flex items-start gap-4 cursor-pointer ${
+                    task.is_finished
+                      ? 'bg-slate-100/50 dark:bg-slate-900/40 border-slate-200/50 dark:border-slate-800/30 opacity-60'
+                      : 'bg-white/65 dark:bg-slate-900/70 border-white/60 dark:border-slate-800/40 hover:bg-white/80 dark:hover:bg-slate-900/85'
+                  }`}
+                  onClick={() => handleInspectTask(task)}
+                >
                 {/* Checkbox untuk mengubah status tugas secara instan tanpa masuk drawer detail */}
                 <div className="pt-1 select-none" onClick={(e) => e.stopPropagation()}>
                   <input
@@ -474,12 +478,11 @@ export default function TasksView({
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
                     Tanggal Batas Waktu
                   </label>
-                  <input
-                    type="date"
-                    required
+                  <DatePicker
                     value={newDeadlineDate}
-                    onChange={(e) => setNewDeadlineDate(e.target.value)}
-                    className="w-full h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-medium"
+                    onChange={setNewDeadlineDate}
+                    required
+                    position="down"
                   />
                 </div>
                 <div>
@@ -664,12 +667,11 @@ export default function TasksView({
                     <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
                       Tanggal Batas Waktu
                     </label>
-                    <input
-                      type="date"
-                      required
+                    <DatePicker
                       value={editDeadlineDate}
-                      onChange={(e) => setEditDeadlineDate(e.target.value)}
-                      className="w-full h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-medium"
+                      onChange={setEditDeadlineDate}
+                      required
+                      position="down"
                     />
                   </div>
                   <div>

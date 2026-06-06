@@ -398,6 +398,9 @@ export default function App() {
             loading={loadingData}
             events={events}
             rescheduledSessions={rescheduledSessions}
+            pomodoroStage={pomodoroStage}
+            pomodoroTaskId={pomodoroTaskId}
+            completedPomodoroCount={completedPomodoroCount}
           />
         );
       case 'calendar':

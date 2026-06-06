@@ -11,7 +11,9 @@ import { CalendarDays, Clock, MapPin, User, Info, X, Calendar as CalendarIcon, U
 import { Course, RescheduledSession } from '../types';
 import Skeleton from './ui/Skeleton';
 import TimePicker from './ui/TimePicker';
+import DatePicker from './ui/DatePicker';
 import { getCoursesForDate, ProcessedCourse } from '../utils/reschedule';
+import { hexToRgb } from '../utils/color';
 
 interface CalendarViewProps {
   courses: Course[];
@@ -211,21 +213,6 @@ export default function CalendarView({
     setRescheduleNote('');
   };
 
-  // Handler batal sesi kuliah
-  const handleCancelSession = (course: Course) => {
-    const reason = prompt('Masukkan alasan pembatalan sesi perkuliahan (opsional):');
-    if (reason === null) return; // Batal klik cancel
-
-    onAddReschedule({
-      course_id: course.id,
-      original_date: selectedISODate,
-      new_date: null,
-      new_start_time: null,
-      new_end_time: null,
-      is_canceled: true,
-      note: reason || 'Kelas dibatalkan'
-    });
-  };
 
   /**
    * Interval timer pembaruan waktu (focus timer ticks / system updates):
@@ -634,18 +621,16 @@ export default function CalendarView({
                   </div>
 
                   {/* Kartu Detail Mata Kuliah */}
-                  <div className={`flex-1 bg-white rounded-2xl border p-5 relative overflow-hidden transition-all shadow-sm ${
-                    isInProgress 
-                      ? 'border-primary shadow-[0_0_20px_rgba(79,70,229,0.15)] ring-1 ring-primary/35 bg-primary/[0.01]' 
-                      : isCanceled 
-                        ? 'border-red-200 bg-red-50/10'
-                        : 'border-[#E2E8F0] hover:border-primary/50 hover:shadow-md'
-                  }`}>
-                    {/* Pita dekoratif vertikal di sisi kiri kartu berdasarkan warna kustom mata kuliah */}
-                    <div
-                      className="absolute left-0 top-0 bottom-0 w-1.5"
-                      style={{ backgroundColor: isCanceled ? '#E2E8F0' : course.color_hex }}
-                    ></div>
+                  <div
+                    style={{ '--glow-color': hexToRgb(course.color_hex) } as React.CSSProperties}
+                    className={`flex-1 border backdrop-blur-md rounded-2xl p-5 relative transition-all duration-300 shadow-[0_8px_30px_rgba(var(--glow-color),0.04)] dark:shadow-[0_8px_30px_rgba(var(--glow-color),0.06)] hover:-translate-y-1 hover:shadow-[0_15px_30px_rgba(var(--glow-color),0.1)] ${
+                      isInProgress 
+                        ? 'border-primary/45 bg-primary/[0.03] ring-1 ring-primary/10' 
+                        : isCanceled 
+                          ? 'border-red-200 bg-red-50/10 opacity-60'
+                          : 'bg-white/65 dark:bg-slate-900/70 border-white/60 dark:border-slate-800/40 hover:bg-white/80 dark:hover:bg-slate-900/85'
+                    }`}
+                  >
 
                     <div className="flex justify-between items-start mb-3 pl-2">
                       <div>
@@ -676,11 +661,10 @@ export default function CalendarView({
                       </div>
                       {/* Kode mata kuliah */}
                       <span
-                        className="text-[10px] font-bold px-2 py-0.5 rounded border shadow-2xs"
+                        className="text-[11px] font-black px-3 py-1 rounded-lg text-white tracking-wider uppercase border border-white/10"
                         style={{
-                          color: isCanceled ? '#94A3B8' : course.color_hex,
-                          backgroundColor: isCanceled ? '#F1F5F9' : `${course.color_hex}10`,
-                          borderColor: isCanceled ? '#E2E8F0' : `${course.color_hex}25`
+                          backgroundColor: isCanceled ? '#64748B' : course.color_hex,
+                          boxShadow: isCanceled ? undefined : `0 4px 12px rgba(var(--glow-color), 0.25)`
                         }}
                       >
                         {course.course_code}
@@ -730,78 +714,87 @@ export default function CalendarView({
                           <span>Pulihkan Sesi Normal</span>
                         </button>
                       ) : (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedCourseForReschedule(course);
-                              setRescheduleDate(selectedISODate);
-                              setRescheduleStartTime(course.start_time);
-                              setRescheduleEndTime(course.end_time);
-                              setIsRescheduleModalOpen(true);
-                            }}
-                            className="px-2.5 py-1 border border-[#E2E8F0] hover:bg-slate-50 text-on-surface-variant hover:text-on-surface rounded cursor-pointer transition-colors"
-                          >
-                            Pindahkan Sesi
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleCancelSession(course)}
-                            className="px-2.5 py-1 border border-red-100 hover:bg-red-50 text-red-500 rounded cursor-pointer transition-colors"
-                          >
-                            Batalkan Sesi
-                          </button>
-                        </>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedCourseForReschedule(course);
+                            setRescheduleDate(selectedISODate);
+                            setRescheduleStartTime(course.start_time);
+                            setRescheduleEndTime(course.end_time);
+                            setIsRescheduleModalOpen(true);
+                          }}
+                          className="px-3.5 py-1.5 border border-primary/20 bg-primary/5 hover:bg-primary text-primary hover:text-white rounded-xl cursor-pointer hover:-translate-y-0.5 active:scale-95 transition-all duration-300 flex items-center gap-1.5 shadow-[0_2px_8px_rgba(79,70,229,0.05)] hover:shadow-[0_4px_12px_rgba(79,70,229,0.2)]"
+                        >
+                          <CalendarIcon className="w-3.5 h-3.5" />
+                          <span>Pindahkan Sesi</span>
+                        </button>
                       )}
-                    </div>
                   </div>
-
                 </div>
+              </div>
               );
             })
           )}
-
-          {/* Timeline untuk kelas yang dipindahkan ke hari lain */}
-          {rescheduledOutCourses.length > 0 && (
-            <div className="mt-8 pt-6 border-t border-[#F1F5F9] space-y-4">
-              <h3 className="text-xs font-bold text-[#94A3B8] uppercase tracking-wider flex items-center gap-1.5 pl-2">
-                <Undo2 className="w-4 h-4 text-primary" />
-                <span>Kelas yang Dipindahkan dari Hari Ini</span>
-              </h3>
-              <div className="space-y-3 pl-2">
-                {rescheduledOutCourses.map((c) => {
-                  const override = rescheduledSessions.find(
-                    (s) => s.course_id === c.id && s.original_date === selectedISODate
-                  );
-                  const newDateFormatted = override?.new_date
-                    ? new Date(override.new_date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' })
-                    : '';
-                  return (
-                    <div key={c.id} className="bg-slate-50 border border-slate-200/60 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                      <div>
-                        <h4 className="font-bold text-xs text-on-surface">{c.course_name}</h4>
-                        <p className="text-[10px] text-on-surface-variant font-medium mt-1">
-                          Dipindahkan ke: <strong className="text-primary">{newDateFormatted} ({override?.new_start_time} - {override?.new_end_time} WIB)</strong>
-                        </p>
-                        {override?.note && (
-                          <p className="text-[9px] text-[#94A3B8] italic mt-0.5">Alasan: "{override.note}"</p>
-                        )}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => onDeleteReschedule(c.id, selectedISODate)}
-                        className="px-2.5 py-1 text-primary hover:bg-primary/5 rounded border border-primary/20 text-[10px] font-bold cursor-pointer transition-colors"
-                      >
-                        Pulihkan Sesi Normal
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
         </div>
+
+        {/* Timeline untuk kelas yang dipindahkan ke hari lain */}
+        {rescheduledOutCourses.length > 0 && (
+          <div className="mt-8 pt-6 border-t border-[#F1F5F9] dark:border-slate-800 space-y-4">
+            <h3 className="text-xs font-bold text-[#94A3B8] uppercase tracking-wider flex items-center gap-1.5 pl-2">
+              <Undo2 className="w-4 h-4 text-primary" />
+              <span>Kelas yang Dipindahkan dari Hari Ini</span>
+            </h3>
+            <div className="space-y-3 pl-2">
+              {rescheduledOutCourses.map((c) => {
+                const override = rescheduledSessions.find(
+                  (s) => s.course_id === c.id && s.original_date === selectedISODate
+                );
+                const newDateFormatted = override?.new_date
+                  ? new Date(override.new_date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' })
+                  : '';
+                return (
+                  <div
+                    key={c.id}
+                    style={{ '--glow-color': hexToRgb(c.color_hex) } as React.CSSProperties}
+                    className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 rounded-2xl p-5 relative transition-all duration-300 shadow-[0_8px_30px_rgba(var(--glow-color),0.04)] dark:shadow-[0_8px_30px_rgba(var(--glow-color),0.06)] hover:-translate-y-1 hover:shadow-[0_15px_30px_rgba(var(--glow-color),0.1)] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span
+                          className="text-[11px] font-black px-3 py-1 rounded-lg text-white tracking-wider uppercase border border-white/10"
+                          style={{
+                            backgroundColor: c.color_hex,
+                            boxShadow: `0 4px 12px rgba(var(--glow-color), 0.25)`
+                          }}
+                        >
+                          {c.course_code}
+                        </span>
+                        <h4 className="font-bold text-sm text-on-surface">{c.course_name}</h4>
+                      </div>
+                      <p className="text-xs text-on-surface-variant font-medium mt-1">
+                        Dipindahkan ke: <strong className="text-primary">{newDateFormatted} ({override?.new_start_time} - {override?.new_end_time} WIB)</strong>
+                      </p>
+                      {override?.note && (
+                        <p className="text-[10px] text-on-surface-variant/80 italic mt-1 bg-slate-50 dark:bg-slate-800/30 p-2 rounded-lg border border-slate-100 dark:border-slate-800/50">
+                          Alasan: "{override.note}"
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => onDeleteReschedule(c.id, selectedISODate)}
+                      className="px-3 py-1.5 text-primary hover:bg-primary/5 rounded-xl border border-primary/20 text-xs font-bold cursor-pointer transition-colors flex items-center gap-1 flex-shrink-0"
+                    >
+                      <Undo2 className="w-3.5 h-3.5" />
+                      <span>Pulihkan Sesi Normal</span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
       </div>
 
       {/* Modal Reschedule Sesi Kuliah */}
@@ -833,12 +826,11 @@ export default function CalendarView({
             <form onSubmit={handleSubmitReschedule} className="space-y-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Tanggal Baru</label>
-                <input
-                  type="date"
-                  required
+                <DatePicker
                   value={rescheduleDate}
-                  onChange={(e) => setRescheduleDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg text-xs bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+                  onChange={setRescheduleDate}
+                  required
+                  position="up"
                 />
               </div>
 

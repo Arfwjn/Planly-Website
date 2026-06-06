@@ -4,6 +4,7 @@ import { Note, Course } from '../types';
 import Skeleton from './ui/Skeleton';
 import CustomSelect from './ui/CustomSelect';
 import type { SelectOption } from './ui/CustomSelect';
+import { hexToRgb } from '../utils/color';
 
 interface NotesViewProps {
   notes: Note[];
@@ -306,17 +307,14 @@ export default function NotesView({
           filteredNotes.map((note) => {
             // Di sini kita menggunakan visualisasi khusus: mendeteksi jika catatan adalah daftar tugas (to-do list)
             const isTodoNote = note.title.toLowerCase().includes('to-do list');
-            
+            const courseColor = courses.find((c) => c.id === note.course_id)?.color_hex || '#3525cd';
             return (
               <div
                 key={note.id}
                 onClick={() => handleInspectNote(note)}
-                className="break-inside-avoid bg-white border border-[#E2E8F0] rounded-xl p-5 shadow-sm hover:shadow-md hover:border-primary/50 transition-all duration-300 cursor-pointer group flex flex-col gap-3 relative overflow-hidden"
+                style={{ '--glow-color': hexToRgb(courseColor) } as React.CSSProperties}
+                className="break-inside-avoid bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-5 shadow-[0_8px_30px_rgba(var(--glow-color),0.06)] dark:shadow-[0_8px_30px_rgba(var(--glow-color),0.08)] hover:-translate-y-1 hover:bg-white/80 dark:hover:bg-slate-900/85 hover:shadow-[0_20px_40px_rgba(var(--glow-color),0.12)] transition-all duration-300 cursor-pointer group flex flex-col gap-3 relative overflow-visible"
               >
-                {/* Di sini kita tampilkan indikator aksen garis warna di sisi kiri khusus untuk to-do list */}
-                {isTodoNote && (
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
-                )}
 
                 <div className="flex justify-between items-start">
                   <h3 className="text-sm font-bold leading-snug group-hover:text-primary transition-colors cursor-pointer text-on-surface">

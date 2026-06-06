@@ -4,6 +4,7 @@ import { Course, Task, Note, SidebarTab } from '../types';
 import { useToast } from './ui/Toast';
 import CustomSelect from './ui/CustomSelect';
 import type { SelectOption } from './ui/CustomSelect';
+import DatePicker from './ui/DatePicker';
 import { synthAudio } from '../services/synthAudio';
 
 
@@ -303,7 +304,7 @@ ${lectureNoteContent || '*(Tidak ada catatan materi ditulis)*'}
         </div>
         
         {/* Tab Selector Mode (Pomodoro vs Kuliah Live) */}
-        <div className="flex bg-[#F1F5F9] dark:bg-card-bg border border-card-border p-1 rounded-xl shadow-2xs">
+        <div className="flex bg-white/45 dark:bg-slate-900/40 border border-white/60 dark:border-slate-800/40 p-1 rounded-xl shadow-2xs backdrop-blur-md">
           <button
             onClick={() => {
               if (isLectureRunning) {
@@ -346,7 +347,7 @@ ${lectureNoteContent || '*(Tidak ada catatan materi ditulis)*'}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Kolom Kiri: Timer Workspace (Lebar 1 kolom jika di mode kuliah live, lebar 3 kolom jika mode Pomodoro) */}
-        <div className={`bg-white dark:bg-card-bg border border-card-border rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center min-h-[350px] relative ${
+        <div className={`bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col items-center justify-center min-h-[350px] relative ${
           workspaceMode === 'lecture' ? 'lg:col-span-1' : 'lg:col-span-3'
         }`}>
           
@@ -543,7 +544,7 @@ ${lectureNoteContent || '*(Tidak ada catatan materi ditulis)*'}
           <div className="lg:col-span-2 flex flex-col gap-6 h-auto">
             
             {/* Panel Catatan Kuliah */}
-            <div className="bg-white dark:bg-card-bg border border-card-border rounded-2xl p-5 shadow-sm flex flex-col flex-1 min-h-[250px]">
+            <div className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col flex-1 min-h-[250px]">
               <div className="flex items-center justify-between border-b border-card-border pb-2.5 mb-3">
                 <div className="flex items-center gap-2">
                   <FileText className="w-5 h-5 text-primary" />
@@ -564,7 +565,7 @@ ${lectureNoteContent || '*(Tidak ada catatan materi ditulis)*'}
             </div>
 
             {/* Panel Tugas & PR Baru dari Kuliah */}
-            <div className="bg-white dark:bg-card-bg border border-card-border rounded-2xl p-5 shadow-sm space-y-3.5">
+            <div className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 space-y-3.5">
               <div className="flex items-center justify-between border-b border-card-border pb-2.5">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-5 h-5 text-indigo-500" />
@@ -588,13 +589,13 @@ ${lectureNoteContent || '*(Tidak ada catatan materi ditulis)*'}
                   />
                 </div>
                 
-                <div className="w-full sm:w-auto">
-                  <input
-                    type="date"
-                    className="w-full sm:w-auto bg-[#F8FAFC] dark:bg-input-bg border border-card-border rounded-xl py-2 px-3 text-xs text-on-surface focus:outline-none cursor-pointer font-medium"
+                <div className="w-full sm:w-auto min-w-[160px]">
+                  <DatePicker
                     value={taskInputDeadline}
-                    onChange={(e) => setTaskInputDeadline(e.target.value)}
+                    onChange={setTaskInputDeadline}
                     disabled={!activeLectureCourseId}
+                    position="up"
+                    placeholder="Batas Tanggal"
                   />
                 </div>
 

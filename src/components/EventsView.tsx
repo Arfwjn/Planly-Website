@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CampusEvent, EventCategory, CampusEventCreatePayload } from '../types';
 import CustomSelect from './ui/CustomSelect';
 import TimePicker from './ui/TimePicker';
+import DatePicker from './ui/DatePicker';
 import Skeleton from './ui/Skeleton';
 import { 
   CalendarCheck, MapPin, Users, Clock, Star, Pencil, Trash2, Plus, X, 
@@ -72,7 +73,6 @@ export default function EventsView({
   const [formEndTime, setFormEndTime] = useState('10:00');
   const [formLocation, setFormLocation] = useState('');
   const [formOrganizer, setFormOrganizer] = useState('');
-  const [formColor, setFormColor] = useState('#6366F1');
   const [formIsImportant, setFormIsImportant] = useState(false);
 
   // Delete Confirmation State
@@ -89,7 +89,6 @@ export default function EventsView({
     setFormEndTime('10:00');
     setFormLocation('');
     setFormOrganizer('');
-    setFormColor('#6366F1');
     setFormIsImportant(false);
   };
 
@@ -110,7 +109,6 @@ export default function EventsView({
     setFormEndTime(event.end_time);
     setFormLocation(event.location);
     setFormOrganizer(event.organizer);
-    setFormColor(event.color_hex);
     setFormIsImportant(event.is_important);
     setIsFormOpen(true);
   };
@@ -132,7 +130,7 @@ export default function EventsView({
       end_time: formEndTime,
       location: formLocation,
       organizer: formOrganizer,
-      color_hex: formColor,
+      color_hex: CATEGORY_COLORS[formCategory],
       is_important: formIsImportant,
     };
 
@@ -348,7 +346,7 @@ export default function EventsView({
             return (
               <div
                 key={event.id}
-                style={{ '--glow-color': hexToRgb(event.color_hex) } as React.CSSProperties}
+                style={{ '--glow-color': hexToRgb(CATEGORY_COLORS[event.category]) } as React.CSSProperties}
                 className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-5 shadow-[0_8px_30px_rgba(var(--glow-color),0.06)] dark:shadow-[0_8px_30px_rgba(var(--glow-color),0.08)] hover:-translate-y-1 hover:bg-white/80 dark:hover:bg-slate-900/85 hover:shadow-[0_20px_40px_rgba(var(--glow-color),0.12)] transition-all duration-300 flex flex-col justify-between"
               >
                 <div>
@@ -547,7 +545,16 @@ export default function EventsView({
                   <CustomSelect
                     value={formCategory}
                     onChange={(val) => setFormCategory(val as EventCategory)}
-                    options={Object.entries(CATEGORY_LABELS).map(([value, label]) => ({ value, label }))}
+                    options={Object.entries(CATEGORY_LABELS).map(([value, label]) => ({
+                      value,
+                      label,
+                      icon: (
+                        <span 
+                          className="w-3 h-3 rounded-full inline-block flex-shrink-0 border border-black/10 dark:border-white/10" 
+                          style={{ backgroundColor: CATEGORY_COLORS[value as EventCategory] }}
+                        />
+                      )
+                    }))}
                     placeholder="Pilih Kategori"
                     position="down"
                   />
@@ -567,17 +574,15 @@ export default function EventsView({
                   />
                 </div>
 
-                {/* Event Date */}
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wide mb-1.5">
                     Tanggal Kegiatan <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="date"
-                    required
+                  <DatePicker
                     value={formDate}
-                    onChange={(e) => setFormDate(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/80 dark:border-slate-700 focus:border-primary dark:focus:border-primary focus:ring-1 focus:ring-primary rounded-xl text-on-surface text-sm outline-none transition-all"
+                    onChange={setFormDate}
+                    required
+                    position="down"
                   />
                 </div>
 
@@ -635,27 +640,7 @@ export default function EventsView({
                   />
                 </div>
 
-                {/* Color Preset Buttons */}
-                <div>
-                  <label className="block text-xs font-bold text-on-surface uppercase tracking-wide mb-2">
-                    Warna Label
-                  </label>
-                  <div className="grid grid-cols-8 gap-2">
-                    {COLOR_PRESETS.map((color) => (
-                      <button
-                        key={color}
-                        type="button"
-                        onClick={() => setFormColor(color)}
-                        style={{ backgroundColor: color }}
-                        className={`w-8 h-8 rounded-full border-2 transition-all cursor-pointer ${
-                          formColor === color 
-                            ? 'border-slate-800 dark:border-slate-100 scale-110 shadow' 
-                            : 'border-transparent hover:scale-105'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
+
 
                 {/* Important Toggle */}
                 <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200/80 dark:border-slate-700">

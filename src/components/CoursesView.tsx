@@ -13,6 +13,7 @@ import Skeleton from './ui/Skeleton';
 import CustomSelect from './ui/CustomSelect';
 import type { SelectOption } from './ui/CustomSelect';
 import TimePicker from './ui/TimePicker';
+import { hexToRgb } from '../utils/color';
 
 const dayOfWeekOptions: SelectOption[] = [
   { value: 'Monday', label: 'Senin' },
@@ -433,21 +434,15 @@ export default function CoursesView({
               <article
                 key={course.id}
                 onClick={() => setSelectedCourse(course)}
-                className="bg-white border border-[#E2E8F0] rounded-xl p-6 flex flex-col gap-4 relative overflow-hidden shadow-sm hover:shadow-md hover:border-primary/30 transition-all group cursor-pointer h-full"
+                style={{ '--glow-color': hexToRgb(course.color_hex) } as React.CSSProperties}
+                className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-6 flex flex-col gap-4 relative shadow-[0_8px_30px_rgba(var(--glow-color),0.06)] dark:shadow-[0_8px_30px_rgba(var(--glow-color),0.08)] hover:-translate-y-1 hover:bg-white/80 dark:hover:bg-slate-900/85 hover:shadow-[0_20px_40px_rgba(var(--glow-color),0.12)] transition-all duration-300 group cursor-pointer h-full"
               >
-                {/* Pita penanda warna di sisi kiri kartu */}
-                <div
-                  className="absolute left-0 top-0 bottom-0 w-1.5 transition-all group-hover:w-2"
-                  style={{ backgroundColor: course.color_hex }}
-                ></div>
-
                 <div className="flex justify-between items-start">
                   <span
-                    className="text-[10px] font-bold px-2.5 py-1 rounded-md border"
+                    className="text-[11px] font-black px-3 py-1 rounded-lg text-white tracking-wider uppercase border border-white/10"
                     style={{
-                      color: course.color_hex,
-                      backgroundColor: `${course.color_hex}10`,
-                      borderColor: `${course.color_hex}25`
+                      backgroundColor: course.color_hex,
+                      boxShadow: `0 4px 12px rgba(var(--glow-color), 0.25)`
                     }}
                   >
                     {course.course_code}

@@ -5,11 +5,15 @@
  * memantau progres tugas, serta mengelola timer fokus (Focus Timer).
  */
 
-import { useState, useEffect } from 'react';
-import { Clock, Play, Pause, AlertTriangle, MapPin, Users, Notebook, Calendar, Info, Undo2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { 
+  Clock, Play, Pause, AlertTriangle, MapPin, Users, Notebook, Calendar, 
+  Info, Undo2, BookOpen, Flame, CheckSquare, Sparkles 
+} from 'lucide-react';
 import { Course, Task, SidebarTab, CampusEvent, RescheduledSession } from '../types';
 import NotificationBanner from './ui/NotificationBanner';
 import { getCoursesForDate } from '../utils/reschedule';
+import { hexToRgb } from '../utils/color';
 
 interface TodayViewProps {
   user: { name: string };
@@ -24,6 +28,9 @@ interface TodayViewProps {
   loading?: boolean;
   events?: CampusEvent[];
   rescheduledSessions: RescheduledSession[];
+  pomodoroStage: 'work' | 'short-break' | 'long-break';
+  pomodoroTaskId: number | null;
+  completedPomodoroCount: number;
 }
 
 export default function TodayView({
@@ -38,7 +45,10 @@ export default function TodayView({
   onResetFocusTimer,
   loading = false,
   events = [],
-  rescheduledSessions
+  rescheduledSessions,
+  pomodoroStage,
+  pomodoroTaskId,
+  completedPomodoroCount
 }: TodayViewProps) {
 
   // Tampilkan loading skeleton jika data sedang dimuat
@@ -183,8 +193,10 @@ export default function TodayView({
   // Menghitung jumlah tugas belum selesai yang memiliki tingkat prioritas tinggi
   const highPriorityCount = pendingTasks.filter((t) => t.is_priority).length;
   
-  // Mengambil tugas pertama dari daftar tugas pending untuk dijadikan fokus utama pengerjaan saat ini
-  const focusTask = pendingTasks[0];
+  // Mengambil tugas fokus aktif berdasarkan pomodoroTaskId (jika diset), atau fallback ke tugas pertama
+  const activeFocusTask = pomodoroTaskId 
+    ? tasks.find(t => t.id === pomodoroTaskId) 
+    : pendingTasks[0];
   
   /**
    * course progress calculation (task progress):
@@ -219,6 +231,19 @@ export default function TodayView({
     }
   };
 
+  // Penghitungan kelas selesai dan mendatang untuk hari ini
+  const completedCoursesCount = todayCourses.filter(c => getCourseStatus(c) === 'completed').length;
+  const upcomingCoursesCount = todayCourses.length - completedCoursesCount;
+
+  // Penghitungan kemajuan timer Pomodoro sesi aktif saat ini
+  const getStageTotalSeconds = (stage: 'work' | 'short-break' | 'long-break') => {
+    if (stage === 'work') return 1500;
+    if (stage === 'short-break') return 300;
+    return 900;
+  };
+  const totalStageSecs = getStageTotalSeconds(pomodoroStage);
+  const sessionProgressPercentage = Math.min(100, Math.max(0, Math.round(((totalStageSecs - focusTimeLeft) / totalStageSecs) * 100)));
+
   return (
     <div className="max-w-[1000px] mx-auto w-full space-y-6">
       {/* Header Halaman */}
@@ -235,85 +260,171 @@ export default function TodayView({
       <NotificationBanner />
 
       {/* 
-        bento layout grid:
-        Layout grid modular bergaya Bento (menggunakan Tailwind `grid grid-cols-1 md:grid-cols-3 gap-6`)
-        yang responsif untuk membagi halaman ke dalam beberapa wadah informasi ringkas secara estetis.
+        Dashboard Row 1: Tiga Kartu Metrik Ringkas (Tugas Aktif, Kuliah Hari Ini, Fokus Pomodoro)
       */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
-        {/* Bento Box: Tugas Belum Selesai (Mengarah ke tab Tugas saat diklik) */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        {/* Tugas Aktif */}
         <div
           onClick={() => onTabChange('tasks')}
-          className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group cursor-pointer"
+          style={{ '--glow-color': hexToRgb('#6366F1') } as React.CSSProperties}
+          className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-5 shadow-[0_8px_30px_rgba(var(--glow-color),0.03)] dark:shadow-[0_8px_30px_rgba(var(--glow-color),0.05)] hover:-translate-y-1 hover:bg-white/80 dark:hover:bg-slate-900/85 hover:shadow-[0_15px_30px_rgba(var(--glow-color),0.08)] transition-all duration-300 flex items-center justify-between group cursor-pointer"
         >
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
-              Tugas Belum Selesai
+          <div className="space-y-1 text-left">
+            <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block">
+              Tugas Aktif
             </span>
-            <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-red-600 group-hover:scale-110 transition-transform">
-              <AlertTriangle className="w-4 h-4" />
+            <div className="text-3xl font-black text-on-surface group-hover:text-primary transition-colors leading-none">
+              {pendingTasks.length} <span className="text-xs font-semibold text-on-surface-variant">Tugas</span>
             </div>
-          </div>
-          <div>
-            <div className="text-[48px] font-bold tracking-tight text-on-surface leading-none mb-2 group-hover:text-primary transition-colors">
-              {pendingTasks.length}
-            </div>
-            <p className="text-xs text-on-surface-variant flex items-center gap-1.5 font-medium">
-              <span className="w-2 h-2 rounded-full bg-red-600 inline-block"></span>
+            <span className="text-[10px] text-on-surface-variant/80 font-medium block">
               {highPriorityCount} Prioritas Tinggi
-            </p>
+            </span>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-110 transition-transform">
+            <CheckSquare className="w-5 h-5" />
           </div>
         </div>
 
-        {/* Bento Box: Fokus Saat Ini & Kontrol Timer Fokus (Lebar 2 kolom pada layar medium ke atas) */}
-        <div className="bg-primary text-white border border-primary/25 rounded-2xl p-6 shadow-md md:col-span-2 relative overflow-hidden group">
+        {/* Kuliah Hari Ini */}
+        <div
+          onClick={() => onTabChange('calendar')}
+          style={{ '--glow-color': hexToRgb('#10B981') } as React.CSSProperties}
+          className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-5 shadow-[0_8px_30px_rgba(var(--glow-color),0.03)] dark:shadow-[0_8px_30px_rgba(var(--glow-color),0.05)] hover:-translate-y-1 hover:bg-white/80 dark:hover:bg-slate-900/85 hover:shadow-[0_15px_30px_rgba(var(--glow-color),0.08)] transition-all duration-300 flex items-center justify-between group cursor-pointer"
+        >
+          <div className="space-y-1 text-left">
+            <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block">
+              Kuliah Hari Ini
+            </span>
+            <div className="text-3xl font-black text-on-surface group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors leading-none">
+              {todayCourses.length} <span className="text-xs font-semibold text-on-surface-variant">Kelas</span>
+            </div>
+            <span className="text-[10px] text-on-surface-variant/80 font-medium block">
+              {completedCoursesCount} Selesai, {upcomingCoursesCount} Mendatang
+            </span>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <BookOpen className="w-5 h-5" />
+          </div>
+        </div>
+
+        {/* Fokus Pomodoro */}
+        <div
+          onClick={() => onTabChange('workspace')}
+          style={{ '--glow-color': hexToRgb('#F59E0B') } as React.CSSProperties}
+          className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-5 shadow-[0_8px_30px_rgba(var(--glow-color),0.03)] dark:shadow-[0_8px_30px_rgba(var(--glow-color),0.05)] hover:-translate-y-1 hover:bg-white/80 dark:hover:bg-slate-900/85 hover:shadow-[0_15px_30px_rgba(var(--glow-color),0.08)] transition-all duration-300 flex items-center justify-between group cursor-pointer"
+        >
+          <div className="space-y-1 text-left">
+            <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block">
+              Fokus Pomodoro
+            </span>
+            <div className="text-3xl font-black text-on-surface group-hover:text-amber-500 transition-colors leading-none">
+              {completedPomodoroCount} <span className="text-xs font-semibold text-on-surface-variant">Sesi</span>
+            </div>
+            <span className="text-[10px] text-on-surface-variant/80 font-medium block">
+              Target Harian: 4 Sesi Kerja
+            </span>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <Flame className="w-5 h-5" />
+          </div>
+        </div>
+      </div>
+
+      {/* 
+        Dashboard Row 2: Dua Panel Detail Utama (Fokus Sesi & Progres Tugas)
+      */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Panel Fokus Saat Ini (Pomodoro) */}
+        <div
+          style={{ '--glow-color': hexToRgb('#3525cd') } as React.CSSProperties}
+          className="bg-primary/85 dark:bg-primary/75 text-white border border-primary/20 backdrop-blur-md rounded-2xl p-6 shadow-[0_8px_30px_rgba(var(--glow-color),0.08)] hover:-translate-y-1 hover:bg-primary/90 dark:hover:bg-primary/80 hover:shadow-[0_20px_40px_rgba(var(--glow-color),0.15)] transition-all duration-300 lg:col-span-2 relative overflow-hidden group flex flex-col justify-between"
+        >
           {/* Aksentuasi Dekoratif di Latar Belakang */}
           <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700 ease-out"></div>
           
-          <div className="relative z-10 flex flex-col h-full justify-between">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-bold text-white/80 uppercase tracking-wider">
-                Fokus Saat Ini
-              </span>
+          <div className="relative z-10 flex flex-col h-full justify-between gap-4 text-left">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                {/* 
-                  focus timer ticks:
-                  Menampilkan sisa waktu hitung mundur (focusTimeLeft) yang dikelola di tingkat atas (parent component).
-                  Setiap detiknya diperbarui oleh timer interval utama (focus timer ticks), dioper ke sini sebagai prop,
-                  dan tombol ini digunakan untuk memulai/menghentikan jalannya timer.
-                */}
-                <button
-                  onClick={() => setIsFocusTimerRunning(!isFocusTimerRunning)}
-                  className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded-full text-xs font-semibold flex items-center gap-1.5 backdrop-blur-md cursor-pointer transition-colors"
-                >
-                  {isFocusTimerRunning ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-                  <span>{formatTimer(focusTimeLeft)}</span>
-                </button>
+                <span className="text-xs font-bold text-white/80 uppercase tracking-wider">
+                  Fokus Saat Ini
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-white/20 text-[9px] font-bold uppercase tracking-wider">
+                  {pomodoroStage === 'work' 
+                    ? 'Sesi Fokus' 
+                    : pomodoroStage === 'short-break' 
+                      ? 'Istirahat Pendek' 
+                      : 'Istirahat Panjang'}
+                </span>
               </div>
+              <button
+                onClick={() => setIsFocusTimerRunning(!isFocusTimerRunning)}
+                className="px-3.5 py-1.5 bg-white text-primary hover:bg-white/95 active:scale-95 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+              >
+                {isFocusTimerRunning ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                <span>{formatTimer(focusTimeLeft)}</span>
+              </button>
             </div>
             
-            <div>
-              <h3 className="text-xl font-bold tracking-tight mb-2 truncate">
-                {focusTask ? focusTask.task_title : 'Tidak ada tugas tersisa!'}
+            <div className="space-y-1.5">
+              <h3 className="text-xl font-extrabold tracking-tight truncate">
+                {activeFocusTask ? activeFocusTask.task_title : 'Tidak ada tugas tersisa!'}
               </h3>
-              <p className="text-xs text-white/85 mb-3 line-clamp-2 min-h-8">
-                {focusTask ? (focusTask.description || 'Tidak ada deskripsi tambahan.') : 'Semua tugas semester Anda telah selesai dikerjakan.'}
+              <p className="text-xs text-white/80 line-clamp-2 min-h-8 font-medium">
+                {activeFocusTask ? (activeFocusTask.description || 'Tidak ada deskripsi tambahan.') : 'Semua tugas semester Anda telah selesai dikerjakan.'}
               </p>
-              {/* Progres Penyelesaian Tugas Keseluruhan */}
-              <div className="flex items-center gap-4">
-                <div className="flex-1 h-2 bg-white/20 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-white rounded-full relative transition-all duration-500"
-                    style={{ width: `${progressPercentage}%` }}
-                  >
-                  </div>
-                </div>
-                <span className="text-xs font-bold">{progressPercentage}% Tugas Selesai</span>
+            </div>
+
+            {/* Progres Sesi Pomodoro Saat Ini */}
+            <div className="space-y-1.5 pt-2 border-t border-white/10">
+              <div className="flex justify-between items-center text-xs">
+                <span className="font-semibold text-white/90">Kemajuan Sesi Pomodoro</span>
+                <span className="font-bold">{sessionProgressPercentage}%</span>
+              </div>
+              <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-white rounded-full transition-all duration-500"
+                  style={{ width: `${sessionProgressPercentage}%` }}
+                />
               </div>
             </div>
           </div>
         </div>
 
+        {/* Panel Progres Tugas Semester */}
+        <div
+          onClick={() => onTabChange('tasks')}
+          style={{ '--glow-color': hexToRgb('#6366F1') } as React.CSSProperties}
+          className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-6 shadow-[0_8px_30px_rgba(var(--glow-color),0.03)] dark:shadow-[0_8px_30px_rgba(var(--glow-color),0.05)] hover:-translate-y-1 hover:bg-white/80 dark:hover:bg-slate-900/85 hover:shadow-[0_15px_30px_rgba(var(--glow-color),0.08)] transition-all duration-300 flex flex-col justify-between group cursor-pointer text-left"
+        >
+          <div className="space-y-1">
+            <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block">
+              Progres Tugas Semester
+            </span>
+            <h3 className="text-base font-bold text-on-surface leading-tight pt-1">
+              Penyelesaian Tugas
+            </h3>
+            <p className="text-xs text-on-surface-variant font-medium">
+              {completedCount} tugas telah selesai dari total {tasks.length} tugas.
+            </p>
+          </div>
+
+          <div className="space-y-2 pt-4">
+            <div className="flex justify-between items-center text-xs">
+              <span className="font-semibold text-on-surface-variant">Progres Keseluruhan</span>
+              <span className="font-bold text-primary">{progressPercentage}%</span>
+            </div>
+            <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full transition-all duration-500"
+                style={{ width: `${progressPercentage}%` }}
+              />
+            </div>
+            <span className="text-[9px] text-on-surface-variant/80 font-bold block pt-1 uppercase tracking-wider flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5 text-yellow-500" />
+              {progressPercentage === 100 ? 'Luar Biasa! Semua selesai' : 'Ayo selesaikan tugas Anda!'}
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Bagian Jadwal Kuliah Utama */}
@@ -368,19 +479,25 @@ export default function TodayView({
                   </div>                  
                   
                   {/* Kartu Informasi Kelas */}
-                  <div className={`flex-1 bg-white border rounded-xl p-4 md:p-5 hover:border-primary transition-all shadow-sm ${
-                    isInProgress 
-                      ? 'border-primary/45 bg-primary/[0.02] ring-1 ring-primary/5' 
-                      : isCanceled 
-                        ? 'border-red-200 bg-red-50/10' 
-                        : 'border-[#E2E8F0]'
-                  }`}>
+                  <div
+                    style={{ '--glow-color': hexToRgb(course.color_hex) } as React.CSSProperties}
+                    className={`flex-1 border backdrop-blur-md rounded-2xl p-4 md:p-5 relative transition-all duration-300 shadow-[0_8px_30px_rgba(var(--glow-color),0.04)] dark:shadow-[0_8px_30px_rgba(var(--glow-color),0.06)] hover:-translate-y-1 hover:shadow-[0_15px_30px_rgba(var(--glow-color),0.1)] ${
+                      isInProgress 
+                        ? 'border-primary/45 bg-primary/[0.03] ring-1 ring-primary/10' 
+                        : isCanceled 
+                          ? 'border-red-200 bg-red-50/10 opacity-60' 
+                          : 'bg-white/65 dark:bg-slate-900/70 border-white/60 dark:border-slate-800/40 hover:bg-white/80 dark:hover:bg-slate-900/85'
+                    }`}
+                  >
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-2">
-                      <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2.5">
                         {/* Kode Mata Kuliah dengan warna kustom */}
                         <span
-                          className="text-[10px] font-bold px-2 py-0.5 rounded text-white shadow-2xs"
-                          style={{ backgroundColor: isCanceled ? '#94A3B8' : course.color_hex }}
+                          className="text-[11px] font-black px-3 py-1 rounded-lg text-white tracking-wider uppercase border border-white/10"
+                          style={{
+                            backgroundColor: isCanceled ? '#64748B' : course.color_hex,
+                            boxShadow: isCanceled ? undefined : `0 4px 12px rgba(var(--glow-color), 0.25)`
+                          }}
                         >
                           {course.course_code}
                         </span>
@@ -478,8 +595,8 @@ export default function TodayView({
               {todayEvents.map(event => (
                 <div
                   key={event.id}
-                  style={{ borderLeftColor: event.color_hex, borderLeftWidth: '4px' }}
-                  className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between"
+                  style={{ '--glow-color': hexToRgb(event.color_hex) } as React.CSSProperties}
+                  className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-4 shadow-[0_8px_30px_rgba(var(--glow-color),0.05)] dark:shadow-[0_8px_30px_rgba(var(--glow-color),0.07)] hover:-translate-y-1 hover:bg-white/80 dark:hover:bg-slate-900/85 hover:shadow-[0_15px_30px_rgba(var(--glow-color),0.1)] transition-all duration-300 flex flex-col justify-between"
                 >
                   <div>
                     <div className="flex justify-between items-start mb-2">
