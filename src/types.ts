@@ -161,3 +161,33 @@ export interface ProfileUpdatePayload {
  * Menentukan tab aktif pada sidebar navigasi utama aplikasi Planly.
  */
 export type SidebarTab = 'today' | 'calendar' | 'tasks' | 'courses' | 'notes' | 'profile' | 'workspace';
+
+// --- Event Kampus ---
+
+/**
+ * Tipe kategori event kampus.
+ */
+export type EventCategory = 'seminar' | 'workshop' | 'study_club' | 'ukm' | 'rapat_himpunan' | 'lomba' | 'webinar' | 'lainnya';
+
+/**
+ * Interface CampusEvent merepresentasikan event non-kuliah kampus.
+ */
+export interface CampusEvent {
+  id: number;
+  user_id: number;
+  event_name: string;
+  category: EventCategory;
+  description: string | null;
+  event_date: string;       // format "YYYY-MM-DD"
+  start_time: string;       // format "HH:MM"
+  end_time: string;         // format "HH:MM"
+  location: string;
+  organizer: string;
+  color_hex: string;
+  is_important: boolean;
+}
+
+/**
+ * Payload untuk membuat event baru.
+ */
+export type CampusEventCreatePayload = Omit<CampusEvent, 'id' | 'user_id'>;
