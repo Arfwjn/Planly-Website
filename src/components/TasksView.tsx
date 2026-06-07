@@ -506,7 +506,7 @@ export default function TasksView({
               {/* Judul Tugas */}
               <div>
                 <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                  Nama / Judul Tugas
+                  Nama / Judul Tugas <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -535,7 +535,7 @@ export default function TasksView({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    Tanggal Batas Waktu
+                    Tanggal Batas Waktu <span className="text-red-500">*</span>
                   </label>
                   <DatePicker
                     value={newDeadlineDate}
@@ -546,7 +546,7 @@ export default function TasksView({
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    Waktu
+                    Waktu <span className="text-red-500">*</span>
                   </label>
                   <TimePicker
                     value={newDeadlineTime}
@@ -738,7 +738,7 @@ export default function TasksView({
                 {/* Edit Judul Tugas */}
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    Nama / Judul Tugas
+                    Nama / Judul Tugas <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -765,7 +765,7 @@ export default function TasksView({
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                      Tanggal Batas Waktu
+                      Tanggal Batas Waktu <span className="text-red-500">*</span>
                     </label>
                     <DatePicker
                       value={editDeadlineDate}
@@ -776,7 +776,7 @@ export default function TasksView({
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                      Waktu
+                      Waktu <span className="text-red-500">*</span>
                     </label>
                     <TimePicker
                       value={editDeadlineTime}

@@ -25,6 +25,7 @@ export interface User {
   gpa_target?: number | null;
   target_study_hours?: number | null;
   address?: string | null;
+  calendar_sync?: CalendarSyncConfig;
 }
 
 /**
@@ -173,7 +174,7 @@ export interface ProfileUpdatePayload {
 /**
  * Menentukan tab aktif pada sidebar navigasi utama aplikasi Planly.
  */
-export type SidebarTab = 'today' | 'calendar' | 'tasks' | 'courses' | 'notes' | 'profile' | 'workspace' | 'events';
+export type SidebarTab = 'today' | 'calendar' | 'tasks' | 'courses' | 'notes' | 'profile' | 'workspace' | 'events' | 'attendance';
 
 // --- Event Kampus ---
 
@@ -219,3 +220,50 @@ export interface RescheduledSession {
   is_canceled: boolean;
   note: string | null; // Alasan reschedule, e.g. "Dosen ada seminar"
 }
+
+// --- Absensi Kuliah ---
+
+/**
+ * Interface AttendanceRecord merepresentasikan riwayat absensi mahasiswa.
+ */
+export interface AttendanceRecord {
+  id: number;
+  user_id: number;
+  course_id: number;
+  course_code: string;
+  course_name: string;
+  date: string;              // Format "YYYY-MM-DD"
+  time: string;              // Format "HH:MM:SS"
+  status: 'Hadir' | 'Sakit' | 'Izin' | 'Alpha';
+  latitude: number | null;
+  longitude: number | null;
+  image_base64: string | null;
+  verified_face: boolean;
+}
+
+/**
+ * Payload untuk mengirimkan data absensi baru.
+ */
+export interface AttendanceSubmitPayload {
+  course_id: number;
+  course_code: string;
+  course_name: string;
+  date: string;
+  time: string;
+  status: 'Hadir' | 'Sakit' | 'Izin' | 'Alpha';
+  latitude: number | null;
+  longitude: number | null;
+  image_base64: string | null;
+}
+
+export interface CalendarSyncConfig {
+  google_connected: boolean;
+  outlook_connected: boolean;
+  sync_courses: boolean;
+  sync_reschedules: boolean;
+  sync_tasks: boolean;
+  sync_events: boolean;
+  last_sync_time: string | null;
+}
+
+

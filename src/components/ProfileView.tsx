@@ -1,10 +1,9 @@
-import React, { useState, useRef } from 'react';
-import { User as UserIcon, MapPin, Bell, Palette, LogOut, ArrowRight, Save, X, Camera, TrendingUp, Download, Upload, CheckSquare, Clock } from 'lucide-react';
-import { User } from '../types';
+import React, { useState, useRef, useEffect } from 'react';
+import { User as UserIcon, MapPin, Bell, Palette, LogOut, ArrowRight, Save, X, Camera, TrendingUp, Download, Upload, CheckSquare, Clock, Calendar, Link, Globe, RefreshCw, Check } from 'lucide-react';
+import { User, Course, Task, RescheduledSession, CampusEvent, CalendarSyncConfig } from '../types';
 import { useToast } from './ui/Toast';
-
-
-import { Course, Task } from '../types';
+import { calendarSyncService } from '../services/calendarSync';
+import { generateICalendarData, downloadICSFile } from '../utils/ical';
 
 interface ProfileViewProps {
   user: User;
@@ -15,6 +14,8 @@ interface ProfileViewProps {
   courses: Course[];
   tasks: Task[];
   notesCount: number;
+  rescheduledSessions: RescheduledSession[];
+  events: CampusEvent[];
 }
 
 /**
@@ -31,7 +32,9 @@ export default function ProfileView({
   onThemeChange,
   courses,
   tasks,
-  notesCount
+  notesCount,
+  rescheduledSessions,
+  events
 }: ProfileViewProps) {
   const toast = useToast();
 
@@ -106,6 +109,118 @@ export default function ProfileView({
     } else {
       toast.info('Rangkuman harian dinonaktifkan.');
     }
+  };
+
+  // --- STATES FOR SUB-TABS & CALENDAR SYNC ---
+  const [activeSubTab, setActiveSubTab] = useState<'account' | 'sync' | 'system'>('account');
+  const [syncConfig, setSyncConfig] = useState<CalendarSyncConfig>(() => calendarSyncService.getConfig());
+  const [isSyncingAll, setIsSyncingAll] = useState(false);
+  const [showOAuthModal, setShowOAuthModal] = useState<'google' | 'outlook' | null>(null);
+  const [oauthLoading, setOauthLoading] = useState(false);
+
+  // Sync back to local storage whenever config changes
+  useEffect(() => {
+    calendarSyncService.saveConfig(syncConfig);
+  }, [syncConfig]);
+
+  const handleConnectGoogle = () => {
+    setShowOAuthModal('google');
+  };
+
+  const handleConnectOutlook = () => {
+    setShowOAuthModal('outlook');
+  };
+
+  const handleConfirmOAuthConnect = async () => {
+    setOauthLoading(true);
+    try {
+      if (showOAuthModal === 'google') {
+        await calendarSyncService.connectGoogle();
+        setSyncConfig(prev => ({
+          ...prev,
+          google_connected: true,
+          last_sync_time: new Date().toLocaleString('id-ID')
+        }));
+        toast.success('Berhasil menghubungkan Planly dengan Google Calendar!');
+      } else if (showOAuthModal === 'outlook') {
+        await calendarSyncService.connectOutlook();
+        setSyncConfig(prev => ({
+          ...prev,
+          outlook_connected: true,
+          last_sync_time: new Date().toLocaleString('id-ID')
+        }));
+        toast.success('Berhasil menghubungkan Planly dengan Microsoft Outlook!');
+      }
+    } catch (err) {
+      toast.error('Gagal menghubungkan kalender eksternal.');
+    } finally {
+      setOauthLoading(false);
+      setShowOAuthModal(null);
+    }
+  };
+
+  const handleDisconnectGoogle = () => {
+    setSyncConfig(prev => ({
+      ...prev,
+      google_connected: false
+    }));
+    toast.info('Koneksi Google Calendar diputuskan.');
+  };
+
+  const handleDisconnectOutlook = () => {
+    setSyncConfig(prev => ({
+      ...prev,
+      outlook_connected: false
+    }));
+    toast.info('Koneksi Microsoft Outlook diputuskan.');
+  };
+
+  const handleToggleSyncSetting = (key: keyof CalendarSyncConfig) => {
+    setSyncConfig(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+    toast.success('Pengaturan sinkronisasi diperbarui.');
+  };
+
+  const handleForceMassSync = async () => {
+    if (!syncConfig.google_connected && !syncConfig.outlook_connected) {
+      toast.error('Harap hubungkan setidaknya satu kalender eksternal terlebih dahulu.');
+      return;
+    }
+    setIsSyncingAll(true);
+    const totalItems = courses.length + rescheduledSessions.length + tasks.length + events.length;
+    try {
+      const syncTime = await calendarSyncService.syncAllData(totalItems, toast);
+      setSyncConfig(prev => ({
+        ...prev,
+        last_sync_time: syncTime
+      }));
+    } catch (err) {
+      // Error ditangani di service
+    } finally {
+      setIsSyncingAll(false);
+    }
+  };
+
+  const handleExportICS = () => {
+    try {
+      const icsData = generateICalendarData(courses, rescheduledSessions, tasks, events);
+      downloadICSFile(icsData, `planly_calendar_${user.nim || 'academic'}.ics`);
+      toast.success('Berkas iCalendar (.ics) berhasil dibuat dan diunduh.');
+    } catch (err) {
+      console.error("Gagal ekspor ICS:", err);
+      toast.error('Gagal mengekspor data kalender.');
+    }
+  };
+
+  const handleCopySubscriptionLink = () => {
+    const dummySubLink = `https://planly.app/feeds/calendar/${user.nim || 'arfwjn'}.ics`;
+    navigator.clipboard.writeText(dummySubLink).then(() => {
+      toast.success('Link langganan kalender disalin! Gunakan link ini pada menu "Subscribe/Add Calendar from URL" di Google Calendar atau Outlook.');
+    }).catch(err => {
+      toast.error('Gagal menyalin link.');
+    });
   };
 
   const handleStartEditing = () => {
@@ -245,477 +360,695 @@ export default function ProfileView({
         className="hidden"
       />
 
-      {/* Profile Header Block */}
-      <section className="flex flex-col items-center text-center bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-8 shadow-sm hover:shadow-md transition-all duration-300">
-        <div className="relative w-32 h-32 md:w-36 md:h-36 rounded-full mb-4 group">
-          <div className="absolute inset-0 rounded-full border-4 border-white dark:border-card-bg shadow-md z-15"></div>
-          {user.profile_photo_url ? (
-            <img
-              src={user.profile_photo_url}
-              alt="Avatar Pengguna"
-              className="w-full h-full object-cover rounded-full z-10"
-              referrerPolicy="no-referrer"
-            />
-          ) : (
-            <div className="w-full h-full bg-[#F5F2FF] dark:bg-input-bg rounded-full flex items-center justify-center text-primary z-10 border border-card-border">
-              <UserIcon className="w-16 h-16" />
-            </div>
-          )}
+      {/* Compact Horizontal Profile Header */}
+      <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
+        <div className="flex items-center gap-4">
+          <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-full flex-shrink-0 group">
+            <div className="absolute inset-0 rounded-full border-2 border-white dark:border-card-bg shadow-sm z-15"></div>
+            {user.profile_photo_url ? (
+              <img
+                src={user.profile_photo_url}
+                alt="Avatar Pengguna"
+                className="w-full h-full object-cover rounded-full z-10"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="w-full h-full bg-[#F5F2FF] dark:bg-input-bg rounded-full flex items-center justify-center text-primary z-10 border border-card-border">
+                <UserIcon className="w-8 h-8" />
+              </div>
+            )}
+            
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="absolute -bottom-1 -right-1 z-20 w-6 h-6 rounded-full bg-primary hover:bg-[#4F46E5] text-white flex items-center justify-center shadow-md hover:scale-105 transition-all cursor-pointer border border-white dark:border-card-bg"
+              aria-label="Edit Foto Profil"
+              title="Unggah Foto Profil Baru"
+            >
+              <Camera className="w-3.5 h-3.5" />
+            </button>
+          </div>
           
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="absolute bottom-1 right-1 z-20 w-8 h-8 rounded-full bg-primary hover:bg-[#4F46E5] text-white flex items-center justify-center shadow-md hover:scale-105 transition-all cursor-pointer border border-white dark:border-card-bg"
-            aria-label="Edit Foto Profil"
-            title="Unggah Foto Profil Baru"
-          >
-            <Camera className="w-4 h-4" />
-          </button>
+          <div className="text-left space-y-1">
+            <h1 className="text-lg md:text-xl font-bold text-on-surface leading-tight">{user.name}</h1>
+            <p className="text-[10px] text-[#94A3B8] font-bold tracking-wider uppercase leading-none">{user.email}</p>
+            <p className="text-xs font-semibold text-on-surface-variant">
+              {user.major || 'Belum diatur'} • NIM {user.nim || 'Belum diatur'}
+            </p>
+          </div>
         </div>
- 
-        <h1 className="text-2xl font-bold text-on-surface">{user.name}</h1>
-        <p className="text-xs text-[#94A3B8] font-bold mt-1 tracking-wider uppercase">{user.email}</p>
-        <p className="text-sm font-semibold text-on-surface-variant mt-2 max-w-md mx-auto">
-          {user.major || 'Belum diatur'} • NIM {user.nim || 'Belum diatur'}
-        </p>
- 
-        {/* Kapsul lencana akademik */}
-        <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
-          <span className="px-3 py-1 rounded-full bg-primary/10 text-primary font-bold text-xs">
+
+        <div className="flex flex-wrap items-center gap-1.5 self-start sm:self-center">
+          <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-bold text-[10px] uppercase tracking-wider">
             Mahasiswa Aktif
           </span>
           {user.semester && (
-            <span className="px-3 py-1 rounded-full bg-[#EC4899]/10 text-[#EC4899] font-bold text-xs">
+            <span className="px-2.5 py-0.5 rounded-full bg-[#EC4899]/10 text-[#EC4899] font-bold text-[10px] uppercase tracking-wider">
               Semester {user.semester}
             </span>
           )}
-          {user.gpa_target && (
-            <span className="px-3 py-1 rounded-full bg-[#10B981]/10 text-[#10B981] font-bold text-xs">
-              Target IPK: {Number(user.gpa_target).toFixed(2)}
-            </span>
-          )}
-          {user.target_study_hours && (
-            <span className="px-3 py-1 rounded-full bg-[#F59E0B]/10 text-[#F59E0B] font-bold text-xs flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              {user.target_study_hours} Jam/Hari
-            </span>
-          )}
-          <span className="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800/80 text-on-surface-variant font-semibold text-xs flex items-center gap-1 border border-[#E2E8F0] dark:border-slate-700/80">
-            <MapPin className="w-3.5 h-3.5 text-primary" />
-            {user.address || 'Alamat Belum Diatur'}
-          </span>
         </div>
       </section>
- 
-      {/* Settings Grid (Bento Style Layout) */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
-        {/* Formulir Profil Akun (Account Details Form) */}
-        <div className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-6 shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-9 h-9 rounded-full bg-[#F5F2FF] dark:bg-input-bg flex items-center justify-center text-primary">
-                <UserIcon className="w-4.5 h-4.5" />
-              </div>
-              <h3 className="text-base font-bold text-on-surface">Ringkasan Akun</h3>
-            </div>
- 
-            {/* Jika mode edit aktif, kita tampilkan formulir pengisian data akun */}
-            {isEditingAccount ? (
-              <form onSubmit={handleAccountUpdateSubmit} className="space-y-3 mb-4">
-                <div>
-                  <label className="block text-[10px] font-bold text-on-surface uppercase mb-1">
-                    Nama Lengkap
-                  </label>
-                  <input
-                    type="text"
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className="w-full h-9 px-3 bg-[#F8FAFC] dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
-                    required
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[10px] font-bold text-on-surface uppercase mb-1">
-                      NIM
-                    </label>
-                    <input
-                      type="text"
-                      value={editNim}
-                      onChange={(e) => setEditNim(e.target.value)}
-                      className="w-full h-9 px-3 bg-[#F8FAFC] dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-on-surface uppercase mb-1">
-                      Program Studi
-                    </label>
-                    <input
-                      type="text"
-                      value={editMajor}
-                      onChange={(e) => setEditMajor(e.target.value)}
-                      className="w-full h-9 px-3 bg-[#F8FAFC] dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
-                    />
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[10px] font-bold text-on-surface uppercase mb-1">
-                      Semester Aktif
-                    </label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={14}
-                      value={editSemester}
-                      onChange={(e) => setEditSemester(e.target.value)}
-                      placeholder="e.g. 4"
-                      className="w-full h-9 px-3 bg-[#F8FAFC] dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-on-surface uppercase mb-1">
-                      Target Belajar
-                    </label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={24}
-                      value={editTargetStudyHours}
-                      onChange={(e) => setEditTargetStudyHours(e.target.value)}
-                      placeholder="Jam/Hari (e.g. 3)"
-                      className="w-full h-9 px-3 bg-[#F8FAFC] dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[10px] font-bold text-on-surface uppercase mb-1">
-                      IPK Saat Ini
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0.00"
-                      max="4.00"
-                      value={editGpaCurrent}
-                      onChange={(e) => setEditGpaCurrent(e.target.value)}
-                      placeholder="e.g. 3.75"
-                      className="w-full h-9 px-3 bg-[#F8FAFC] dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-on-surface uppercase mb-1">
-                      Target IPK
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0.00"
-                      max="4.00"
-                      value={editGpaTarget}
-                      onChange={(e) => setEditGpaTarget(e.target.value)}
-                      placeholder="e.g. 3.85"
-                      className="w-full h-9 px-3 bg-[#F8FAFC] dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold text-on-surface uppercase mb-1">
-                    Alamat / Tempat Tinggal
-                  </label>
-                  <input
-                    type="text"
-                    value={editAddress}
-                    onChange={(e) => setEditAddress(e.target.value)}
-                    placeholder="e.g. Purwokerto, Jawa Tengah"
-                    className="w-full h-9 px-3 bg-[#F8FAFC] dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
-                  />
-                </div>
-
-                <div className="flex gap-2 pt-2">
-                  <button
-                    type="submit"
-                    className="px-3.5 py-2 bg-primary hover:bg-[#4F46E5] text-white font-semibold rounded-lg text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors"
-                  >
-                    <Save className="w-3.5 h-3.5" /> Simpan
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsEditingAccount(false)}
-                    className="px-3.5 py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-on-surface-variant font-semibold rounded-lg text-xs flex items-center gap-1.5 cursor-pointer transition-colors bg-white dark:bg-slate-900"
-                  >
-                    <X className="w-3.5 h-3.5" /> Batal
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <p className="text-xs leading-relaxed text-on-surface-variant mb-6 font-medium">
-                Kelola informasi profil, nomor induk mahasiswa, program studi, target akademik, dan jam belajar harian Anda.
-              </p>
-            )}
-          </div>
- 
-          {!isEditingAccount && (
-            <button
-              onClick={handleStartEditing}
-              className="self-start text-primary font-bold text-xs flex items-center gap-1 hover:underline group cursor-pointer bg-transparent border-none p-0"
-            >
-              <span>Perbarui profil</span>
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-            </button>
-          )}
-        </div>
-
-        {/* Statistik Akademik Card */}
-        <div className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-6 shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-9 h-9 rounded-full bg-[#F5F2FF] dark:bg-slate-800/50 flex items-center justify-center text-primary">
-                <TrendingUp className="w-4.5 h-4.5" />
-              </div>
-              <h3 className="text-base font-bold text-on-surface">Statistik Akademik</h3>
-            </div>
-            
-            <div className="grid grid-cols-3 gap-3 mb-5">
-              <div className="p-3 bg-indigo-50/40 dark:bg-indigo-950/10 border border-indigo-100/30 dark:border-indigo-900/20 rounded-xl text-center">
-                <span className="block text-xl font-extrabold text-primary">{coursesCount}</span>
-                <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Mata Kuliah</span>
-              </div>
-              <div className="p-3 bg-emerald-50/40 dark:bg-emerald-950/10 border border-emerald-100/30 dark:border-emerald-900/20 rounded-xl text-center">
-                <span className="block text-xl font-extrabold text-emerald-600 dark:text-emerald-400">
-                  {tasksCount > 0 ? `${Math.round((completedTasksCount / tasksCount) * 100)}%` : '0%'}
-                </span>
-                <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Tugas Selesai</span>
-              </div>
-              <div className="p-3 bg-amber-50/40 dark:bg-amber-950/10 border border-amber-100/30 dark:border-amber-900/20 rounded-xl text-center">
-                <span className="block text-xl font-extrabold text-amber-600 dark:text-amber-400">{notesCount}</span>
-                <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Catatan Materi</span>
-              </div>
-            </div>
-
-            {/* GPA Progress Bar */}
-            {user.gpa_current && user.gpa_target ? (
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs font-semibold text-on-surface">
-                  <span>Progres IPK</span>
-                  <span>{Number(user.gpa_current).toFixed(2)} / {Number(user.gpa_target).toFixed(2)}</span>
-                </div>
-                <div className="w-full bg-[#E2E8F0] dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
-                  <div 
-                    className="bg-primary h-full rounded-full transition-all duration-500" 
-                    style={{ width: `${Math.min((Number(user.gpa_current) / Number(user.gpa_target)) * 100, 100)}%` }}
-                  />
-                </div>
-                <div className="text-[10px] text-on-surface-variant font-semibold italic flex items-center gap-1.5 mt-1">
-                  {Number(user.gpa_current) >= Number(user.gpa_target) ? (
-                    <>
-                      <svg className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="8" r="7"/>
-                        <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
-                      </svg>
-                      <span>Luar biasa! Anda telah mencapai target IPK Anda!</span>
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-3.5 h-3.5 text-primary flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10"/>
-                        <circle cx="12" cy="12" r="6"/>
-                        <circle cx="12" cy="12" r="2"/>
-                      </svg>
-                      <span>Butuh {(Number(user.gpa_target) - Number(user.gpa_current)).toFixed(2)} poin lagi untuk mencapai target IPK Semester ini.</span>
-                    </>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <p className="text-xs text-on-surface-variant font-semibold italic bg-slate-50 dark:bg-slate-800/40 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
-                Atur IPK saat ini dan target IPK Anda pada menu perbarui profil untuk melihat ringkasan visual progres IPK.
-              </p>
-            )}
-          </div>
-
-          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-[10px] text-[#94A3B8] font-bold flex items-center gap-1.5">
-            <CheckSquare className="w-3.5 h-3.5 text-emerald-500" />
-            <span>{completedTasksCount} dari {tasksCount} tugas kuliah berhasil Anda selesaikan.</span>
-          </div>
-        </div>
-
-        {/* Portabilitas Data / Cadangan Card */}
-        <div className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-6 shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-9 h-9 rounded-full bg-[#F5F2FF] dark:bg-slate-800/50 flex items-center justify-center text-primary">
-                <Download className="w-4.5 h-4.5" />
-              </div>
-              <h3 className="text-base font-bold text-on-surface">Cadangkan & Portabilitas Data</h3>
-            </div>
-            
-            <p className="text-xs leading-relaxed text-on-surface-variant font-medium mb-4">
-              Karena Planly menyimpan data akademik Anda secara lokal di peramban, ekspor data Anda secara rutin ke berkas JSON agar aman, atau impor kembali di perangkat baru Anda.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-3">
-              {/* Export Button */}
-              <button
-                type="button"
-                onClick={handleExportData}
-                className="flex-1 h-9 px-4 bg-white dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 hover:border-primary hover:text-primary rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer text-on-surface"
-              >
-                <Download className="w-4 h-4" />
-                <span>Ekspor Cadangan</span>
-              </button>
-
-              {/* Import Button */}
-              <label
-                className="flex-1 h-9 px-4 bg-primary hover:bg-[#4F46E5] text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
-              >
-                <Upload className="w-4 h-4" />
-                <span>Impor Cadangan</span>
-                <input
-                  type="file"
-                  accept=".json"
-                  className="hidden"
-                  onChange={handleImportData}
-                />
-              </label>
-            </div>
-          </div>
-
-          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-[10px] text-[#94A3B8] font-bold flex items-center gap-1.5">
-            <svg className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
-              <line x1="12" y1="9" x2="12" y2="13"/>
-              <line x1="12" y1="17" x2="12.01" y2="17"/>
-            </svg>
-            <span>Perhatian: Mengimpor data baru akan menimpa seluruh data yang ada saat ini secara permanen.</span>
-          </div>
-        </div>
-
-        {/* Pengaturan Saklar Notifikasi (Notifications Toggle Settings) */}
-        <div className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-6 shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-9 h-9 rounded-full bg-[#F5F2FF] dark:bg-slate-800/50 flex items-center justify-center text-primary">
-                <Bell className="w-4.5 h-4.5" />
-              </div>
-              <h3 className="text-base font-bold text-on-surface">Notifikasi</h3>
-            </div>
-            
-            {/* Saklar untuk pengingat tugas dan email rangkuman harian */}
-            <div className="space-y-4 mb-4">
-              <div className="flex justify-between items-center text-xs font-semibold text-on-surface">
-                <span>Pengingat Tugas & Jadwal</span>
-                <button
-                  type="button"
-                  onClick={handleToggleReminders}
-                  className={`w-10 h-6 rounded-full relative cursor-pointer block transition-colors ${
-                    reminders ? 'bg-primary' : 'bg-[#E2E8F0] dark:bg-slate-800'
-                  }`}
-                >
-                  <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                    reminders ? 'right-1' : 'left-1'
-                  }`} />
-                </button>
-              </div>
- 
-              <div className="flex justify-between items-center text-xs font-semibold text-on-surface">
-                <div>
-                  <span>Email Rangkuman Tugas Harian</span>
-                  <span className="block text-[9px] text-[#94A3B8] font-bold mt-0.5">{user.email}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleToggleDailyDigest}
-                  className={`w-10 h-6 rounded-full relative cursor-pointer block transition-colors ${
-                    dailyDigest ? 'bg-primary' : 'bg-[#E2E8F0] dark:bg-slate-800'
-                  }`}
-                >
-                  <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                    dailyDigest ? 'right-1' : 'left-1'
-                  }`} />
-                </button>
-              </div>
-
-              {dailyDigest && (
-                <button
-                  type="button"
-                  onClick={() => setShowEmailModal(true)}
-                  className="mt-2 text-primary hover:text-[#4F46E5] text-xs font-bold flex items-center gap-1.5 cursor-pointer bg-transparent border-none p-0 transition-colors"
-                >
-                  <svg className="w-3.5 h-3.5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <rect width="20" height="16" x="2" y="4" rx="2"/>
-                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-                  </svg>
-                  <span>Simulasi & Pratinjau Email Rangkuman</span>
-                </button>
-              )}
-            </div>
-          </div>
-          
-          <p className="text-[10px] text-on-surface-variant font-medium">
-            Pemberitahuan dikirim melalui saluran notifikasi browser sistem dan email terdaftar.
-          </p>
-        </div>
- 
-        {/* Pengaturan Pilihan Tema (Theme Switcher Triggers) */}
-        <div className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-6 shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 rounded-full bg-[#F5F2FF] dark:bg-input-bg flex items-center justify-center text-primary">
-              <Palette className="w-4.5 h-4.5" />
-            </div>
-            <h3 className="text-base font-bold text-on-surface">Pengaturan Tampilan</h3>
-          </div>
- 
-          <div className="grid grid-cols-2 gap-3 mt-2">
-            {/* Pemicu Mode Terang */}
-            <div
-              onClick={() => onThemeChange('light')}
-              className={`border rounded-xl p-3 flex flex-col items-center gap-2 cursor-pointer transition-all ${
-                theme === 'light'
-                  ? 'border-primary bg-primary/5 text-primary shadow-[0_2px_8px_rgba(79,70,229,0.08)]'
-                  : 'border-white/60 dark:border-slate-800/40 bg-white/60 dark:bg-slate-900/60 hover:bg-white/80 dark:hover:bg-slate-900/80 text-on-surface-variant'
-              }`}
-            >
-              <Palette className="w-6 h-6 text-primary" />
-              <span className="text-xs font-bold text-primary">Mode Terang</span>
-            </div>
-            
-            {/* Pemicu Mode Gelap */}
-            <div
-              onClick={() => onThemeChange('dark')}
-              className={`border rounded-xl p-3 flex flex-col items-center gap-2 cursor-pointer transition-all ${
-                theme === 'dark'
-                  ? 'border-primary bg-primary/5 text-primary shadow-[0_2px_8px_rgba(79,70,229,0.08)]'
-                  : 'border-white/60 dark:border-slate-800/40 bg-white/60 dark:bg-slate-900/60 hover:bg-white/80 dark:hover:bg-slate-900/80 text-on-surface-variant'
-              }`}
-            >
-              <Palette className="w-6 h-6 text-on-surface-variant" />
-              <span className="text-xs font-bold text-on-surface-variant">Mode Gelap</span>
-            </div>
-          </div>
-        </div>
- 
-        {/* Tombol Keluar Sesi & Konfirmasi Log Out */}
-        <div className="bg-red-50/20 dark:bg-red-950/5 border border-red-100/50 dark:border-red-900/20 backdrop-blur-md rounded-2xl p-6 text-center flex flex-col justify-center items-center hover:-translate-y-1 hover:shadow-md transition-all duration-300">
-          <LogOut className="w-8 h-8 text-red-600 mb-2" />
-          <h3 className="text-base font-bold text-red-600 mb-1">Keluar dengan Aman</h3>
-          <p className="text-xs text-on-surface-variant max-w-[280px] mb-4 font-semibold">
-            Keluar dari sesi akademik Planly aktif Anda pada perangkat peramban ini dengan aman.
-          </p>
+      {/* Settings Tabbed Layout */}
+      <div className="flex flex-col md:flex-row gap-6 items-start">
+        {/* Left Side: Navigation Tabs Sidebar */}
+        <div className="w-full md:w-[220px] flex-shrink-0 flex md:flex-col gap-1.5 overflow-x-auto md:overflow-visible pb-3 md:pb-0 scrollbar-none border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-800 pr-0 md:pr-4">
           <button
-            onClick={onSignOut}
-            className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs rounded-full shadow-sm transition-colors cursor-pointer"
+            type="button"
+            onClick={() => setActiveSubTab('account')}
+            className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold transition-all flex-shrink-0 cursor-pointer w-auto md:w-full text-left ${
+              activeSubTab === 'account'
+                ? 'bg-primary text-white shadow-xs'
+                : 'text-on-surface-variant hover:bg-slate-50 dark:hover:bg-slate-850/40 hover:text-on-surface bg-transparent'
+            }`}
           >
-            Keluar Sekarang
+            <UserIcon className="w-4 h-4 flex-shrink-0" />
+            <span>Akun & Akademik</span>
+          </button>
+          
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('sync')}
+            className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold transition-all flex-shrink-0 cursor-pointer w-auto md:w-full text-left ${
+              activeSubTab === 'sync'
+                ? 'bg-primary text-white shadow-xs'
+                : 'text-on-surface-variant hover:bg-slate-50 dark:hover:bg-slate-850/40 hover:text-on-surface bg-transparent'
+            }`}
+          >
+            <Calendar className="w-4 h-4 flex-shrink-0" />
+            <span>Kalender & Notifikasi</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('system')}
+            className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold transition-all flex-shrink-0 cursor-pointer w-auto md:w-full text-left ${
+              activeSubTab === 'system'
+                ? 'bg-primary text-white shadow-xs'
+                : 'text-on-surface-variant hover:bg-slate-50 dark:hover:bg-slate-850/40 hover:text-on-surface bg-transparent'
+            }`}
+          >
+            <Palette className="w-4 h-4 flex-shrink-0" />
+            <span>Tampilan & Cadangan</span>
           </button>
         </div>
- 
-      </section>
+
+        {/* Right Side: Active Settings Panel Content */}
+        <div className="flex-1 w-full space-y-6">
+          
+          {/* SUB-TAB 1: AKUN & AKADEMIK */}
+          {activeSubTab === 'account' && (
+            <div className="space-y-6">
+              {/* Formulir Profil Akun */}
+              <div className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-6 shadow-sm">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-9 h-9 rounded-full bg-[#F5F2FF] dark:bg-input-bg flex items-center justify-center text-primary">
+                    <UserIcon className="w-4.5 h-4.5" />
+                  </div>
+                  <h3 className="text-base font-bold text-on-surface">Informasi Akun</h3>
+                </div>
+
+                {isEditingAccount ? (
+                  <form onSubmit={handleAccountUpdateSubmit} className="space-y-3">
+                    <div>
+                      <label className="block text-[10px] font-bold text-on-surface uppercase mb-1">
+                        Nama Lengkap
+                      </label>
+                      <input
+                        type="text"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        className="w-full h-9 px-3 bg-[#F8FAFC] dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+                        required
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] font-bold text-on-surface uppercase mb-1">
+                          NIM
+                        </label>
+                        <input
+                          type="text"
+                          value={editNim}
+                          onChange={(e) => setEditNim(e.target.value)}
+                          className="w-full h-9 px-3 bg-[#F8FAFC] dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-on-surface uppercase mb-1">
+                          Program Studi
+                        </label>
+                        <input
+                          type="text"
+                          value={editMajor}
+                          onChange={(e) => setEditMajor(e.target.value)}
+                          className="w-full h-9 px-3 bg-[#F8FAFC] dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] font-bold text-on-surface uppercase mb-1">
+                          Semester Aktif
+                        </label>
+                        <input
+                          type="number"
+                          min={1}
+                          max={14}
+                          value={editSemester}
+                          onChange={(e) => setEditSemester(e.target.value)}
+                          placeholder="e.g. 4"
+                          className="w-full h-9 px-3 bg-[#F8FAFC] dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-on-surface uppercase mb-1">
+                          Target Jam Belajar
+                        </label>
+                        <input
+                          type="number"
+                          min={1}
+                          max={24}
+                          value={editTargetStudyHours}
+                          onChange={(e) => setEditTargetStudyHours(e.target.value)}
+                          placeholder="Jam/Hari (e.g. 3)"
+                          className="w-full h-9 px-3 bg-[#F8FAFC] dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] font-bold text-on-surface uppercase mb-1">
+                          IPK Saat Ini
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0.00"
+                          max="4.00"
+                          value={editGpaCurrent}
+                          onChange={(e) => setEditGpaCurrent(e.target.value)}
+                          placeholder="e.g. 3.75"
+                          className="w-full h-9 px-3 bg-[#F8FAFC] dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-on-surface uppercase mb-1">
+                          Target IPK
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0.00"
+                          max="4.00"
+                          value={editGpaTarget}
+                          onChange={(e) => setEditGpaTarget(e.target.value)}
+                          placeholder="e.g. 3.85"
+                          className="w-full h-9 px-3 bg-[#F8FAFC] dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold text-on-surface uppercase mb-1">
+                        Alamat / Tempat Tinggal
+                      </label>
+                      <input
+                        type="text"
+                        value={editAddress}
+                        onChange={(e) => setEditAddress(e.target.value)}
+                        placeholder="e.g. Purwokerto, Jawa Tengah"
+                        className="w-full h-9 px-3 bg-[#F8FAFC] dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+                      />
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      <button
+                        type="submit"
+                        className="px-3.5 py-2 bg-primary hover:bg-[#4F46E5] text-white font-semibold rounded-lg text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors"
+                      >
+                        <Save className="w-3.5 h-3.5" /> Simpan
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingAccount(false)}
+                        className="px-3.5 py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-on-surface-variant font-semibold rounded-lg text-xs flex items-center gap-1.5 cursor-pointer transition-colors bg-white dark:bg-slate-900"
+                      >
+                        <X className="w-3.5 h-3.5" /> Batal
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div>
+                    <p className="text-xs leading-relaxed text-on-surface-variant mb-6 font-medium">
+                      Kelola informasi profil, nomor induk mahasiswa, program studi, target akademik, dan jam belajar harian Anda di sini.
+                    </p>
+                    <button
+                      onClick={handleStartEditing}
+                      className="self-start text-primary font-bold text-xs flex items-center gap-1 hover:underline group cursor-pointer bg-transparent border-none p-0"
+                    >
+                      <span>Perbarui profil</span>
+                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Statistik Akademik & Progres IPK */}
+              <div className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-6 shadow-sm">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-9 h-9 rounded-full bg-[#F5F2FF] dark:bg-slate-800/50 flex items-center justify-center text-primary">
+                    <TrendingUp className="w-4.5 h-4.5" />
+                  </div>
+                  <h3 className="text-base font-bold text-on-surface">Statistik & Progres Akademik</h3>
+                </div>
+                
+                <div className="grid grid-cols-3 gap-3 mb-5">
+                  <div className="p-3 bg-indigo-50/40 dark:bg-indigo-950/10 border border-indigo-100/30 dark:border-indigo-900/20 rounded-xl text-center">
+                    <span className="block text-xl font-extrabold text-primary">{coursesCount}</span>
+                    <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Mata Kuliah</span>
+                  </div>
+                  <div className="p-3 bg-emerald-50/40 dark:bg-emerald-950/10 border border-emerald-100/30 dark:border-emerald-900/20 rounded-xl text-center">
+                    <span className="block text-xl font-extrabold text-emerald-600 dark:text-emerald-400">
+                      {tasksCount > 0 ? `${Math.round((completedTasksCount / tasksCount) * 100)}%` : '0%'}
+                    </span>
+                    <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Tugas Selesai</span>
+                  </div>
+                  <div className="p-3 bg-amber-50/40 dark:bg-amber-950/10 border border-amber-100/30 dark:border-amber-900/20 rounded-xl text-center">
+                    <span className="block text-xl font-extrabold text-amber-600 dark:text-amber-400">{notesCount}</span>
+                    <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Catatan Materi</span>
+                  </div>
+                </div>
+
+                {user.gpa_current && user.gpa_target ? (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs font-semibold text-on-surface">
+                      <span>Progres IPK</span>
+                      <span>{Number(user.gpa_current).toFixed(2)} / {Number(user.gpa_target).toFixed(2)}</span>
+                    </div>
+                    <div className="w-full bg-[#E2E8F0] dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                      <div 
+                        className="bg-primary h-full rounded-full transition-all duration-500" 
+                        style={{ width: `${Math.min((Number(user.gpa_current) / Number(user.gpa_target)) * 100, 100)}%` }}
+                      />
+                    </div>
+                    <div className="text-[10px] text-on-surface-variant font-semibold italic flex items-center gap-1.5 mt-1">
+                      {Number(user.gpa_current) >= Number(user.gpa_target) ? (
+                        <>
+                          <svg className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="8" r="7"/>
+                            <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
+                          </svg>
+                          <span>Luar biasa! Anda telah mencapai target IPK Anda!</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-3.5 h-3.5 text-primary flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <circle cx="12" cy="12" r="6"/>
+                            <circle cx="12" cy="12" r="2"/>
+                          </svg>
+                          <span>Butuh {(Number(user.gpa_target) - Number(user.gpa_current)).toFixed(2)} poin lagi untuk mencapai target IPK Semester ini.</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs text-on-surface-variant font-semibold italic bg-slate-50 dark:bg-slate-800/40 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+                    Atur IPK saat ini dan target IPK Anda pada menu perbarui profil untuk melihat ringkasan visual progres IPK.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* SUB-TAB 2: KALENDER & NOTIFIKASI */}
+          {activeSubTab === 'sync' && (
+            <div className="space-y-6">
+              {/* Pengaturan Saklar Notifikasi */}
+              <div className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-6 shadow-sm">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-9 h-9 rounded-full bg-[#F5F2FF] dark:bg-slate-800/50 flex items-center justify-center text-primary">
+                    <Bell className="w-4.5 h-4.5" />
+                  </div>
+                  <h3 className="text-base font-bold text-on-surface">Notifikasi Sistem</h3>
+                </div>
+                
+                <div className="space-y-4 mb-4">
+                  <div className="flex justify-between items-center text-xs font-semibold text-on-surface">
+                    <span>Pengingat Tugas & Jadwal</span>
+                    <button
+                      type="button"
+                      onClick={handleToggleReminders}
+                      className={`w-10 h-6 rounded-full relative cursor-pointer block transition-colors ${
+                        reminders ? 'bg-primary' : 'bg-[#E2E8F0] dark:bg-slate-800'
+                      }`}
+                    >
+                      <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                        reminders ? 'right-1' : 'left-1'
+                      }`} />
+                    </button>
+                  </div>
+     
+                  <div className="flex justify-between items-center text-xs font-semibold text-on-surface">
+                    <div>
+                      <span>Email Rangkuman Tugas Harian</span>
+                      <span className="block text-[9px] text-[#94A3B8] font-bold mt-0.5">{user.email}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleToggleDailyDigest}
+                      className={`w-10 h-6 rounded-full relative cursor-pointer block transition-colors ${
+                        dailyDigest ? 'bg-primary' : 'bg-[#E2E8F0] dark:bg-slate-800'
+                      }`}
+                    >
+                      <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                        dailyDigest ? 'right-1' : 'left-1'
+                      }`} />
+                    </button>
+                  </div>
+
+                  {dailyDigest && (
+                    <button
+                      type="button"
+                      onClick={() => setShowEmailModal(true)}
+                      className="mt-2 text-primary hover:text-[#4F46E5] text-xs font-bold flex items-center gap-1.5 cursor-pointer bg-transparent border-none p-0 transition-colors"
+                    >
+                      <svg className="w-3.5 h-3.5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <rect width="20" height="16" x="2" y="4" rx="2"/>
+                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                      </svg>
+                      <span>Simulasi & Pratinjau Email Rangkuman</span>
+                    </button>
+                  )}
+                </div>
+                <p className="text-[10px] text-on-surface-variant font-medium">
+                  Pemberitahuan dikirim melalui saluran notifikasi peramban dan email akademis Anda.
+                </p>
+              </div>
+
+              {/* Integrasi Kalender Eksternal Card */}
+              <div className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-6 shadow-sm">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-9 h-9 rounded-full bg-[#F5F2FF] dark:bg-slate-800/50 flex items-center justify-center text-primary">
+                    <Calendar className="w-4.5 h-4.5" />
+                  </div>
+                  <h3 className="text-base font-bold text-on-surface">Sinkronisasi Kalender Eksternal</h3>
+                </div>
+
+                <p className="text-xs leading-relaxed text-on-surface-variant font-medium mb-5">
+                  Hubungkan Planly dengan Google Calendar atau Outlook untuk menyinkronkan jadwal kuliah, reschedule, dan tugas Anda secara otomatis.
+                </p>
+
+                {/* Google & Outlook Connection Rows */}
+                <div className="space-y-3 mb-5">
+                  {/* Google Calendar Row */}
+                  <div className="flex items-center justify-between p-3 bg-slate-50/50 dark:bg-slate-850/30 rounded-xl border border-slate-100 dark:border-slate-800 text-xs">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-white shadow-xs flex items-center justify-center border border-slate-100 flex-shrink-0">
+                        <Globe className="w-4.5 h-4.5 text-blue-500" />
+                      </div>
+                      <div>
+                        <span className="font-bold block text-on-surface">Google Calendar</span>
+                        <span className={`text-[10px] font-bold block ${syncConfig.google_connected ? 'text-emerald-500' : 'text-[#94A3B8]'}`}>
+                          {syncConfig.google_connected ? 'Terhubung' : 'Belum Terhubung'}
+                        </span>
+                      </div>
+                    </div>
+                    {syncConfig.google_connected ? (
+                      <button
+                        type="button"
+                        onClick={handleDisconnectGoogle}
+                        className="px-3 py-1.5 border border-red-200 dark:border-red-900/30 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 font-bold rounded-lg text-[10px] cursor-pointer transition-colors"
+                      >
+                        Putuskan
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleConnectGoogle}
+                        className="px-3 py-1.5 bg-primary hover:bg-[#4F46E5] text-white font-bold rounded-lg text-[10px] cursor-pointer shadow-xs transition-colors"
+                      >
+                        Hubungkan
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Outlook Row */}
+                  <div className="flex items-center justify-between p-3 bg-slate-50/50 dark:bg-slate-850/30 rounded-xl border border-slate-100 dark:border-slate-800 text-xs">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-white shadow-xs flex items-center justify-center border border-slate-100 flex-shrink-0">
+                        <Calendar className="w-4.5 h-4.5 text-blue-700" />
+                      </div>
+                      <div>
+                        <span className="font-bold block text-on-surface">Microsoft Outlook</span>
+                        <span className={`text-[10px] font-bold block ${syncConfig.outlook_connected ? 'text-emerald-500' : 'text-[#94A3B8]'}`}>
+                          {syncConfig.outlook_connected ? 'Terhubung' : 'Belum Terhubung'}
+                        </span>
+                      </div>
+                    </div>
+                    {syncConfig.outlook_connected ? (
+                      <button
+                        type="button"
+                        onClick={handleDisconnectOutlook}
+                        className="px-3 py-1.5 border border-red-200 dark:border-red-900/30 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 font-bold rounded-lg text-[10px] cursor-pointer transition-colors"
+                      >
+                        Putuskan
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleConnectOutlook}
+                        className="px-3 py-1.5 bg-primary hover:bg-[#4F46E5] text-white font-bold rounded-lg text-[10px] cursor-pointer shadow-xs transition-colors"
+                      >
+                        Hubungkan
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Sync Settings switches (visible only when connected) */}
+                {(syncConfig.google_connected || syncConfig.outlook_connected) && (
+                  <div className="bg-slate-50/50 dark:bg-slate-850/20 p-4 rounded-xl border border-slate-100 dark:border-slate-800 text-xs space-y-3.5 mb-5">
+                    <span className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider border-b border-slate-150 dark:border-slate-800 pb-1">
+                      Pengaturan Sinkronisasi Otomatis
+                    </span>
+                    
+                    <div className="flex justify-between items-center text-on-surface">
+                      <span className="font-medium">Sinkronkan Jadwal Kuliah</span>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleSyncSetting('sync_courses')}
+                        className={`w-8 h-5 rounded-full relative cursor-pointer block transition-colors ${
+                          syncConfig.sync_courses ? 'bg-primary' : 'bg-[#E2E8F0] dark:bg-slate-800'
+                        }`}
+                      >
+                        <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${
+                          syncConfig.sync_courses ? 'right-0.5' : 'left-0.5'
+                        }`} />
+                      </button>
+                    </div>
+
+                    <div className="flex justify-between items-center text-on-surface">
+                      <span className="font-medium">Sinkronkan Kuliah Pengganti (Reschedule)</span>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleSyncSetting('sync_reschedules')}
+                        className={`w-8 h-5 rounded-full relative cursor-pointer block transition-colors ${
+                          syncConfig.sync_reschedules ? 'bg-primary' : 'bg-[#E2E8F0] dark:bg-slate-800'
+                        }`}
+                      >
+                        <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${
+                          syncConfig.sync_reschedules ? 'right-0.5' : 'left-0.5'
+                        }`} />
+                      </button>
+                    </div>
+
+                    <div className="flex justify-between items-center text-on-surface">
+                      <span className="font-medium">Sinkronkan Tenggat Tugas</span>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleSyncSetting('sync_tasks')}
+                        className={`w-8 h-5 rounded-full relative cursor-pointer block transition-colors ${
+                          syncConfig.sync_tasks ? 'bg-primary' : 'bg-[#E2E8F0] dark:bg-slate-800'
+                        }`}
+                      >
+                        <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${
+                          syncConfig.sync_tasks ? 'right-0.5' : 'left-0.5'
+                        }`} />
+                      </button>
+                    </div>
+
+                    <div className="flex justify-between items-center text-on-surface">
+                      <span className="font-medium">Sinkronkan Event Kampus</span>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleSyncSetting('sync_events')}
+                        className={`w-8 h-5 rounded-full relative cursor-pointer block transition-colors ${
+                          syncConfig.sync_events ? 'bg-primary' : 'bg-[#E2E8F0] dark:bg-slate-800'
+                        }`}
+                      >
+                        <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${
+                          syncConfig.sync_events ? 'right-0.5' : 'left-0.5'
+                        }`} />
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={isSyncingAll}
+                      onClick={handleForceMassSync}
+                      className="w-full py-2 bg-primary hover:bg-[#4F46E5] disabled:bg-slate-200 disabled:dark:bg-slate-800 text-white font-bold rounded-lg text-[10px] flex items-center justify-center gap-1.5 cursor-pointer shadow-xs transition-colors"
+                    >
+                      {isSyncingAll ? (
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-3.5 h-3.5" />
+                      )}
+                      <span>Sinkronkan Sekarang</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* Manual Export & Subscription Section */}
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
+                  <span className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">
+                    Integrasi Manual & iCalendar (.ics)
+                  </span>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <button
+                      type="button"
+                      onClick={handleExportICS}
+                      className="flex-1 h-9 px-3 bg-white dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 hover:border-primary hover:text-primary rounded-lg text-[10px] font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer text-on-surface"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Unduh File .ics</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCopySubscriptionLink}
+                      className="flex-1 h-9 px-3 bg-white dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 hover:border-primary hover:text-primary rounded-lg text-[10px] font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer text-on-surface"
+                    >
+                      <Link className="w-3.5 h-3.5" />
+                      <span>Salin Link Kalender</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* SUB-TAB 3: TAMPILAN & CADANGAN */}
+          {activeSubTab === 'system' && (
+            <div className="space-y-6">
+              {/* Pilihan Tema */}
+              <div className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-6 shadow-sm">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-9 h-9 rounded-full bg-[#F5F2FF] dark:bg-input-bg flex items-center justify-center text-primary">
+                    <Palette className="w-4.5 h-4.5" />
+                  </div>
+                  <h3 className="text-base font-bold text-on-surface">Tema Tampilan</h3>
+                </div>
+       
+                <div className="grid grid-cols-2 gap-3 mt-2">
+                  <div
+                    onClick={() => onThemeChange('light')}
+                    className={`border rounded-xl p-3 flex flex-col items-center gap-2 cursor-pointer transition-all ${
+                      theme === 'light'
+                        ? 'border-primary bg-primary/5 text-primary shadow-xs'
+                        : 'border-white/60 dark:border-slate-800/40 bg-white/60 dark:bg-slate-900/60 hover:bg-white/80 dark:hover:bg-slate-900/80 text-on-surface-variant'
+                    }`}
+                  >
+                    <Palette className="w-6 h-6 text-primary" />
+                    <span className="text-xs font-bold text-primary">Mode Terang</span>
+                  </div>
+                  
+                  <div
+                    onClick={() => onThemeChange('dark')}
+                    className={`border rounded-xl p-3 flex flex-col items-center gap-2 cursor-pointer transition-all ${
+                      theme === 'dark'
+                        ? 'border-primary bg-primary/5 text-primary shadow-xs'
+                        : 'border-white/60 dark:border-slate-800/40 bg-white/60 dark:bg-slate-900/60 hover:bg-white/80 dark:hover:bg-slate-900/80 text-on-surface-variant'
+                    }`}
+                  >
+                    <Palette className="w-6 h-6 text-on-surface-variant" />
+                    <span className="text-xs font-bold text-on-surface-variant">Mode Gelap</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Portabilitas Data / Cadangan Card */}
+              <div className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-9 h-9 rounded-full bg-[#F5F2FF] dark:bg-slate-800/50 flex items-center justify-center text-primary">
+                      <Download className="w-4.5 h-4.5" />
+                    </div>
+                    <h3 className="text-base font-bold text-on-surface">Ekspor & Impor Data</h3>
+                  </div>
+                  
+                  <p className="text-xs leading-relaxed text-on-surface-variant font-medium mb-4">
+                    Data Planly Anda disimpan secara lokal di peramban. Ekspor berkala ke berkas JSON untuk mengamankan data Anda.
+                  </p>
+
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <button
+                      type="button"
+                      onClick={handleExportData}
+                      className="flex-1 h-9 px-4 bg-white dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 hover:border-primary hover:text-primary rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer text-on-surface"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span>Ekspor Cadangan</span>
+                    </button>
+
+                    <label
+                      className="flex-1 h-9 px-4 bg-primary hover:bg-[#4F46E5] text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                    >
+                      <Upload className="w-4 h-4" />
+                      <span>Impor Cadangan</span>
+                      <input
+                        type="file"
+                        accept=".json"
+                        className="hidden"
+                        onChange={handleImportData}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-[10px] text-[#94A3B8] font-bold flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                  </svg>
+                  <span>Mengimpor data akan menimpa data saat ini secara permanen.</span>
+                </div>
+              </div>
+
+              {/* Tombol Keluar Sesi & Konfirmasi Log Out */}
+              <div className="bg-red-50/20 dark:bg-red-950/5 border border-red-100/50 dark:border-red-900/20 backdrop-blur-md rounded-2xl p-6 text-center flex flex-col justify-center items-center">
+                <LogOut className="w-8 h-8 text-red-600 mb-2" />
+                <h3 className="text-base font-bold text-red-600 mb-1">Keluar Akun</h3>
+                <p className="text-xs text-on-surface-variant max-w-[280px] mb-4 font-semibold">
+                  Keluar dari sesi akademik Planly aktif Anda pada perangkat peramban ini dengan aman.
+                </p>
+                <button
+                  type="button"
+                  onClick={onSignOut}
+                  className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs rounded-full shadow-sm transition-colors cursor-pointer"
+                >
+                  Keluar Sekarang
+                </button>
+              </div>
+            </div>
+          )}
+
+        </div>
+      </div>
 
       {/* Modal Simulasi Email Rangkuman Harian */}
       {showEmailModal && (
@@ -889,6 +1222,94 @@ export default function ProfileView({
               >
                 Tutup Pratinjau
               </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* Modal Otorisasi OAuth Kalender Simulator */}
+      {showOAuthModal && (
+        <div className="fixed inset-0 bg-[#1b1b24]/40 backdrop-blur-xs z-50 flex items-center justify-center p-4" onClick={() => setShowOAuthModal(null)}>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-[420px] overflow-hidden border border-[#E2E8F0] dark:border-slate-800 animate-zoom-in text-center" onClick={(e) => e.stopPropagation()}>
+            
+            {/* Modal Header */}
+            <div className="px-6 py-4 bg-[#F8FAFC] dark:bg-slate-800 border-b border-[#E2E8F0] dark:border-slate-700 flex items-center justify-between">
+              <span className="text-xs font-bold text-on-surface-variant font-mono">
+                {showOAuthModal === 'google' ? 'Google Account Consent' : 'Microsoft Account Consent'}
+              </span>
+              <button
+                onClick={() => setShowOAuthModal(null)}
+                className="text-on-surface-variant hover:text-on-surface p-1.5 rounded-full cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-6">
+              {/* Service Brand Logo */}
+              <div className="flex items-center justify-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-slate-850 flex items-center justify-center border border-slate-200 dark:border-slate-700 text-primary">
+                  {showOAuthModal === 'google' ? (
+                    <Globe className="w-6 h-6 text-blue-500" />
+                  ) : (
+                    <Calendar className="w-6 h-6 text-blue-700" />
+                  )}
+                </div>
+                <div className="text-slate-400">⚡</div>
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                  <Calendar className="w-5 h-5" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="text-sm font-extrabold text-on-surface">
+                  Hubungkan Planly dengan Akun {showOAuthModal === 'google' ? 'Google' : 'Outlook'} Anda?
+                </h4>
+                <p className="text-[11px] text-on-surface-variant leading-relaxed">
+                  Planly meminta izin untuk mengelola agenda dan tugas pada {showOAuthModal === 'google' ? 'Google Calendar' : 'Microsoft Outlook'} Anda.
+                </p>
+              </div>
+
+              {/* Permission Scopes Details */}
+              <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-100 dark:border-slate-800 text-left space-y-2 text-[10px] text-on-surface-variant font-medium">
+                <div className="flex items-start gap-2">
+                  <Check className="w-3.5 h-3.5 text-emerald-500 stroke-[3px] flex-shrink-0 mt-0.5" />
+                  <span>Membaca daftar kalender dan status agenda Anda</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Check className="w-3.5 h-3.5 text-emerald-500 stroke-[3px] flex-shrink-0 mt-0.5" />
+                  <span>Membuat, mengedit, dan menghapus kegiatan/tugas kuliah Anda</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Check className="w-3.5 h-3.5 text-emerald-500 stroke-[3px] flex-shrink-0 mt-0.5" />
+                  <span>Menyinkronkan data secara real-time di latar belakang</span>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowOAuthModal(null)}
+                  className="flex-1 py-2.5 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-on-surface-variant font-bold rounded-xl text-xs transition-colors cursor-pointer bg-white dark:bg-slate-900"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  disabled={oauthLoading}
+                  onClick={handleConfirmOAuthConnect}
+                  className="flex-1 py-2.5 bg-primary hover:bg-[#4F46E5] disabled:bg-slate-200 disabled:dark:bg-slate-800 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-xs transition-colors"
+                >
+                  {oauthLoading ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <span>Setujui & Hubungkan</span>
+                  )}
+                </button>
+              </div>
             </div>
 
           </div>

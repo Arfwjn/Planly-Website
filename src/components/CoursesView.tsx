@@ -520,7 +520,7 @@ export default function CoursesView({
               <div className="grid grid-cols-3 gap-4">
                 <div className="col-span-1">
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    Kode Mata Kuliah
+                    Kode Mata Kuliah <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -533,7 +533,7 @@ export default function CoursesView({
                 </div>
                 <div className="col-span-2">
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    Nama Mata Kuliah
+                    Nama Mata Kuliah <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -550,7 +550,7 @@ export default function CoursesView({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    SKS (Kredit)
+                    SKS (Kredit) <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -564,7 +564,7 @@ export default function CoursesView({
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    Ruangan / Lokasi
+                    Ruangan / Lokasi <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -580,7 +580,7 @@ export default function CoursesView({
               {/* Form Field: Nama Dosen Pengampu */}
               <div>
                 <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                  Nama Dosen
+                  Nama Dosen <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -596,7 +596,7 @@ export default function CoursesView({
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    Hari Kuliah
+                    Hari Kuliah <span className="text-red-500">*</span>
                   </label>
                   <CustomSelect
                     value={dayOfWeek}
@@ -606,7 +606,7 @@ export default function CoursesView({
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    Jam Mulai
+                    Jam Mulai <span className="text-red-500">*</span>
                   </label>
                   <TimePicker
                     value={startTime}
@@ -617,7 +617,7 @@ export default function CoursesView({
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    Jam Selesai
+                    Jam Selesai <span className="text-red-500">*</span>
                   </label>
                   <TimePicker
                     value={endTime}
@@ -631,7 +631,7 @@ export default function CoursesView({
               {/* Pemilihan warna visual (Color Dot Selections) */}
               <div>
                 <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                  Warna Tema
+                  Warna Tema <span className="text-red-500">*</span>
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {colorsOption.map((c) => {
@@ -707,7 +707,7 @@ export default function CoursesView({
               <div className="grid grid-cols-3 gap-4">
                 <div className="col-span-1">
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    Kode Mata Kuliah
+                    Kode Mata Kuliah <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -719,7 +719,7 @@ export default function CoursesView({
                 </div>
                 <div className="col-span-2">
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    Nama Mata Kuliah
+                    Nama Mata Kuliah <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -735,7 +735,7 @@ export default function CoursesView({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    SKS (Kredit)
+                    SKS (Kredit) <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -749,7 +749,7 @@ export default function CoursesView({
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    Ruangan / Lokasi
+                    Ruangan / Lokasi <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -764,7 +764,7 @@ export default function CoursesView({
               {/* Edit Nama Dosen Pengampu */}
               <div>
                 <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                  Nama Dosen
+                  Nama Dosen <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -779,7 +779,7 @@ export default function CoursesView({
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    Hari Kuliah
+                    Hari Kuliah <span className="text-red-500">*</span>
                   </label>
                   <CustomSelect
                     value={dayOfWeek}
@@ -789,7 +789,7 @@ export default function CoursesView({
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    Jam Mulai
+                    Jam Mulai <span className="text-red-500">*</span>
                   </label>
                   <TimePicker
                     value={startTime}
@@ -800,7 +800,7 @@ export default function CoursesView({
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                    Jam Selesai
+                    Jam Selesai <span className="text-red-500">*</span>
                   </label>
                   <TimePicker
                     value={endTime}
@@ -814,7 +814,7 @@ export default function CoursesView({
               {/* Edit Pilihan Warna */}
               <div>
                 <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
-                  Warna Tema
+                  Warna Tema <span className="text-red-500">*</span>
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {colorsOption.map((c) => {

@@ -19,6 +19,7 @@ import {
   ProfileUpdatePayload,
   CampusEvent, CampusEventCreatePayload,
   RescheduledSession,
+  AttendanceRecord, AttendanceSubmitPayload,
 } from '../types';
 import { initialUser, initialCourses, initialTasks, initialNotes } from '../mockData';
 import httpClient from './httpClient';
@@ -657,6 +658,67 @@ const reschedulesService = {
 };
 
 // =============================================================================
+// ATTENDANCE SERVICE SECTION
+// =============================================================================
+const attendanceService = {
+  /**
+   * GET /api/attendance
+   * Mengambil semua daftar riwayat absensi.
+   */
+  getAll: async (): Promise<AttendanceRecord[]> => {
+    if (USE_MOCK) {
+      await delay(300);
+      return getStored<AttendanceRecord[]>('planly_attendance_records', []);
+    }
+    const { data } = await httpClient.get<AttendanceRecord[]>('/attendance');
+    return data;
+  },
+
+  /**
+   * POST /api/attendance
+   * Mengirimkan data absensi baru (termasuk Base64 snapshot dan GPS).
+   */
+  submit: async (payload: AttendanceSubmitPayload): Promise<AttendanceRecord> => {
+    if (USE_MOCK) {
+      await delay(500);
+      const records = getStored<AttendanceRecord[]>('planly_attendance_records', []);
+      const newRecord: AttendanceRecord = {
+        id: ++mockIdCounter,
+        user_id: 1,
+        course_id: payload.course_id,
+        course_code: payload.course_code,
+        course_name: payload.course_name,
+        date: payload.date,
+        time: payload.time,
+        status: payload.status,
+        latitude: payload.latitude,
+        longitude: payload.longitude,
+        image_base64: payload.image_base64,
+        verified_face: true, // Mock verification always passes
+      };
+      setStored('planly_attendance_records', [newRecord, ...records]);
+      return newRecord;
+    }
+    const { data } = await httpClient.post<AttendanceRecord>('/attendance', payload);
+    return data;
+  },
+
+  /**
+   * DELETE /api/attendance/{id}
+   * Menghapus record absensi tertentu.
+   */
+  delete: async (id: number): Promise<void> => {
+    if (USE_MOCK) {
+      await delay(300);
+      const records = getStored<AttendanceRecord[]>('planly_attendance_records', []);
+      setStored('planly_attendance_records', records.filter(r => r.id !== id));
+      return;
+    }
+    await httpClient.delete(`/attendance/${id}`);
+  },
+};
+
+// =============================================================================
 // EXPORT — unified API object
 // Kita menyatukan semua service section di atas ke dalam satu objek 'api'
 // agar lebih rapi dan mudah diimpor di bagian aplikasi lainnya.
@@ -670,4 +732,5 @@ export const api = {
   notes: notesService,
   events: eventsService,
   reschedules: reschedulesService,
+  attendance: attendanceService,
 };

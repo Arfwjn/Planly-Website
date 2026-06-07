@@ -7,8 +7,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { CalendarDays, Clock, MapPin, User, Info, X, Calendar as CalendarIcon, Undo2, CheckSquare } from 'lucide-react';
-import { Course, RescheduledSession, Task } from '../types';
+import { CalendarDays, Clock, MapPin, User, Info, X, Calendar as CalendarIcon, Undo2, CheckSquare, UserCheck, Check } from 'lucide-react';
+import { Course, RescheduledSession, Task, AttendanceRecord } from '../types';
 import Skeleton from './ui/Skeleton';
 import TimePicker from './ui/TimePicker';
 import DatePicker from './ui/DatePicker';
@@ -24,6 +24,8 @@ interface CalendarViewProps {
   rescheduledSessions: RescheduledSession[];
   onAddReschedule: (session: Omit<RescheduledSession, 'id'>) => void;
   onDeleteReschedule: (courseId: number, originalDate: string) => void;
+  onTabChange?: (tab: any) => void;
+  attendanceRecords: AttendanceRecord[];
 }
 
 export default function CalendarView({
@@ -34,7 +36,9 @@ export default function CalendarView({
   loading = false,
   rescheduledSessions,
   onAddReschedule,
-  onDeleteReschedule
+  onDeleteReschedule,
+  onTabChange,
+  attendanceRecords
 }: CalendarViewProps) {
   if (loading) {
     return (
@@ -596,7 +600,10 @@ export default function CalendarView({
               const isCanceled = c.is_canceled;
               const isRescheduledIn = c.is_rescheduled_in;
               const isCompleted = status === 'completed' && !isCanceled;
-              const isInProgress = status === 'in-progress' && !isCanceled;
+              const isInProgress = status === 'in-progress' && !isCanceled && selectedISODate === formatDateYYYYMMDD(currentTime);
+              const hasCheckedInSelectedDate = attendanceRecords.some(
+                r => r.course_id === course.id && r.date === selectedISODate && r.status === 'Hadir'
+              );
 
               return (
                 <div key={course.id} className={`flex gap-4 lg:gap-6 relative group transition-opacity duration-300 ${isCompleted || isCanceled ? 'opacity-60' : ''}`}>
@@ -742,7 +749,27 @@ export default function CalendarView({
                     })()}
 
                     {/* Action buttons for rescheduling/cancellation */}
-                    <div className="mt-4 pt-3 border-t border-[#F1F5F9] flex justify-end gap-2 text-[10px] font-bold">
+                    <div className="mt-4 pt-3 border-t border-[#F1F5F9] dark:border-slate-800/50 flex justify-end gap-2 text-[10px] font-bold">
+                      {isInProgress && onTabChange && (
+                        hasCheckedInSelectedDate ? (
+                          <div className="px-3.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-xl flex items-center gap-1.5">
+                            <Check className="w-3.5 h-3.5 text-emerald-500 stroke-[3px]" />
+                            <span>Sudah Presensi</span>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onTabChange('attendance');
+                            }}
+                            className="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl cursor-pointer hover:-translate-y-0.5 active:scale-95 transition-all duration-300 flex items-center gap-1.5 shadow-[0_2px_8px_rgba(16,185,129,0.05)] hover:shadow-[0_4px_12px_rgba(16,185,129,0.2)]"
+                          >
+                            <UserCheck className="w-3.5 h-3.5" />
+                            <span>Presensi Wajah</span>
+                          </button>
+                        )
+                      )}
+                      
                       {c.is_canceled || c.is_rescheduled_in ? (
                         <button
                           type="button"

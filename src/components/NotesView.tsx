@@ -501,7 +501,7 @@ export default function NotesView({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1">
-                  Judul Catatan
+                  Judul Catatan <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -531,7 +531,7 @@ export default function NotesView({
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-1.5">
                 <div className="flex items-center gap-4">
                   <label className="block text-xs font-bold text-on-surface uppercase tracking-wider">
-                    Isi / Catatan Materi
+                    Isi / Catatan Materi <span className="text-red-500">*</span>
                   </label>
                   {/* Tab Switcher */}
                   <div className="flex bg-[#E2E8F0] dark:bg-slate-800 p-0.5 rounded-lg text-[10px] font-bold">
@@ -861,7 +861,7 @@ export default function NotesView({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1">
-                      Judul Catatan
+                      Judul Catatan <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -888,7 +888,7 @@ export default function NotesView({
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-1.5">
                     <div className="flex items-center gap-4">
                       <label className="block text-xs font-bold text-on-surface uppercase tracking-wider">
-                        Isi Catatan
+                        Isi Catatan <span className="text-red-500">*</span>
                       </label>
                       {/* Tab Switcher */}
                       <div className="flex bg-[#E2E8F0] dark:bg-slate-800 p-0.5 rounded-lg text-[10px] font-bold">

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Course, Task, Note, SidebarTab, LoginResponse, CampusEvent, RescheduledSession } from './types';
+import { User, Course, Task, Note, SidebarTab, LoginResponse, CampusEvent, RescheduledSession, AttendanceRecord, AttendanceSubmitPayload } from './types';
 import { api } from './services/api';
 
 // Impor komponen-komponen view utama aplikasi
@@ -14,8 +14,10 @@ import CoursesView from './components/CoursesView';
 import NotesView from './components/NotesView';
 import ProfileView from './components/ProfileView';
 import WorkspaceView from './components/WorkspaceView';
+import AttendanceView from './components/AttendanceView';
 import useDeadlineMonitor from './hooks/useDeadlineMonitor';
 import { useToast } from './components/ui/Toast';
+import { calendarSyncService } from './services/calendarSync';
 
 
 // Impor ikon untuk navigasi bawah pada perangkat mobile
@@ -46,6 +48,7 @@ export default function App() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [events, setEvents] = useState<CampusEvent[]>([]);
   const [rescheduledSessions, setRescheduledSessions] = useState<RescheduledSession[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [loadingData, setLoadingData] = useState(false); // Indikator ketika mengambil data dari API
 
   // --- STATE NAVIGASI GLOBAL & PENCARIAN ---
@@ -184,13 +187,15 @@ export default function App() {
         api.tasks.getAll(),
         api.notes.getAll(),
         api.events.getAll(),
-        api.reschedules.getAll()
-      ]).then(([c, t, n, e, r]) => {
+        api.reschedules.getAll(),
+        api.attendance.getAll()
+      ]).then(([c, t, n, e, r, a]) => {
         setCourses(c);
         setTasks(t);
         setNotes(n);
         setEvents(e);
         setRescheduledSessions(r);
+        setAttendanceRecords(a);
         setLoadingData(false);
       }).catch(err => {
         console.error("Error loading data from api", err);
@@ -239,6 +244,7 @@ export default function App() {
       setTasks((prev) =>
         prev.map((t) => (t.id === taskId ? updatedTask : t))
       );
+      calendarSyncService.syncItem('update', 'task', updatedTask.task_title, toast);
     }).catch(err => toast.error(err.message));
   };
 
@@ -249,6 +255,7 @@ export default function App() {
       if (!silent) {
         toast.success('Tugas baru berhasil ditambahkan.');
       }
+      calendarSyncService.syncItem('create', 'task', createdTask.task_title, toast);
       return createdTask;
     }).catch(err => {
       toast.error(err.message);
@@ -261,13 +268,17 @@ export default function App() {
     api.tasks.update(taskId, updatedTask).then((savedTask) => {
       setTasks((prev) => prev.map((t) => (t.id === taskId ? savedTask : t)));
       toast.success('Tugas berhasil diperbarui.');
+      calendarSyncService.syncItem('update', 'task', savedTask.task_title, toast);
     }).catch(err => toast.error(err.message));
   };
 
   // Menghapus tugas berdasarkan ID
   const handleDeleteTask = (taskId: number) => {
+    const taskToDelete = tasks.find((t) => t.id === taskId);
+    const taskTitle = taskToDelete ? taskToDelete.task_title : 'Tugas';
     api.tasks.delete(taskId).then(() => {
       setTasks((prev) => prev.filter((t) => t.id !== taskId));
+      calendarSyncService.syncItem('delete', 'task', taskTitle, toast);
     }).catch(err => toast.error(err.message));
   };
 
@@ -277,6 +288,7 @@ export default function App() {
     api.courses.create(newCourse).then((createdCourse) => {
       setCourses((prev) => [...prev, createdCourse]);
       toast.success('Mata Kuliah berhasil didaftarkan.');
+      calendarSyncService.syncItem('create', 'course', createdCourse.course_name, toast);
     }).catch(err => toast.error(err.message));
   };
 
@@ -287,15 +299,19 @@ export default function App() {
       api.tasks.getAll().then(setTasks);
       api.notes.getAll().then(setNotes);
       toast.success('Mata Kuliah berhasil diperbarui.');
+      calendarSyncService.syncItem('update', 'course', savedCourse.course_name, toast);
     }).catch(err => toast.error(err.message));
   };
 
   // Menghapus mata kuliah beserta data terkait
   const handleDeleteCourse = (courseId: number) => {
+    const courseToDelete = courses.find((c) => c.id === courseId);
+    const courseName = courseToDelete ? courseToDelete.course_name : 'Mata Kuliah';
     api.courses.delete(courseId).then(() => {
       setCourses((prev) => prev.filter((c) => c.id !== courseId));
       api.tasks.getAll().then(setTasks);
       api.notes.getAll().then(setNotes);
+      calendarSyncService.syncItem('delete', 'course', courseName, toast);
     }).catch(err => toast.error(err.message));
   };
 
@@ -329,6 +345,7 @@ export default function App() {
     api.events.create(newEvent).then((createdEvent) => {
       setEvents((prev) => [createdEvent, ...prev]);
       toast.success('Event baru berhasil ditambahkan.');
+      calendarSyncService.syncItem('create', 'event', createdEvent.event_name, toast);
     }).catch(err => toast.error(err.message));
   };
 
@@ -337,33 +354,66 @@ export default function App() {
     api.events.update(eventId, updatedEvent).then((savedEvent) => {
       setEvents((prev) => prev.map((e) => (e.id === eventId ? savedEvent : e)));
       toast.success('Event berhasil diperbarui.');
+      calendarSyncService.syncItem('update', 'event', savedEvent.event_name, toast);
     }).catch(err => toast.error(err.message));
   };
 
   // Menghapus event kampus
   const handleDeleteEvent = (eventId: number) => {
+    const eventToDelete = events.find((e) => e.id === eventId);
+    const eventName = eventToDelete ? eventToDelete.event_name : 'Event';
     api.events.delete(eventId).then(() => {
       setEvents((prev) => prev.filter((e) => e.id !== eventId));
       toast.success('Event berhasil dihapus.');
+      calendarSyncService.syncItem('delete', 'event', eventName, toast);
     }).catch(err => toast.error(err.message));
   };
 
   // Menambahkan pemindahan jadwal (reschedule) kuliah
   const handleAddReschedule = (session: Omit<RescheduledSession, 'id'>) => {
+    const course = courses.find((c) => c.id === session.course_id);
+    const courseName = course ? course.course_name : 'Mata Kuliah';
     api.reschedules.create(session).then((created) => {
       setRescheduledSessions((prev) => [created, ...prev]);
       toast.success(session.is_canceled ? 'Sesi kuliah berhasil dibatalkan.' : 'Sesi kuliah berhasil dipindahkan.');
+      calendarSyncService.syncItem('create', 'reschedule', courseName, toast);
     }).catch(err => toast.error(err.message));
   };
 
   // Menghapus pemindahan jadwal kuliah (mengembalikan ke semula)
   const handleDeleteReschedule = (courseId: number, originalDate: string) => {
+    const course = courses.find((c) => c.id === courseId);
+    const courseName = course ? course.course_name : 'Mata Kuliah';
     api.reschedules.delete(courseId, originalDate).then(() => {
       setRescheduledSessions((prev) =>
         prev.filter((r) => !(r.course_id === courseId && r.original_date === originalDate))
       );
       toast.success('Jadwal kuliah dikembalikan ke sesi normal.');
+      calendarSyncService.syncItem('delete', 'reschedule', courseName, toast);
     }).catch(err => toast.error(err.message));
+  };
+
+  // Menyimpan absensi baru mahasiswa
+  const handleCreateAttendance = async (payload: AttendanceSubmitPayload) => {
+    try {
+      const newRecord = await api.attendance.submit(payload);
+      setAttendanceRecords((prev) => [newRecord, ...prev]);
+      return newRecord;
+    } catch (err: any) {
+      toast.error(err.message || 'Gagal menyimpan absensi.');
+      throw new Error(err.message || 'Gagal menyimpan absensi.');
+    }
+  };
+
+  // Menghapus riwayat absensi mahasiswa
+  const handleDeleteAttendance = async (id: number) => {
+    try {
+      await api.attendance.delete(id);
+      setAttendanceRecords((prev) => prev.filter((r) => r.id !== id));
+      toast.success('Riwayat presensi berhasil dihapus.');
+    } catch (err: any) {
+      toast.error(err.message || 'Gagal menghapus riwayat presensi.');
+    }
   };
 
   // Berpindah ke tab catatan dan otomatis memfilter berdasarkan kode mata kuliah yang dipilih
@@ -418,6 +468,8 @@ export default function App() {
             rescheduledSessions={rescheduledSessions}
             onAddReschedule={handleAddReschedule}
             onDeleteReschedule={handleDeleteReschedule}
+            onTabChange={setActiveTab}
+            attendanceRecords={attendanceRecords}
           />
         );
       case 'events':
@@ -517,6 +569,18 @@ export default function App() {
             courses={courses}
             tasks={tasks}
             notesCount={notes.length}
+            rescheduledSessions={rescheduledSessions}
+            events={events}
+          />
+        );
+      case 'attendance':
+        return (
+          <AttendanceView
+            courses={courses}
+            rescheduledSessions={rescheduledSessions}
+            attendanceRecords={attendanceRecords}
+            onSubmitAttendance={handleCreateAttendance}
+            onDeleteAttendance={handleDeleteAttendance}
           />
         );
       default:

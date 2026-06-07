@@ -1,4 +1,4 @@
-import { BookOpen, CalendarDays, Calendar, CheckSquare, FileText, LayoutDashboard, User as UserIcon, GraduationCap, Play, Pause, RotateCcw, Timer } from 'lucide-react';
+import { BookOpen, CalendarDays, Calendar, CheckSquare, FileText, LayoutDashboard, User as UserIcon, GraduationCap, Play, Pause, RotateCcw, Timer, UserCheck } from 'lucide-react';
 import { SidebarTab } from '../types';
 
 interface SidebarProps {
@@ -36,6 +36,7 @@ export default function Sidebar({
     { id: 'tasks' as SidebarTab, label: 'Tugas', icon: CheckSquare },
     { id: 'courses' as SidebarTab, label: 'Mata Kuliah', icon: BookOpen },
     { id: 'notes' as SidebarTab, label: 'Catatan', icon: FileText },
+    { id: 'attendance' as SidebarTab, label: 'Absensi', icon: UserCheck },
     { id: 'profile' as SidebarTab, label: 'Profil', icon: UserIcon },
   ];
 
