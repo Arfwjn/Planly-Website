@@ -1,3 +1,11 @@
+// =============================================================================
+// Planly — Header Component (Navigasi Atas & Pengaturan Cepat)
+//
+// Komponen ini berfungsi sebagai navbar atas yang nampilin tombol menu burger
+// (khusus mobile), kolom pencarian dinamis, dropdown notifikasi real-time,
+// tombol panel pengaturan cepat (semester/tema), dan jalan pintas ke profil user.
+// =============================================================================
+
 import { useState, useEffect, useRef } from 'react';
 import { Bell, Search, Settings, Menu, Clock, Calendar, CheckSquare, Check, HelpCircle } from 'lucide-react';
 import { User, Task, Course, SidebarTab } from '../types';
@@ -34,11 +42,12 @@ export default function Header({
   onUserUpdate
 }: HeaderProps) {
   const toast = useToast();
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [hasBadge, setHasBadge] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false); // Toggle popup notifikasi
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false); // Toggle popup setting cepat
+  const [hasBadge, setHasBadge] = useState(false); // Menandai ada notifikasi baru yang belum dibaca
+  const [isScrolled, setIsScrolled] = useState(false); // Efek bayangan (shadow) pas halaman di-scroll down
 
+  // Efek buat mendeteksi scroll halaman biar header dapet efek shadow tipis pas user nge-scroll
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 0);
@@ -50,7 +59,7 @@ export default function Header({
   const notificationRef = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
 
-  // Menentukan placeholder input pencarian
+  // Fungsi buat nentuin tulisan placeholder di input pencarian sesuai dengan tab aktif saat ini
   const getSearchPlaceholder = () => {
     switch (activeTab) {
       case 'tasks':
@@ -68,12 +77,12 @@ export default function Header({
     }
   };
 
-  // Menghasilkan daftar Notifikasi Dinamis secara real-time
+  // Fungsi buat nge-generate notifikasi dinamis berdasarkan deadline tugas terdekat & jadwal kuliah hari ini
   const getDynamicNotifications = () => {
     const list: { id: string; type: 'task' | 'course'; title: string; desc: string; targetTab: SidebarTab }[] = [];
     const now = new Date();
     
-    // 1. Deteksi tugas belum selesai dengan tenggat waktu dalam 24 jam ke depan
+    // 1. Deteksi tugas kuliah yang belum selesai dan sisa waktunya kurang dari 24 jam (mepet banget!)
     tasks
       .filter(t => !t.is_finished)
       .forEach(t => {
@@ -95,7 +104,7 @@ export default function Header({
         }
       });
       
-    // 2. Deteksi perkuliahan yang terjadwal hari ini
+    // 2. Deteksi kelas kuliah rutin yang terjadwal di hari ini
     const weekdaysEng = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const todayDayEng = weekdaysEng[now.getDay()];
     courses
@@ -115,9 +124,10 @@ export default function Header({
 
   const notifications = getDynamicNotifications();
 
-  // Pengaturan lencana merah notifikasi (badge)
+  // Ngatur lencana merah (badge) notifikasi di atas tombol lonceng
   useEffect(() => {
     if (notifications.length > 0) {
+      // Kalo user udah pernah ngeklik 'Tandai dibaca' di sesi ini, badge-nya gak usah nongol lagi
       const isCleared = sessionStorage.getItem('planly_badge_cleared') === 'true';
       if (!isCleared) {
         setHasBadge(true);
@@ -127,7 +137,7 @@ export default function Header({
     }
   }, [tasks, courses]);
 
-  // Menutup popover ketika pengguna mengklik di luar area menu dropdown
+  // Efek buat nutup menu popover dropdown secara otomatis pas user ngeklik di luar area dropdown tersebut (click outside)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
@@ -146,6 +156,7 @@ export default function Header({
     sessionStorage.setItem('planly_badge_cleared', 'true');
   };
 
+  // Menentukan fitur pencarian di header didukung atau nggak buat halaman yang lagi aktif
   const isSearchSupported = activeTab === 'tasks' || activeTab === 'courses' || activeTab === 'notes' || activeTab === 'events';
 
   return (

@@ -1,377 +1,1013 @@
-# Dokumentasi REST API
+# Dokumentasi REST API — Planly
+
+Dokumentasi ini menjelaskan endpoint-endpoint REST API yang digunakan oleh aplikasi **Planly** untuk sinkronisasi data dengan server backend Laravel.
 
 ## Deskripsi Umum
 
-REST API ini digunakan untuk mendukung sistem manajemen pembelajaran dan produktivitas akademik. API menyediakan fitur autentikasi pengguna, pengelolaan course, jadwal, tugas, catatan, dan profil pengguna.
-
-Base URL:
+* **Base URL**: `http://localhost:8000/api`
+* **Format Request/Response**: `application/json`
+* **Autentikasi**: Menggunakan Laravel Sanctum. Bearer Token harus disertakan pada Header untuk mengakses semua endpoint privat (selain Register dan Login).
 
 ```txt
-http://localhost:8000/api
+Authorization: Bearer <your_access_token>
 ```
+
+---
+
+## Ringkasan Endpoint
+
+| No | Kategori | Method | Endpoint | Keterangan |
+|---|---|---|---|---|
+| **1** | **Auth** | `POST` | `/auth/register` | Pendaftaran akun baru |
+| **2** | **Auth** | `POST` | `/auth/login` | Masuk ke sistem & mendapatkan token |
+| **3** | **Auth** | `POST` | `/logout` | Keluar dari sistem & menghapus token |
+| **4** | **Profile** | `GET` | `/profile` | Mengambil data profil user aktif |
+| **5** | **Profile** | `POST` | `/profile/update` | Memperbarui data profil akademik user |
+| **6** | **Courses** | `GET` | `/courses` | Mengambil seluruh mata kuliah |
+| **7** | **Courses** | `POST` | `/courses` | Mendaftarkan mata kuliah baru |
+| **8** | **Courses** | `GET` | `/courses/{id}` | Mengambil detail mata kuliah |
+| **9** | **Courses** | `PUT` | `/courses/{id}` | Memperbarui data mata kuliah |
+| **10** | **Courses** | `DELETE` | `/courses/{id}` | Menghapus mata kuliah (Cascade delete) |
+| **11** | **Tasks** | `GET` | `/tasks` | Mengambil semua tugas kuliah |
+| **12** | **Tasks** | `POST` | `/tasks` | Menambahkan tugas baru (Mendukung lampiran) |
+| **13** | **Tasks** | `GET` | `/tasks/{id}` | Mengambil detail tugas tertentu |
+| **14** | **Tasks** | `PUT` | `/tasks/{id}` | Memperbarui data/lampiran tugas |
+| **15** | **Tasks** | `PATCH` | `/tasks/{id}/finish` | Mengubah status checklist selesai tugas |
+| **16** | **Tasks** | `DELETE` | `/tasks/{id}` | Menghapus tugas |
+| **17** | **Notes** | `GET` | `/notes` | Mengambil semua catatan materi |
+| **18** | **Notes** | `POST` | `/notes` | Menulis catatan baru (Mendukung lampiran) |
+| **19** | **Notes** | `GET` | `/notes/{id}` | Mengambil detail catatan tertentu |
+| **20** | **Notes** | `PUT` | `/notes/{id}` | Memperbarui data/lampiran catatan |
+| **21** | **Notes** | `DELETE` | `/notes/{id}` | Menghapus catatan |
+| **22** | **Events** | `GET` | `/events` | Mengambil seluruh event kampus |
+| **23** | **Events** | `POST` | `/events` | Menambahkan event baru |
+| **24** | **Events** | `PUT` | `/events/{id}` | Memperbarui data event |
+| **25** | **Events** | `DELETE` | `/events/{id}` | Menghapus event |
+| **26** | **Reschedules** | `GET` | `/reschedules` | Mengambil seluruh jadwal pindahan/batal |
+| **27** | **Reschedules** | `POST` | `/reschedules` | Membuat jadwal pindah/batal kelas |
+| **28** | **Reschedules** | `DELETE` | `/reschedules/{course_id}/{original_date}` | Mengembalikan jadwal kelas ke normal |
+| **29** | **Attendance** | `GET` | `/attendance` | Mengambil seluruh riwayat absensi masuk |
+| **30** | **Attendance** | `POST` | `/attendance` | Mengirim presensi wajah (Base64) & GPS |
+| **31** | **Attendance** | `DELETE` | `/attendance/{id}` | Menghapus riwayat absensi |
 
 ---
 
 # 1. Authentication API
 
 ## Register User
+Mendaftarkan akun baru mahasiswa ke dalam sistem.
 
-Digunakan untuk melakukan registrasi akun baru ke dalam sistem.
-
-### Request
-
-```http
-POST /api/auth/register
-```
-
-### Deskripsi
-
-Pengguna mengirimkan data registrasi seperti nama, email, dan password untuk membuat akun baru.
+* **URL**: `/auth/register`
+* **Method**: `POST`
+* **Headers**: `Content-Type: application/json`
+* **Request Body**:
+  ```json
+  {
+    "name": "Arief Sidik Wijayanto",
+    "email": "arfwjn@gmail.com",
+    "password": "ariefsidikpassword",
+    "password_confirmation": "ariefsidikpassword",
+    "nim": "STI202303494"
+  }
+  ```
+* **Response (Success 201)**:
+  ```json
+  {
+    "message": "Pendaftaran berhasil",
+    "user": {
+      "id": 1,
+      "name": "Arief Sidik Wijayanto",
+      "email": "arfwjn@gmail.com",
+      "nim": "STI202303494",
+      "major": null,
+      "semester": null,
+      "profile_photo_url": "https://lh3.googleusercontent.com/aida-public/..."
+    }
+  }
+  ```
 
 ---
 
 ## Login User
+Melakukan proses masuk akun dan mengambil token akses Sanctum.
 
-Digunakan untuk proses autentikasi pengguna.
-
-### Request
-
-```http
-POST /api/auth/login
-```
-
-### Deskripsi
-
-Jika login berhasil, sistem akan mengembalikan token autentikasi yang digunakan untuk mengakses endpoint privat.
-
----
-
-## Get Current User
-
-Digunakan untuk mengambil data pengguna yang sedang login.
-
-### Request
-
-```http
-GET /api/me
-```
-
-### Deskripsi
-
-Mengembalikan informasi akun pengguna berdasarkan token autentikasi aktif.
+* **URL**: `/auth/login`
+* **Method**: `POST`
+* **Headers**: `Content-Type: application/json`
+* **Request Body**:
+  ```json
+  {
+    "email": "arfwjn@gmail.com",
+    "password": "ariefsidikpassword"
+  }
+  ```
+* **Response (Success 200)**:
+  ```json
+  {
+    "token": "1|laravel_sanctum_token_hash_here",
+    "user": {
+      "id": 1,
+      "name": "Arief Sidik Wijayanto",
+      "email": "arfwjn@gmail.com",
+      "nim": "STI202303494",
+      "semester": 4,
+      "major": "Teknik Informatika",
+      "profile_photo_url": "https://lh3.googleusercontent.com/aida-public/...",
+      "gpa_current": 3.75,
+      "gpa_target": 3.85,
+      "target_study_hours": 3,
+      "address": "Purwokerto, Jawa Tengah"
+    }
+  }
+  ```
 
 ---
 
 ## Logout User
+Mengakhiri sesi token aktif di server.
 
-Digunakan untuk mengakhiri sesi login pengguna.
-
-### Request
-
-```http
-POST /api/logout
-```
-
-### Deskripsi
-
-Token autentikasi akan dinonaktifkan sehingga pengguna keluar dari sistem.
+* **URL**: `/logout`
+* **Method**: `POST`
+* **Headers**: 
+  * `Content-Type: application/json`
+  * `Authorization: Bearer <token>`
+* **Response (Success 200)**:
+  ```json
+  {
+    "message": "Berhasil logout"
+  }
+  ```
 
 ---
 
-# 2. Course API
+# 2. Profile API
+
+## Get Profile
+Mengambil data profil mahasiswa yang sedang masuk sesi.
+
+* **URL**: `/profile`
+* **Method**: `GET`
+* **Headers**: `Authorization: Bearer <token>`
+* **Response (Success 200)**:
+  ```json
+  {
+    "id": 1,
+    "name": "Arief Sidik Wijayanto",
+    "email": "arfwjn@gmail.com",
+    "nim": "STI202303494",
+    "semester": 6,
+    "major": "Teknik Informatika",
+    "profile_photo_url": "https://lh3.googleusercontent.com/aida-public/...",
+    "gpa_current": 3.60,
+    "gpa_target": 3.80,
+    "target_study_hours": 2,
+    "address": "Purwokerto, Jawa Tengah"
+  }
+  ```
+
+---
+
+## Update Profile
+Memperbarui data diri mahasiswa dan target belajarnya.
+
+* **URL**: `/profile/update`
+* **Method**: `POST`
+* **Headers**: `Authorization: Bearer <token>`
+* **Request Body**:
+  ```json
+  {
+    "name": "Arief Sidik Wijayanto",
+    "nim": "STI202303494",
+    "semester": 6,
+    "major": "Teknik Informatika",
+    "gpa_current": 3.60,
+    "gpa_target": 3.80,
+    "target_study_hours": 2,
+    "address": "Purwokerto, Jawa Tengah"
+  }
+  ```
+* **Response (Success 200)**:
+  ```json
+  {
+    "id": 1,
+    "name": "Arief Sidik Wijayanto",
+    "email": "arfwjn@gmail.com",
+    "nim": "STI202303494",
+    "semester": 6,
+    "major": "Teknik Informatika",
+    "profile_photo_url": "https://lh3.googleusercontent.com/aida-public/...",
+    "gpa_current": 3.60,
+    "gpa_target": 3.80,
+    "target_study_hours": 2,
+    "address": "Purwokerto, Jawa Tengah"
+  }
+  ```
+
+---
+
+# 3. Courses API
 
 ## Get All Courses
+Mengambil daftar seluruh mata kuliah mahasiswa terdaftar.
 
-Digunakan untuk mengambil seluruh data course.
-
-### Request
-
-```http
-GET /api/courses
-```
-
-### Deskripsi
-
-Mengembalikan daftar seluruh course yang tersedia.
+* **URL**: `/courses`
+* **Method**: `GET`
+* **Headers**: `Authorization: Bearer <token>`
+* **Response (Success 200)**:
+  ```json
+  [
+    {
+      "id": 1,
+      "user_id": 1,
+      "course_code": "SWU001",
+      "course_name": "Website Programming Lanjut",
+      "sks": 4,
+      "lecturer_name": "Sunaryono M.Kom",
+      "room": "KB. Ruang 2.3",
+      "day_of_week": "Wednesday",
+      "start_time": "17:00",
+      "end_time": "18:00",
+      "color_hex": "#3525cd"
+    },
+    {
+      "id": 2,
+      "user_id": 1,
+      "course_code": "SWU002",
+      "course_name": "Metodologi Penelitian",
+      "sks": 4,
+      "lecturer_name": "Singgih Briandoko S.Pd., M.Kom",
+      "room": "KB. Ruang 2.1",
+      "day_of_week": "Tuesday",
+      "start_time": "17:00",
+      "end_time": "18:00",
+      "color_hex": "#7e3000"
+    },
+    {
+      "id": 3,
+      "user_id": 1,
+      "course_code": "SWU003",
+      "course_name": "Mobile Programming Lanjut",
+      "sks": 4,
+      "lecturer_name": "Nicolaus Euclides Wahyu S.Kom., M.Cs.,",
+      "room": "KB. Lab 2",
+      "day_of_week": "Tuesday",
+      "start_time": "19:50",
+      "end_time": "21:10",
+      "color_hex": "#505f76"
+    },
+    {
+      "id": 4,
+      "user_id": 1,
+      "course_code": "SWU004",
+      "course_name": "Rekayasa Perangkat Lunak",
+      "sks": 2,
+      "lecturer_name": "Tarwoto S.Kom., M.Msi.",
+      "room": "KS. Ruang 1.1",
+      "day_of_week": "Friday",
+      "start_time": "17:00",
+      "end_time": "18:00",
+      "color_hex": "#4f46e5"
+    },
+    {
+      "id": 5,
+      "user_id": 1,
+      "course_code": "SWU005",
+      "course_name": "Komputasi Awan",
+      "sks": 2,
+      "lecturer_name": "Aulia Desy Nur Utomo M.Cs.",
+      "room": "KB. Ruang 2.3",
+      "day_of_week": "Friday",
+      "start_time": "18:30",
+      "end_time": "19:30",
+      "color_hex": "#ba1a1a"
+    }
+  ]
+  ```
 
 ---
 
 ## Create Course
+Mendaftarkan jadwal mata kuliah baru.
 
-Digunakan untuk menambahkan course baru.
-
-### Request
-
-```http
-POST /api/courses
-```
-
-### Deskripsi
-
-Menyimpan data course baru ke dalam database.
+* **URL**: `/courses`
+* **Method**: `POST`
+* **Headers**: `Authorization: Bearer <token>`
+* **Request Body**:
+  ```json
+  {
+    "course_code": "SWU001",
+    "course_name": "Website Programming Lanjut",
+    "sks": 4,
+    "lecturer_name": "Sunaryono M.Kom",
+    "room": "KB. Ruang 2.3",
+    "day_of_week": "Wednesday",
+    "start_time": "17:00",
+    "end_time": "18:00",
+    "color_hex": "#3525cd"
+  }
+  ```
+* **Response (Success 201)**:
+  ```json
+  {
+    "id": 1,
+    "user_id": 1,
+    "course_code": "SWU001",
+    "course_name": "Website Programming Lanjut",
+    "sks": 4,
+    "lecturer_name": "Sunaryono M.Kom",
+    "room": "KB. Ruang 2.3",
+    "day_of_week": "Wednesday",
+    "start_time": "17:00",
+    "end_time": "18:00",
+    "color_hex": "#3525cd"
+  }
+  ```
 
 ---
 
 ## Get Course Detail
+Melihat info lengkap satu mata kuliah.
 
-Digunakan untuk mengambil detail course berdasarkan ID.
-
-### Request
-
-```http
-GET /api/courses/{id}
-```
-
-### Parameter
-
-| Parameter | Tipe | Deskripsi |
-|---|---|---|
-| id | integer | ID course |
-
-### Deskripsi
-
-Mengembalikan detail lengkap course tertentu.
+* **URL**: `/courses/{id}`
+* **Method**: `GET`
+* **Headers**: `Authorization: Bearer <token>`
+* **Response (Success 200)**:
+  ```json
+  {
+    "id": 1,
+    "user_id": 1,
+    "course_code": "SWU001",
+    "course_name": "Website Programming Lanjut",
+    "sks": 4,
+    "lecturer_name": "Sunaryono M.Kom",
+    "room": "KB. Ruang 2.3",
+    "day_of_week": "Wednesday",
+    "start_time": "17:00",
+    "end_time": "18:00",
+    "color_hex": "#3525cd"
+  }
+  ```
 
 ---
 
 ## Update Course
+Mengubah info mata kuliah yang terdaftar.
 
-Digunakan untuk memperbarui data course.
-
-### Request
-
-```http
-PUT /api/courses/{id}
-```
-
-### Parameter
-
-| Parameter | Tipe | Deskripsi |
-|---|---|---|
-| id | integer | ID course |
-
-### Deskripsi
-
-Memperbarui informasi course berdasarkan ID yang dipilih.
+* **URL**: `/courses/{id}`
+* **Method**: `PUT`
+* **Headers**: `Authorization: Bearer <token>`
+* **Request Body**:
+  ```json
+  {
+    "room": "KB. Ruang 2.5",
+    "start_time": "16:30",
+    "end_time": "18:00"
+  }
+  ```
+* **Response (Success 200)**:
+  ```json
+  {
+    "id": 1,
+    "user_id": 1,
+    "course_code": "SWU001",
+    "course_name": "Website Programming Lanjut",
+    "sks": 4,
+    "lecturer_name": "Sunaryono M.Kom",
+    "room": "KB. Ruang 2.5",
+    "day_of_week": "Wednesday",
+    "start_time": "16:30",
+    "end_time": "18:00",
+    "color_hex": "#3525cd"
+  }
+  ```
 
 ---
 
 ## Delete Course
+Menghapus mata kuliah. 
 
-Digunakan untuk menghapus course.
+> [!WARNING]
+> Menghapus Course akan memicu cascade di sisi backend: relasi `course_id` pada tabel `tasks` dan `notes` harus diset menjadi `NULL`, sedangkan record absensi (`attendance`) dan reschedule terkait mata kuliah ini harus ikut terhapus secara permanen.
 
-### Request
-
-```http
-DELETE /api/courses/{id}
-```
-
-### Parameter
-
-| Parameter | Tipe | Deskripsi |
-|---|---|---|
-| id | integer | ID course |
-
-### Deskripsi
-
-Menghapus data course secara permanen dari database.
-
----
-
-# 3. Schedule API
-
-## Get Schedule
-
-Digunakan untuk mengambil seluruh jadwal pengguna.
-
-### Request
-
-```http
-GET /api/schedule
-```
-
-### Deskripsi
-
-Mengembalikan daftar seluruh jadwal yang dimiliki pengguna.
-
----
-
-## Create Schedule
-
-Digunakan untuk menambahkan jadwal baru.
-
-### Request
-
-```http
-POST /api/schedule
-```
-
-### Deskripsi
-
-Menyimpan jadwal baru seperti jadwal kuliah atau kegiatan lainnya.
-
----
-
-## Get Today Schedule
-
-Digunakan untuk mengambil jadwal hari ini.
-
-### Request
-
-```http
-GET /api/schedule/today
-```
-
-### Deskripsi
-
-Mengembalikan jadwal yang sesuai dengan tanggal saat ini.
+* **URL**: `/courses/{id}`
+* **Method**: `DELETE`
+* **Headers**: `Authorization: Bearer <token>`
+* **Response (Success 200)**:
+  ```json
+  {
+    "message": "Mata kuliah berhasil dihapus"
+  }
+  ```
 
 ---
 
 # 4. Task API
 
 ## Get All Tasks
+Mengambil daftar tugas kuliah. Dapat disaring berdasarkan ID mata kuliah.
 
-Digunakan untuk mengambil seluruh daftar tugas.
-
-### Request
-
-```http
-GET /api/tasks
-```
-
-### Deskripsi
-
-Mengembalikan seluruh data tugas pengguna.
+* **URL**: `/tasks`
+* **Method**: `GET`
+* **Headers**: `Authorization: Bearer <token>`
+* **Query Parameters**:
+  * `course_id` (integer, optional) - Saring berdasarkan mata kuliah tertentu.
+* **Response (Success 200)**:
+  ```json
+  [
+    {
+      "id": 1,
+      "user_id": 1,
+      "course_id": 1,
+      "task_title": "Membuat UI Login & Register di Flutter",
+      "description": "Implementasi halaman login dan register menggunakan Flutter dengan validasi form, integrasi API, dan state management Provider.",
+      "deadline": "2026-06-10 23:59:00",
+      "is_finished": false,
+      "is_priority": true,
+      "attachments": []
+    },
+    {
+      "id": 2,
+      "user_id": 1,
+      "course_id": 4,
+      "task_title": "Menyusun Dokumen SRS",
+      "description": "Menyusun dokumen Software Requirement Specification (SRS) untuk proyek akhir semester, termasuk use case diagram, activity diagram, dan class diagram.",
+      "deadline": "2026-06-11 17:00:00",
+      "is_finished": false,
+      "is_priority": false,
+      "attachments": []
+    },
+    {
+      "id": 3,
+      "user_id": 1,
+      "course_id": null,
+      "task_title": "Mengisi Formulir KRS Semester Depan",
+      "description": "Memilih dan mengisi mata kuliah semester depan melalui portal akademik mahasiswa sebelum batas waktu pengisian KRS.",
+      "deadline": "2026-06-13 12:00:00",
+      "is_finished": false,
+      "is_priority": false,
+      "attachments": []
+    }
+  ]
+  ```
 
 ---
 
 ## Create Task
+Membuat tugas kuliah baru beserta lampiran dokumennya (jika ada).
 
-Digunakan untuk menambahkan tugas baru.
-
-### Request
-
-```http
-POST /api/tasks
-```
-
-### Deskripsi
-
-Menyimpan data tugas beserta deadline dan detail lainnya.
+* **URL**: `/tasks`
+* **Method**: `POST`
+* **Headers**: `Authorization: Bearer <token>`
+* **Request Body**:
+  ```json
+  {
+    "course_id": 1,
+    "task_title": "Membuat UI Login & Register di Flutter",
+    "description": "Implementasi halaman login dan register menggunakan Flutter dengan validasi form, integrasi API, dan state management Provider.",
+    "deadline": "2026-06-10 23:59:00",
+    "is_priority": true,
+    "attachments": [
+      {
+        "name": "mock_flutter_guidelines.pdf",
+        "type": "application/pdf",
+        "size": 14520,
+        "data_url": "data:application/pdf;base64,JVBERi..."
+      }
+    ]
+  }
+  ```
+* **Response (Success 201)**:
+  ```json
+  {
+    "id": 1,
+    "user_id": 1,
+    "course_id": 1,
+    "task_title": "Membuat UI Login & Register di Flutter",
+    "description": "Implementasi halaman login dan register menggunakan Flutter dengan validasi form, integrasi API, dan state management Provider.",
+    "deadline": "2026-06-10 23:59:00",
+    "is_finished": false,
+    "is_priority": true,
+    "attachments": [
+      {
+        "name": "mock_flutter_guidelines.pdf",
+        "type": "application/pdf",
+        "size": 14520,
+        "data_url": "data:application/pdf;base64,JVBERi..."
+      }
+    ]
+  }
+  ```
 
 ---
 
-## Finish Task
+## Get Task Detail
+Mengambil detail tugas tertentu.
 
-Digunakan untuk mengubah status tugas menjadi selesai.
+* **URL**: `/tasks/{id}`
+* **Method**: `GET`
+* **Headers**: `Authorization: Bearer <token>`
+* **Response (Success 200)**:
+  ```json
+  {
+    "id": 1,
+    "user_id": 1,
+    "course_id": 1,
+    "task_title": "Membuat UI Login & Register di Flutter",
+    "description": "Implementasi halaman login dan register menggunakan Flutter dengan validasi form, integrasi API, dan state management Provider.",
+    "deadline": "2026-06-10 23:59:00",
+    "is_finished": false,
+    "is_priority": true,
+    "attachments": []
+  }
+  ```
 
-### Request
+---
 
-```http
-PATCH /api/tasks/{id}/finish
-```
+## Update Task
+Mengubah info tugas dan daftar berkas lampirannya.
 
-### Parameter
+* **URL**: `/tasks/{id}`
+* **Method**: `PUT`
+* **Headers**: `Authorization: Bearer <token>`
+* **Request Body**:
+  ```json
+  {
+    "task_title": "Membuat UI Login & Register di Flutter (REVISI)",
+    "is_priority": false
+  }
+  ```
+* **Response (Success 200)**:
+  ```json
+  {
+    "id": 1,
+    "user_id": 1,
+    "course_id": 1,
+    "task_title": "Membuat UI Login & Register di Flutter (REVISI)",
+    "description": "Implementasi halaman login dan register menggunakan Flutter dengan validasi form, integrasi API, dan state management Provider.",
+    "deadline": "2026-06-10 23:59:00",
+    "is_finished": false,
+    "is_priority": false,
+    "attachments": []
+  }
+  ```
 
-| Parameter | Tipe | Deskripsi |
-|---|---|---|
-| id | integer | ID tugas |
+---
 
-### Deskripsi
+## Finish Task (Checklist Status)
+Mengubah status penyelesaian tugas (Toggle status `is_finished`).
 
-Mengubah status tugas menjadi completed atau finished.
+* **URL**: `/tasks/{id}/finish`
+* **Method**: `PATCH`
+* **Headers**: `Authorization: Bearer <token>`
+* **Response (Success 200)**:
+  ```json
+  {
+    "id": 1,
+    "user_id": 1,
+    "course_id": 1,
+    "task_title": "Membuat UI Login & Register di Flutter",
+    "description": "Implementasi halaman login dan register menggunakan Flutter dengan validasi form, integrasi API, dan state management Provider.",
+    "deadline": "2026-06-10 23:59:00",
+    "is_finished": true,
+    "is_priority": true,
+    "attachments": []
+  }
+  ```
+
+---
+
+## Delete Task
+Menghapus data tugas kuliah.
+
+* **URL**: `/tasks/{id}`
+* **Method**: `DELETE`
+* **Headers**: `Authorization: Bearer <token>`
+* **Response (Success 200)**:
+  ```json
+  {
+    "message": "Tugas berhasil dihapus"
+  }
+  ```
 
 ---
 
 # 5. Note API
 
 ## Get Notes
+Mengambil seluruh daftar catatan materi milik mahasiswa.
 
-Digunakan untuk mengambil seluruh catatan pengguna.
-
-### Request
-
-```http
-GET /api/notes
-```
-
-### Deskripsi
-
-Mengembalikan daftar catatan yang tersimpan.
+* **URL**: `/notes`
+* **Method**: `GET`
+* **Headers**: `Authorization: Bearer <token>`
+* **Response (Success 200)**:
+  ```json
+  [
+    {
+      "id": 1,
+      "user_id": 1,
+      "course_id": 3,
+      "title": "Catatan Materi AI - Pertemuan 4",
+      "content": "Algoritma pencarian: BFS (Breadth-First Search) dan DFS (Depth-First Search) adalah dasar dari algoritma pencarian pada graf. BFS mengeksplorasi level per level sedangkan DFS mengeksplorasi sedalam mungkin terlebih dahulu. Heuristik digunakan pada informed search seperti A* dan Greedy Best-First Search untuk meningkatkan efisiensi pencarian.",
+      "attachments": []
+    },
+    {
+      "id": 4,
+      "user_id": 1,
+      "course_id": 4,
+      "title": "Checklist Proyek RPL",
+      "content": "[ ] Menyelesaikan dokumen SRS\n[ ] Membuat wireframe UI/UX\n[x] Menentukan tech stack (Laravel + Flutter)\n[ ] Menyiapkan repository GitHub\n[ ] Membuat ERD dan skema database",
+      "attachments": []
+    }
+  ]
+  ```
 
 ---
 
 ## Create Note
+Menambahkan catatan materi kuliah baru (mendukung lampiran berkas).
 
-Digunakan untuk menambahkan catatan baru.
-
-### Request
-
-```http
-POST /api/notes
-```
-
-### Deskripsi
-
-Menyimpan catatan baru ke dalam database.
-
----
-
-# 6. Profile API
-
-## Get Profile
-
-Digunakan untuk mengambil informasi profil pengguna.
-
-### Request
-
-```http
-GET /api/profile
-```
-
-### Deskripsi
-
-Mengembalikan data profil pengguna yang sedang login.
+* **URL**: `/notes`
+* **Method**: `POST`
+* **Headers**: `Authorization: Bearer <token>`
+* **Request Body**:
+  ```json
+  {
+    "course_id": 3,
+    "title": "Catatan Materi AI - Pertemuan 4",
+    "content": "Algoritma pencarian: BFS (Breadth-First Search) dan DFS (Depth-First Search) adalah dasar dari algoritma pencarian pada graf."
+  }
+  ```
+* **Response (Success 201)**:
+  ```json
+  {
+    "id": 1,
+    "user_id": 1,
+    "course_id": 3,
+    "title": "Catatan Materi AI - Pertemuan 4",
+    "content": "Algoritma pencarian: BFS (Breadth-First Search) dan DFS (Depth-First Search) adalah dasar dari algoritma pencarian pada graf.",
+    "attachments": [],
+    "created_at": "2026-06-09 09:30:00",
+    "updated_at": "2026-06-09 09:30:00"
+  }
+  ```
 
 ---
 
-## Update Profile
+## Get Note Detail
+Mengambil isi lengkap suatu catatan.
 
-Digunakan untuk memperbarui data profil pengguna.
-
-### Request
-
-```http
-POST /api/profile/update
-```
-
-### Deskripsi
-
-Memperbarui informasi pengguna seperti nama, password, atau foto profil.
+* **URL**: `/notes/{id}`
+* **Method**: `GET`
+* **Headers**: `Authorization: Bearer <token>`
+* **Response (Success 200)**:
+  ```json
+  {
+    "id": 1,
+    "user_id": 1,
+    "course_id": 3,
+    "title": "Catatan Materi AI - Pertemuan 4",
+    "content": "Algoritma pencarian: BFS (Breadth-First Search) dan DFS (Depth-First Search) adalah dasar dari algoritma pencarian pada graf.",
+    "attachments": [],
+    "created_at": "2026-06-09 09:30:00",
+    "updated_at": "2026-06-09 09:30:00"
+  }
+  ```
 
 ---
 
-# Ringkasan Endpoint
+## Update Note
+Memperbarui isi catatan belajar.
 
-| Category | Method | Endpoint |
-|---|---|---|
-| Auth | POST | `/api/auth/register` |
-| Auth | POST | `/api/auth/login` |
-| Auth | GET | `/api/me` |
-| Auth | POST | `/api/logout` |
-| Course | GET | `/api/courses` |
-| Course | POST | `/api/courses` |
-| Course | GET | `/api/courses/{id}` |
-| Course | PUT | `/api/courses/{id}` |
-| Course | DELETE | `/api/courses/{id}` |
-| Schedule | GET | `/api/schedule` |
-| Schedule | POST | `/api/schedule` |
-| Schedule | GET | `/api/schedule/today` |
-| Task | GET | `/api/tasks` |
-| Task | POST | `/api/tasks` |
-| Task | PATCH | `/api/tasks/{id}/finish` |
-| Note | GET | `/api/notes` |
-| Note | POST | `/api/notes` |
-| Profile | GET | `/api/profile` |
-| Profile | POST | `/api/profile/update` |
+* **URL**: `/notes/{id}`
+* **Method**: `PUT`
+* **Headers**: `Authorization: Bearer <token>`
+* **Request Body**:
+  ```json
+  {
+    "content": "Algoritma pencarian: BFS (Breadth-First Search) dan DFS (Depth-First Search) revisi."
+  }
+  ```
+* **Response (Success 200)**:
+  ```json
+  {
+    "id": 1,
+    "user_id": 1,
+    "course_id": 3,
+    "title": "Catatan Materi AI - Pertemuan 4",
+    "content": "Algoritma pencarian: BFS (Breadth-First Search) dan DFS (Depth-First Search) revisi.",
+    "attachments": [],
+    "created_at": "2026-06-09 09:30:00",
+    "updated_at": "2026-06-09 09:40:00"
+  }
+  ```
+
+---
+
+## Delete Note
+Menghapus catatan materi kuliah.
+
+* **URL**: `/notes/{id}`
+* **Method**: `DELETE`
+* **Headers**: `Authorization: Bearer <token>`
+* **Response (Success 200)**:
+  ```json
+  {
+    "message": "Catatan berhasil dihapus"
+  }
+  ```
+
+---
+
+# 6. Events API
+
+## Get All Events
+Mengambil seluruh jadwal agenda non-kuliah kampus.
+
+* **URL**: `/events`
+* **Method**: `GET`
+* **Headers**: `Authorization: Bearer <token>`
+* **Response (Success 200)**:
+  ```json
+  [
+    {
+      "id": 1,
+      "user_id": 1,
+      "event_name": "Seminar Nasional AI & Web Development",
+      "category": "seminar",
+      "description": "Seminar nasional mengenai masa depan Web Development di era kecerdasan buatan.",
+      "event_date": "2026-06-09",
+      "start_time": "09:00",
+      "end_time": "12:00",
+      "location": "Auditorium SWU Lantai 3",
+      "organizer": "Himpunan Mahasiswa Informatika",
+      "color_hex": "#6366F1",
+      "is_important": true
+    },
+    {
+      "id": 2,
+      "user_id": 1,
+      "event_name": "Workshop Flutter Advanced",
+      "category": "workshop",
+      "description": "Belajar State Management Bloc dan Clean Architecture di Flutter.",
+      "event_date": "2026-06-11",
+      "start_time": "13:00",
+      "end_time": "16:00",
+      "location": "Lab Komputer 3",
+      "organizer": "Google Developer Student Clubs SWU",
+      "color_hex": "#F59E0B",
+      "is_important": false
+    }
+  ]
+  ```
+
+---
+
+## Create Event
+Menambahkan agenda/kegiatan non-kuliah kampus baru.
+
+* **URL**: `/events`
+* **Method**: `POST`
+* **Headers**: `Authorization: Bearer <token>`
+* **Request Body**:
+  ```json
+  {
+    "event_name": "Seminar Nasional AI & Web Development",
+    "category": "seminar",
+    "description": "Seminar nasional mengenai masa depan Web Development di era kecerdasan buatan.",
+    "event_date": "2026-06-09",
+    "start_time": "09:00",
+    "end_time": "12:00",
+    "location": "Auditorium SWU Lantai 3",
+    "organizer": "Himpunan Mahasiswa Informatika",
+    "color_hex": "#6366F1",
+    "is_important": true
+  }
+  ```
+* **Response (Success 201)**:
+  ```json
+  {
+    "id": 1,
+    "user_id": 1,
+    "event_name": "Seminar Nasional AI & Web Development",
+    "category": "seminar",
+    "description": "Seminar nasional mengenai masa depan Web Development di era kecerdasan buatan.",
+    "event_date": "2026-06-09",
+    "start_time": "09:00",
+    "end_time": "12:00",
+    "location": "Auditorium SWU Lantai 3",
+    "organizer": "Himpunan Mahasiswa Informatika",
+    "color_hex": "#6366F1",
+    "is_important": true
+  }
+  ```
+
+---
+
+## Update Event
+Memperbarui informasi event.
+
+* **URL**: `/events/{id}`
+* **Method**: `PUT`
+* **Headers**: `Authorization: Bearer <token>`
+* **Request Body**:
+  ```json
+  {
+    "location": "Auditorium Gedung Utama Lantai 2",
+    "is_important": false
+  }
+  ```
+* **Response (Success 200)**:
+  ```json
+  {
+    "id": 1,
+    "user_id": 1,
+    "event_name": "Seminar Nasional AI & Web Development",
+    "category": "seminar",
+    "description": "Seminar nasional mengenai masa depan Web Development di era kecerdasan buatan.",
+    "event_date": "2026-06-09",
+    "start_time": "09:00",
+    "end_time": "12:00",
+    "location": "Auditorium Gedung Utama Lantai 2",
+    "organizer": "Himpunan Mahasiswa Informatika",
+    "color_hex": "#6366F1",
+    "is_important": false
+  }
+  ```
+
+---
+
+## Delete Event
+Menghapus event kampus.
+
+* **URL**: `/events/{id}`
+* **Method**: `DELETE`
+* **Headers**: `Authorization: Bearer <token>`
+* **Response (Success 200)**:
+  ```json
+  {
+    "message": "Event berhasil dihapus"
+  }
+  ```
+
+---
+
+# 7. Reschedules API
+
+## Get All Reschedules
+Mengambil daftar pemindahan jadwal atau pembatalan sesi kelas kuliah rutin di tanggal tertentu.
+
+* **URL**: `/reschedules`
+* **Method**: `GET`
+* **Headers**: `Authorization: Bearer <token>`
+* **Response (Success 200)**:
+  ```json
+  [
+    {
+      "id": 1,
+      "course_id": 1,
+      "original_date": "2026-06-09",
+      "new_date": null,
+      "new_start_time": null,
+      "new_end_time": null,
+      "is_canceled": true,
+      "note": "Pertemuan perdana dibatalkan karena dosen rapat rektorat"
+    }
+  ]
+  ```
+
+---
+
+## Create Reschedule
+Membuat data pemindahan sesi kuliah atau pembatalan kelas di tanggal tertentu.
+
+* **URL**: `/reschedules`
+* **Method**: `POST`
+* **Headers**: `Authorization: Bearer <token>`
+* **Request Body**:
+  ```json
+  {
+    "course_id": 1,
+    "original_date": "2026-06-09",
+    "new_date": null,
+    "new_start_time": null,
+    "new_end_time": null,
+    "is_canceled": true,
+    "note": "Pertemuan perdana dibatalkan karena dosen rapat rektorat"
+  }
+  ```
+* **Response (Success 201)**:
+  ```json
+  {
+    "id": 1,
+    "course_id": 1,
+    "original_date": "2026-06-09",
+    "new_date": null,
+    "new_start_time": null,
+    "new_end_time": null,
+    "is_canceled": true,
+    "note": "Pertemuan perdana dibatalkan karena dosen rapat rektorat"
+  }
+  ```
+
+---
+
+## Delete Reschedule (Restore Normal)
+Menghapus status reschedule atau penandaan kelas batal, agar sesi kuliah pada tanggal tersebut dikembalikan ke jadwal normal.
+
+* **URL**: `/reschedules/{course_id}/{original_date}`
+* **Method**: `DELETE`
+* **Headers**: `Authorization: Bearer <token>`
+* **Parameters**:
+  * `course_id` (integer) - ID mata kuliah
+  * `original_date` (string) - Tanggal original sesi kelas rutin (Format: `YYYY-MM-DD`)
+* **Response (Success 200)**:
+  ```json
+  {
+    "message": "Jadwal kuliah berhasil dikembalikan ke normal"
+  }
+  ```
+
+---
+
+# 8. Attendance API
+
+## Get All Attendance
+Mengambil seluruh riwayat absensi masuk kelas.
+
+* **URL**: `/attendance`
+* **Method**: `GET`
+* **Headers**: `Authorization: Bearer <token>`
+* **Response (Success 200)**:
+  ```json
+  [
+    {
+      "id": 1,
+      "user_id": 1,
+      "course_id": 1,
+      "course_code": "SWU001",
+      "course_name": "Website Programming Lanjut",
+      "date": "2026-06-09",
+      "time": "17:05:12",
+      "status": "Hadir",
+      "latitude": -6.9825,
+      "longitude": 110.4091,
+      "image_base64": "data:image/jpeg;base64,...",
+      "verified_face": true
+    }
+  ]
+  ```
+
+---
+
+## Submit Attendance
+Melakukan presensi masuk kelas kuliah yang sedang berlangsung dengan menyertakan koordinat GPS lokasi mahasiswa dan snapshot verifikasi wajah (Base64).
+
+* **URL**: `/attendance`
+* **Method**: `POST`
+* **Headers**: `Authorization: Bearer <token>`
+* **Request Body**:
+  ```json
+  {
+    "course_id": 1,
+    "course_code": "SWU001",
+    "course_name": "Website Programming Lanjut",
+    "date": "2026-06-09",
+    "time": "17:05:12",
+    "status": "Hadir",
+    "latitude": -6.9825,
+    "longitude": 110.4091,
+    "image_base64": "data:image/jpeg;base64,..."
+  }
+  ```
+* **Response (Success 201)**:
+  ```json
+  {
+    "id": 1,
+    "user_id": 1,
+    "course_id": 1,
+    "course_code": "SWU001",
+    "course_name": "Website Programming Lanjut",
+    "date": "2026-06-09",
+    "time": "17:05:12",
+    "status": "Hadir",
+    "latitude": -6.9825,
+    "longitude": 110.4091,
+    "image_base64": "data:image/jpeg;base64,...",
+    "verified_face": true
+  }
+  ```
+
+---
+
+## Delete Attendance
+Menghapus riwayat absensi masuk (jika terjadi kesalahan pemrosesan wajah atau untuk keperluan presensi ulang).
+
+* **URL**: `/attendance/{id}`
+* **Method**: `DELETE`
+* **Headers**: `Authorization: Bearer <token>`
+* **Response (Success 200)**:
+  ```json
+  {
+    "message": "Riwayat absensi berhasil dihapus"
+  }
+  ```

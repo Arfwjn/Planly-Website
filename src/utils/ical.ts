@@ -1,5 +1,15 @@
+// =============================================================================
+// Planly — iCalendar Utility (Pengekspor File Kalender .ics)
+//
+// File utilitas ini dipake buat ngebantu nge-generate/bikin file dokumen berformat
+// iCalendar (.ics) biar jadwal kuliah, tugas, sama event di Planly bisa disinkronin
+// (import) langsung ke Google Calendar, Apple Calendar, ato Microsoft Outlook.
+//Format standardnya ngikutin regulasi RFC 5545.
+// =============================================================================
+
 import { Course, RescheduledSession, Task, CampusEvent } from '../types';
 
+// Map nama hari bahasa Inggris ke angka indeks JavaScript (Minggu = 0, Senin = 1, dst)
 const DAY_MAP: Record<string, number> = {
   'Sunday': 0,
   'Monday': 1,
@@ -11,23 +21,27 @@ const DAY_MAP: Record<string, number> = {
 };
 
 /**
- * Format tanggal ("YYYY-MM-DD") dan jam ("HH:MM") ke format iCalendar ("YYYYMMDDTHHMMSS").
+ * Format tanggal ("YYYY-MM-DD") dan jam ("HH:MM") ke format iCalendar standard ("YYYYMMDDTHHMMSS").
+ * Contoh: "2026-06-09" dan "08:00" -> "20260609T080000"
  */
 const formatICalDate = (dateStr: string, timeStr: string): string => {
-  const cleanDate = dateStr.replace(/-/g, '');
-  const cleanTime = timeStr.replace(/:/g, '').substring(0, 4) + '00';
+  const cleanDate = dateStr.replace(/-/g, ''); // Hapus strip "-"
+  const cleanTime = timeStr.replace(/:/g, '').substring(0, 4) + '00'; // Hapus titik dua ":" dan tambahin detik "00"
   return `${cleanDate}T${cleanTime}`;
 };
 
 /**
- * Mendapatkan tanggal awal semester (Senin, 4 minggu yang lalu)
+ * Nyari tanggal awal perkuliahan satu semester (ditentukan Senin, 4 minggu yang lalu dari sekarang).
+ * Ini biar pas di-export, riwayat kuliah 4 minggu ke belakang juga ikut ke-export di kalender.
  */
 const getSemesterStartDate = (): Date => {
   const d = new Date();
   const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Sesuaikan jika hari Minggu
+  // Hitung mundur biar dapet hari Senin di minggu ini
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
   const monday = new Date(d.setDate(diff));
-  monday.setDate(monday.getDate() - 28); // 4 minggu lalu
+  // Mundurin lagi 28 hari (4 minggu) ke belakang
+  monday.setDate(monday.getDate() - 28);
   return monday;
 };
 
@@ -41,19 +55,22 @@ interface ICalEventParams {
 }
 
 /**
- * Membuat blok string VEVENT untuk iCalendar
+ * Bikin satu blok data event (VEVENT) iCalendar.
+ * Blok ini yang nantinya dibaca sama aplikasi kalender luar sebagai satu jadwal/kegiatan.
  */
 const createICalEvent = (params: ICalEventParams): string => {
+  // Timestamp waktu pembuatan data (DTSTAMP) berformat UTC Zulu ("Z")
   const dtstamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
   const eventLines = [
     'BEGIN:VEVENT',
-    `UID:${params.uid}`,
+    `UID:${params.uid}`, // ID unik buat event ini biar gak tabrakan atau double sync
     `DTSTAMP:${dtstamp}`,
-    `DTSTART:${params.start}`,
-    `DTEND:${params.end}`,
-    `SUMMARY:${params.summary.replace(/[,;]/g, '\\$&')}`
+    `DTSTART:${params.start}`, // Waktu mulai event
+    `DTEND:${params.end}`, // Waktu selesai event
+    `SUMMARY:${params.summary.replace(/[,;]/g, '\\$&')}` // Judul event (karakter koma/titik koma di-escape)
   ];
 
+  // Tambahin deskripsi/keterangan kalo ada (karakter khusus di-escape biar gak ngerusak format .ics)
   if (params.description) {
     const cleanDesc = params.description
       .replace(/\\/g, '\\\\')
@@ -62,16 +79,19 @@ const createICalEvent = (params: ICalEventParams): string => {
     eventLines.push(`DESCRIPTION:${cleanDesc}`);
   }
 
+  // Tambahin info lokasi/ruangan kelas kuliah/event kalo ada
   if (params.location) {
     eventLines.push(`LOCATION:${params.location.replace(/[,;]/g, '\\$&')}`);
   }
 
   eventLines.push('END:VEVENT');
+  // Gabungin tiap baris dengan Carriage Return + Line Feed (\r\n) sesuai spec iCal
   return eventLines.join('\r\n');
 };
 
 /**
- * Menghasilkan string dokumen iCalendar (.ics) lengkap
+ * Fungsi utama buat ngerakit seluruh data (Mata Kuliah, Tugas, Event Kampus)
+ * jadi satu kesatuan string dokumen kalender iCalendar (.ics) yang utuh.
  */
 export const generateICalendarData = (
   courses: Course[],
@@ -81,39 +101,40 @@ export const generateICalendarData = (
 ): string => {
   const icalEvents: string[] = [];
   const semesterStart = getSemesterStartDate();
-  const totalWeeks = 18; // Menghasilkan event selama 18 minggu (4 minggu lalu s.d 14 minggu ke depan)
+  // Kita bakal nge-generate jadwal rutin mingguan selama 18 minggu berturut-turut
+  const totalWeeks = 18; 
 
-  // 1. Proses Mata Kuliah Mingguan & Rescheduled Sessions
+  // --- 1. PROSES JADWAL KULIAH RUTIN & OVERRIDE JADWAL (RESCHEDULE) ---
   courses.forEach((course) => {
     const courseDayNum = DAY_MAP[course.day_of_week] ?? 1;
 
     for (let w = 0; w < totalWeeks; w++) {
-      // Hitung tanggal pertemuan di minggu ke-w
+      // Cari tanggal di minggu ke-w
       const currentSessionDate = new Date(semesterStart);
       currentSessionDate.setDate(semesterStart.getDate() + (w * 7));
       
-      // Sesuaikan hari ke target day_of_week
+      // Geser tanggalnya biar pas sama hari kuliah yang bersangkutan (contoh: dipasin ke hari Kamis)
       const sessionDay = currentSessionDate.getDay();
       const dayDiff = courseDayNum - sessionDay;
       currentSessionDate.setDate(currentSessionDate.getDate() + dayDiff);
 
-      // Format ke YYYY-MM-DD
+      // Konversi ke format string "YYYY-MM-DD"
       const year = currentSessionDate.getFullYear();
       const month = String(currentSessionDate.getMonth() + 1).padStart(2, '0');
       const day = String(currentSessionDate.getDate()).padStart(2, '0');
       const dateStr = `${year}-${month}-${day}`;
 
-      // Cek apakah ada jadwal reschedule/dibatalkan untuk tanggal ini
+      // Cek apakah ada jadwal reschedule / pembatalan kelas untuk tanggal ini
       const override = rescheduledSessions.find(
         (r) => r.course_id === course.id && r.original_date === dateStr
       );
 
       if (override) {
         if (override.is_canceled) {
-          // Kelas dibatalkan, lewati minggu ini
+          // Kalo kelas dibatalkan (diliburkan), lewatin aja minggu ini (gak usah dibikin event iCal-nya)
           continue;
         } else if (override.new_date && override.new_start_time && override.new_end_time) {
-          // Kelas dipindahkan (rescheduled)
+          // Kalo kelas dipindahkan (reschedule), ganti jadwalnya pake tanggal & jam yang baru
           const start = formatICalDate(override.new_date, override.new_start_time);
           const end = formatICalDate(override.new_date, override.new_end_time);
           icalEvents.push(
@@ -128,7 +149,7 @@ export const generateICalendarData = (
           );
         }
       } else {
-        // Sesi kuliah rutin normal
+        // Kalo gak ada pemindahan jadwal, kita bikin sesi kuliah rutin normal mingguan biasa
         const start = formatICalDate(dateStr, course.start_time);
         const end = formatICalDate(dateStr, course.end_time);
         icalEvents.push(
@@ -145,18 +166,19 @@ export const generateICalendarData = (
     }
   });
 
-  // 2. Proses Tenggat Tugas (Tasks)
+  // --- 2. PROSES TENGGAT TUGAS (TASKS) ---
   tasks.forEach((task) => {
+    // Kalo tugasnya gak punya info deadline, ya gak usah dimasukin ke kalender
     if (!task.deadline) return;
     
-    // Format deadline: "YYYY-MM-DD HH:MM:SS"
+    // Format tanggal deadline dari Planly: "YYYY-MM-DD HH:MM:SS" -> dipecah
     const parts = task.deadline.split(' ');
     const dateStr = parts[0];
-    const timeStr = parts[1] ? parts[1].substring(0, 5) : '23:59';
+    const timeStr = parts[1] ? parts[1].substring(0, 5) : '23:59'; // Kalo jam gak diset, default jam 23:59 malem
 
     const start = formatICalDate(dateStr, timeStr);
     
-    // Buat durasi 30 menit untuk tenggat tugas
+    // Set durasi event deadline tugas di kalender selama 30 menit (biar keliatan balok kecil di kalender)
     const [h, m] = timeStr.split(':').map(Number);
     const endMinutes = m + 30;
     const endH = String(h + Math.floor(endMinutes / 60)).padStart(2, '0');
@@ -177,7 +199,7 @@ export const generateICalendarData = (
     );
   });
 
-  // 3. Proses Event Kampus (Campus Events)
+  // --- 3. PROSES EVENT KAMPUS (CAMPUS EVENTS) ---
   events.forEach((event) => {
     const start = formatICalDate(event.event_date, event.start_time);
     const end = formatICalDate(event.event_date, event.end_time);
@@ -194,7 +216,7 @@ export const generateICalendarData = (
     );
   });
 
-  // Susun VCALENDAR lengkap
+  // Gabungin semua baris iCalendar data ke dalam satu kerangka utuh
   return [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
@@ -202,14 +224,14 @@ export const generateICalendarData = (
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'X-WR-CALNAME:Planly Academic Calendar',
-    'X-WR-TIMEZONE:Asia/Jakarta',
+    'X-WR-TIMEZONE:Asia/Jakarta', // Set zona waktu default ke Waktu Indonesia Barat (WIB)
     icalEvents.join('\r\n'),
     'END:VCALENDAR'
   ].join('\r\n');
 };
 
 /**
- * Memicu download berkas .ics langsung di browser
+ * Memicu pengunduhan berkas .ics langsung di browser user
  */
 export const downloadICSFile = (content: string, filename = 'planly_calendar.ics'): void => {
   const blob = new Blob([content], { type: 'text/calendar;charset=utf-8;' });
@@ -218,7 +240,7 @@ export const downloadICSFile = (content: string, filename = 'planly_calendar.ics
   link.href = url;
   link.setAttribute('download', filename);
   document.body.appendChild(link);
-  link.click();
+  link.click(); // Klik link download palsu via JS
   document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  URL.revokeObjectURL(url); // Bersihin memory URL blob
 };

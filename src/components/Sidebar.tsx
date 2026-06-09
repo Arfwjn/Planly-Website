@@ -1,3 +1,11 @@
+// =============================================================================
+// Planly — Sidebar Component (Navigasi Kiri & Widget Timer)
+//
+// Komponen ini nampilin sidebar navigasi utama di sebelah kiri (untuk desktop)
+// ato drawer geser (untuk mobile). Nampilin logo, list menu, widget timer
+// Pomodoro/Lecture harian, dan tombol Logout.
+// =============================================================================
+
 import { BookOpen, CalendarDays, Calendar, CheckSquare, FileText, LayoutDashboard, User as UserIcon, GraduationCap, Play, Pause, RotateCcw, Timer, UserCheck, Sparkles } from 'lucide-react';
 import { SidebarTab } from '../types';
 
@@ -5,8 +13,8 @@ interface SidebarProps {
   activeTab: SidebarTab;
   onTabChange: (tab: SidebarTab) => void;
   onSignOut: () => void;
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen: boolean; // Status buka/tutup laci menu (drawer) khusus mobile
+  onClose: () => void; // Fungsi buat nutup drawer mobile
   focusTimeLeft: number;
   isFocusTimerRunning: boolean;
   setIsFocusTimerRunning: (running: boolean) => void;
@@ -28,6 +36,7 @@ export default function Sidebar({
   lectureTime = 0,
   isLectureRunning = false
 }: SidebarProps) {
+  // Daftar menu navigasi utama di Planly beserta icon lucide-react-nya
   const menuItems = [
     { id: 'today' as SidebarTab, label: 'Hari Ini', icon: LayoutDashboard },
     { id: 'calendar' as SidebarTab, label: 'Jadwal', icon: CalendarDays },
@@ -41,6 +50,7 @@ export default function Sidebar({
     { id: 'profile' as SidebarTab, label: 'Profil', icon: UserIcon },
   ];
 
+  // Helper function buat ngubah detik (detik mentah) ke format menit:detik ("MM:SS")
   const formatTimer = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -49,7 +59,7 @@ export default function Sidebar({
 
   return (
     <>
-      {/* Mobile Drawer Overlay */}
+      {/* Overlay hitam transparan di belakang drawer pas sidebar kebuka di mobile */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-black/30 backdrop-blur-xs z-40 lg:hidden"
@@ -57,13 +67,13 @@ export default function Sidebar({
         />
       )}
 
-      {/* Sidebar Container */}
+      {/* Kontainer Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 w-[260px] bg-white border-r border-[#E2E8F0] shadow-sm flex flex-col py-6 z-50 transition-transform duration-300 transform lg:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Brand Header */}
+        {/* Logo & Judul Aplikasi */}
         <div className="px-6 mb-8 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white">
             <GraduationCap className="w-5 h-5" />
@@ -76,7 +86,7 @@ export default function Sidebar({
           </div>
         </div>
 
-        {/* Navigation Links */}
+        {/* Daftar Menu Navigasi Samping */}
         <nav className="flex-1 px-3 space-y-1">
           {menuItems.map((item) => {
             const IconComponent = item.icon;
@@ -107,7 +117,7 @@ export default function Sidebar({
           })}
         </nav>
 
-        {/* Global Focus Timer Widget in Sidebar */}
+        {/* Widget Timer Fokus Global (Pomodoro / Kuliah Live) */}
         <div className="px-4 mt-auto space-y-3">
           <div
             onClick={() => onTabChange('workspace')}

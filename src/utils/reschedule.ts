@@ -1,3 +1,12 @@
+// =============================================================================
+// Planly — Reschedule Utility (Pengolah Jadwal Pindahan & Pembatalan Kuliah)
+//
+// File utilitas ini bertugas buat memproses pergeseran kelas / reschedule
+// dan pembatalan kuliah harian (cancelation). Logika di dalamnya bakal nentuin
+// kelas mana aja yang kudu tampil di hari tertentu dan menyembunyikan kelas normal
+// yang dipindahkan / diliburkan.
+// =============================================================================
+
 import { Course, RescheduledSession } from '../types';
 
 export interface ProcessedCourse extends Course {
@@ -9,29 +18,30 @@ export interface ProcessedCourse extends Course {
 }
 
 /**
- * Memproses mata kuliah untuk suatu tanggal berdasarkan aturan pemindahan (reschedule) dan pembatalan (cancel).
+ * Fungsi buat ngitung dan nyaring daftar mata kuliah pada tanggal tertentu (format "YYYY-MM-DD")
+ * dengan memperhitungkan semua aturan reschedule (pindah jadwal) dan cancel (diliburkan).
  * 
- * Mengembalikan:
- * - dayCoursesProcessed: Kelas yang aktif/tampil pada tanggal tersebut (termasuk kelas pengganti dan kelas dibatalkan).
- * - rescheduledOutCourses: Kelas normal hari tersebut yang dipindahkan ke tanggal lain.
+ * Hasil return-nya berupa object dengan dua array:
+ * - dayCoursesProcessed: Sesi kuliah yang aktif di tanggal tersebut (termasuk kelas pindahan/pengganti).
+ * - rescheduledOutCourses: Sesi kuliah rutin yang aslinya hari ini, tapi lagi dipindahin ke hari lain.
  */
 export function getCoursesForDate(
   dateStr: string, // Format "YYYY-MM-DD"
   courses: Course[],
   rescheduledSessions: RescheduledSession[]
 ): { dayCoursesProcessed: ProcessedCourse[]; rescheduledOutCourses: Course[] } {
-  // Dapatkan nama hari bahasa Inggris
+  // Cari nama hari bahasa Inggris sesuai tanggal input (misal: "Monday", "Tuesday", dst)
   const dateObj = new Date(dateStr);
   const weekdaysEng = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const dayNameEng = weekdaysEng[dateObj.getDay()];
 
-  // Ambil semua kuliah yang jadwal normalnya di hari ini
+  // Filter kelas rutin yang emang aslinya terjadwal di hari ini
   const normalDayCourses = courses.filter((c) => c.day_of_week === dayNameEng);
 
   const dayCoursesProcessed: ProcessedCourse[] = [];
   const rescheduledOutCourses: Course[] = [];
 
-  // Filter kelas normal berdasarkan override pada tanggal ini
+  // 1. Cek satu per satu kelas rutin hari ini, apakah ada override (reschedule/cancel)
   normalDayCourses.forEach((course) => {
     const override = rescheduledSessions.find(
       (s) => s.course_id === course.id && s.original_date === dateStr
@@ -39,7 +49,7 @@ export function getCoursesForDate(
 
     if (override) {
       if (override.is_canceled) {
-        // Kelas dibatalkan pada tanggal ini
+        // Kasus A: Kuliahnya dibatalkan/diliburkan khusus di tanggal ini
         dayCoursesProcessed.push({
           ...course,
           is_canceled: true,
@@ -48,10 +58,10 @@ export function getCoursesForDate(
           reschedule_original_date: override.original_date,
         });
       } else if (override.new_date !== dateStr) {
-        // Kelas dipindahkan ke tanggal lain
+        // Kasus B: Sesi kuliah aslinya hari ini, tapi digeser ke tanggal lain (rescheduled out)
         rescheduledOutCourses.push(course);
       } else {
-        // Kelas tetap di tanggal ini tapi jam diubah
+        // Kasus C: Kuliahnya tetep hari ini, tapi dipindahin jam mulainya (misal dari jam 8 digeser ke jam 10)
         dayCoursesProcessed.push({
           ...course,
           start_time: override.new_start_time || course.start_time,
@@ -63,13 +73,14 @@ export function getCoursesForDate(
         });
       }
     } else {
-      // Tidak ada override, tampilkan normal
+      // Kasus D: Gak ada perubahan jadwal sama sekali, tampilkan normal
       dayCoursesProcessed.push(course);
     }
   });
 
-  // Cari kelas dari hari lain yang dipindahkan ke tanggal ini (Kelas Pengganti / Rescheduled In)
+  // 2. Cari kelas dari hari lain yang dipindahkan / masuk ke tanggal ini (Kelas Pengganti / Rescheduled In)
   rescheduledSessions.forEach((override) => {
+    // Kalo tanggal barunya pas hari ini dan statusnya gak dibatalkan, kita masukin
     if (override.new_date === dateStr && !override.is_canceled) {
       const course = courses.find((c) => c.id === override.course_id);
       if (course) {
@@ -86,7 +97,7 @@ export function getCoursesForDate(
     }
   });
 
-  // Urutkan kelas berdasarkan start_time terkecil ke terbesar
+  // 3. Urutkan jadwal kuliah dari jam paling pagi ke jam paling sore biar rapi pas dibaca
   dayCoursesProcessed.sort((a, b) => a.start_time.localeCompare(b.start_time));
 
   return { dayCoursesProcessed, rescheduledOutCourses };
