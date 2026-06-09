@@ -1,4 +1,4 @@
-import { User, Course, Task, Note } from './types';
+import { User, Course, Task, Note, CampusEvent, RescheduledSession } from './types';
 
 // Dynamic date helper — keeps dummy data relative to today
 const getOffsetDatetime = (days: number, time: string = '23:59:00'): string => {
@@ -189,3 +189,57 @@ export const initialNotes: Note[] = [
     content: 'Teknik Pomodoro: belajar 25 menit, istirahat 5 menit. Setelah 4 siklus, istirahat panjang 15-30 menit. Gunakan active recall (mengingat tanpa melihat catatan) dan spaced repetition untuk memaksimalkan retensi jangka panjang.',
   }
 ];
+
+// Data awal (seed) untuk kegiatan/event kampus
+export const initialEvents: CampusEvent[] = [
+  {
+    id: 1,
+    user_id: 1,
+    event_name: 'Seminar Nasional AI & Web Development',
+    category: 'seminar',
+    description: 'Seminar nasional mengenai masa depan Web Development di era kecerdasan buatan.',
+    event_date: new Date().toLocaleDateString('en-CA'), // Tanggal hari ini
+    start_time: '09:00',
+    end_time: '12:00',
+    location: 'Auditorium SWU Lantai 3',
+    organizer: 'Himpunan Mahasiswa Informatika',
+    color_hex: '#6366F1',
+    is_important: true
+  },
+  {
+    id: 2,
+    user_id: 1,
+    event_name: 'Workshop Flutter Advanced',
+    category: 'workshop',
+    description: 'Belajar State Management Bloc dan Clean Architecture di Flutter.',
+    event_date: (() => {
+      const d = new Date();
+      d.setDate(d.getDate() + 2);
+      return d.toLocaleDateString('en-CA');
+    })(), // 2 hari lagi
+    start_time: '13:00',
+    end_time: '16:00',
+    location: 'Lab Komputer 3',
+    organizer: 'Google Developer Student Clubs SWU',
+    color_hex: '#F59E0B',
+    is_important: false
+  }
+];
+
+// Data awal (seed) untuk pemindahan/pembatalan jadwal kuliah
+export const initialReschedules: RescheduledSession[] = [
+  {
+    id: 1,
+    course_id: 1,
+    original_date: (() => {
+      const d = new Date();
+      return d.toLocaleDateString('en-CA');
+    })(),
+    new_date: null,
+    new_start_time: null,
+    new_end_time: null,
+    is_canceled: true,
+    note: 'Pertemuan perdana dibatalkan karena dosen rapat rektorat'
+  }
+];
+

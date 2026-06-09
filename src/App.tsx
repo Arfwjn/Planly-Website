@@ -1,70 +1,107 @@
+// =============================================================================
+// Planly — Main Application Component (Entry Point UI)
+//
+// File ini berfungsi sebagai tata letak (layout) utama dan sistem router/navigasi.
+// Logika state bisnis yang rumit (API, Timer, Tema, Auth) telah dipecah (refactored)
+// ke dalam Custom Hooks terpisah di folder 'src/hooks/' demi kerapian kode (SoC).
+// =============================================================================
+
 import { useState, useEffect } from 'react';
-import { User, Course, Task, Note, SidebarTab, LoginResponse, CampusEvent, RescheduledSession, AttendanceRecord, AttendanceSubmitPayload } from './types';
-import { api } from './services/api';
+import { SidebarTab } from './types';
 
 // Impor komponen-komponen view utama aplikasi
-import AuthView from './components/AuthView';
+import AuthView from './components/auth/AuthView';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
-import TodayView from './components/TodayView';
-import CalendarView from './components/CalendarView';
-import EventsView from './components/EventsView';
-import TasksView from './components/TasksView';
-import CoursesView from './components/CoursesView';
-import NotesView from './components/NotesView';
-import ProfileView from './components/ProfileView';
-import WorkspaceView from './components/WorkspaceView';
-import AttendanceView from './components/AttendanceView';
+import TodayView from './components/today/TodayView';
+import CalendarView from './components/calendar/CalendarView';
+import EventsView from './components/events/EventsView';
+import TasksView from './components/tasks/TasksView';
+import CoursesView from './components/courses/CoursesView';
+import NotesView from './components/notes/NotesView';
+import ProfileView from './components/profile/ProfileView';
+import WorkspaceView from './components/workspace/WorkspaceView';
+import AttendanceView from './components/attendance/AttendanceView';
+import AICompanionView from './components/ai-companion/AICompanionView';
 import useDeadlineMonitor from './hooks/useDeadlineMonitor';
-import { useToast } from './components/ui/Toast';
-import { calendarSyncService } from './services/calendarSync';
 
+// Impor Custom Hooks (Separation of Concerns & Encapsulation)
+import useAppTheme from './hooks/useAppTheme';
+import useAppAuth from './hooks/useAppAuth';
+import useFocusTimer from './hooks/useFocusTimer';
+import useAcademicData from './hooks/useAcademicData';
 
 // Impor ikon untuk navigasi bawah pada perangkat mobile
-import { LayoutDashboard, CalendarDays, CheckSquare, FileText, User as UserIcon, Menu } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, CheckSquare, FileText, User as UserIcon } from 'lucide-react';
 
-/**
- * Komponen utama App yang mengatur seluruh alur navigasi, autentikasi,
- * sinkronisasi data dari API, serta timer fokus global (Pomodoro).
- */
 export default function App() {
-  const toast = useToast();
-  // --- STATE AUTENTIKASI ---
-  // Menentukan status login pengguna dengan membaca nilai dari localStorage
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return localStorage.getItem('planly_auth') === 'true';
-  });
+  // --- INSTANSIASI CUSTOM HOOKS ---
+  const { theme, setTheme } = useAppTheme();
+  const { isAuthenticated, currentUser, handleLoginSuccess, handleSignOut, handleUserUpdate } = useAppAuth();
+  const {
+    focusTimeLeft,
+    setFocusTimeLeft,
+    isFocusTimerRunning,
+    setIsFocusTimerRunning,
+    pomodoroStage,
+    setPomodoroStage,
+    pomodoroTaskId,
+    setPomodoroTaskId,
+    completedPomodoroCount,
+    setCompletedPomodoroCount,
+    workspaceMode,
+    setWorkspaceMode,
+    lectureTime,
+    setLectureTime,
+    isLectureRunning,
+    setIsLectureRunning,
+    activeLectureCourseId,
+    setActiveLectureCourseId,
+    lectureNoteContent,
+    setLectureNoteContent,
+    handleResetFocusTimer
+  } = useFocusTimer();
 
-  // Menyimpan data profil pengguna aktif yang tersimpan di localStorage
-  const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('planly_user');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const {
+    courses,
+    tasks,
+    notes,
+    events,
+    rescheduledSessions,
+    attendanceRecords,
+    loadingData,
+    handleToggleTaskState,
+    handleAddTask,
+    handleEditTask,
+    handleDeleteTask,
+    handleAddCourse,
+    handleEditCourse,
+    handleDeleteCourse,
+    handleAddNote,
+    handleEditNote,
+    handleDeleteNote,
+    handleAddEvent,
+    handleEditEvent,
+    handleDeleteEvent,
+    handleAddReschedule,
+    handleDeleteReschedule,
+    handleCreateAttendance,
+    handleDeleteAttendance
+  } = useAcademicData(isAuthenticated);
 
-  // --- STATE DATABASE APLIKASI ---
-  // Menyimpan daftar mata kuliah, tugas, dan catatan pengguna
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [events, setEvents] = useState<CampusEvent[]>([]);
-  const [rescheduledSessions, setRescheduledSessions] = useState<RescheduledSession[]>([]);
-  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
-  const [loadingData, setLoadingData] = useState(false); // Indikator ketika mengambil data dari API
-
-  // --- STATE NAVIGASI GLOBAL & PENCARIAN ---
-  // Mengontrol tab aktif yang sedang dilihat oleh pengguna
+  // --- STATE NAVIGASI LOKAL & PENCARIAN ---
   const [activeTab, setActiveTab] = useState<SidebarTab>('today');
-  const [searchQuery, setSearchQuery] = useState(''); // Query pencarian global
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Mengontrol tampilan sidebar pada layar kecil/mobile
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // --- KONTROL MODAL OVERLAY ---
+  // --- KONTROL MODAL OVERLAY LOKAL ---
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
   const [isEnrollCourseOpen, setIsEnrollCourseOpen] = useState(false);
 
   // --- STATE PENGINGAT DEADLINE & AUTO INSPECT ---
   const [autoInspectTaskId, setAutoInspectTaskId] = useState<number | null>(null);
 
-  // Mengaktifkan monitoring deadline batas waktu tugas di latar belakang
+  // Mengaktifkan pemantauan deadline tugas kuliah di latar belakang
   useDeadlineMonitor({
     tasks,
     courses,
@@ -72,348 +109,14 @@ export default function App() {
     setAutoInspectTaskId
   });
 
-  // --- STATE TEMA GLOBAL (MODE TERANG / GELAP) ---
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    return (localStorage.getItem('planly_theme') as 'light' | 'dark') || 'light';
-  });
-
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    localStorage.setItem('planly_theme', theme);
-  }, [theme]);
-
-  // --- STATE TIMER FOKUS GLOBAL (POMODORO) ---
-  const [focusTimeLeft, setFocusTimeLeft] = useState(1500);
-  const [isFocusTimerRunning, setIsFocusTimerRunning] = useState(false);
-  const [pomodoroStage, setPomodoroStage] = useState<'work' | 'short-break' | 'long-break'>('work');
-  const [pomodoroTaskId, setPomodoroTaskId] = useState<number | null>(null);
-  const [completedPomodoroCount, setCompletedPomodoroCount] = useState(0);
-
-  // --- STATE TIMER RUANG BELAJAR LAINNYA ---
-  const [workspaceMode, setWorkspaceMode] = useState<'pomodoro' | 'lecture'>('pomodoro');
-  
-  // 1. Sesi Kuliah Live (Lecture)
-  const [lectureTime, setLectureTime] = useState(0);
-  const [isLectureRunning, setIsLectureRunning] = useState(false);
-  const [activeLectureCourseId, setActiveLectureCourseId] = useState<number | null>(null);
-  const [lectureNoteContent, setLectureNoteContent] = useState('');
-
-  // Audio Beep generator saat timer Pomodoro habis
-  const playChimeSound = () => {
-    try {
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioContextClass) return;
-      const ctx = new AudioContextClass();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // Nada D5
-      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.15); // Nada A5
-      gain.gain.setValueAtTime(0.5, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.45);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.5);
-    } catch (e) {
-      console.warn("Autoplay audio blocked or not supported", e);
-    }
-  };
-
-  // Effect untuk mengontrol jalannya timer fokus Pomodoro setiap detiknya
-  useEffect(() => {
-    let interval: any = null;
-    if (isFocusTimerRunning) {
-      if (focusTimeLeft > 0) {
-        interval = setInterval(() => {
-          setFocusTimeLeft((prev) => prev - 1);
-        }, 1000);
-      } else {
-        // Timer habis (Mencapai 0)
-        setIsFocusTimerRunning(false);
-        playChimeSound();
-
-        if (pomodoroStage === 'work') {
-          const nextCount = completedPomodoroCount + 1;
-          setCompletedPomodoroCount(nextCount);
-          if (nextCount > 0 && nextCount % 4 === 0) {
-            setPomodoroStage('long-break');
-            setFocusTimeLeft(900); // 15 menit
-            toast.success('Luar biasa! 4 sesi fokus selesai. Nikmati istirahat panjang (15 menit) Anda!');
-          } else {
-            setPomodoroStage('short-break');
-            setFocusTimeLeft(300); // 5 menit
-            toast.info('Sesi fokus selesai! Ambil napas dan istirahat pendek (5 menit).');
-          }
-        } else {
-          // Dari break kembali ke work
-          setPomodoroStage('work');
-          setFocusTimeLeft(1500); // 25 menit
-          toast.info('Istirahat selesai! Mari kembali fokus.');
-        }
-      }
-    }
-    return () => clearInterval(interval);
-  }, [isFocusTimerRunning, focusTimeLeft, pomodoroStage, completedPomodoroCount]);
-
-  // Effect untuk mengontrol Sesi Kuliah Live
-  useEffect(() => {
-    let interval: any = null;
-    if (isLectureRunning) {
-      interval = setInterval(() => {
-        setLectureTime((prev) => prev + 1);
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isLectureRunning]);
-
-  const handleResetFocusTimer = () => {
-    setFocusTimeLeft(pomodoroStage === 'work' ? 1500 : pomodoroStage === 'short-break' ? 300 : 900);
-    setIsFocusTimerRunning(false);
-  };
-
-
-  // --- SINKRONISASI DATA DARI API ---
-  // Mengambil semua data pengguna (mata kuliah, tugas, catatan, event) secara paralel saat berhasil login
-  useEffect(() => {
-    if (isAuthenticated) {
-      setLoadingData(true);
-      Promise.all([
-        api.courses.getAll(),
-        api.tasks.getAll(),
-        api.notes.getAll(),
-        api.events.getAll(),
-        api.reschedules.getAll(),
-        api.attendance.getAll()
-      ]).then(([c, t, n, e, r, a]) => {
-        setCourses(c);
-        setTasks(t);
-        setNotes(n);
-        setEvents(e);
-        setRescheduledSessions(r);
-        setAttendanceRecords(a);
-        setLoadingData(false);
-      }).catch(err => {
-        console.error("Error loading data from api", err);
-        setLoadingData(false);
-      });
-    }
-  }, [isAuthenticated]);
-
-  // Membersihkan kata kunci pencarian setiap kali pengguna berpindah tab
+  // Bersihkan search query setiap kali pindah tab menu
   useEffect(() => {
     setSearchQuery('');
   }, [activeTab]);
 
-  // --- HANDLER AUTENTIKASI ---
-  // Menyimpan data pengguna dan memperbarui status autentikasi ketika login berhasil
-  const handleLoginSuccess = (loginResponse: LoginResponse) => {
-    setCurrentUser(loginResponse.user);
-    localStorage.setItem('planly_user', JSON.stringify(loginResponse.user));
-    setIsAuthenticated(true);
-  };
-
-  // Mengeluarkan pengguna dari sistem setelah konfirmasi, menghapus data lokal, dan mereset tab aktif
-  const handleSignOut = () => {
-    if (confirm('Apakah Anda yakin ingin keluar dari Planly?')) {
-      api.auth.logout().then(() => {
-        setIsAuthenticated(false);
-        setCurrentUser(null);
-        localStorage.removeItem('planly_user');
-        setActiveTab('today');
-      });
-    }
-  };
-
-  // Memperbarui data profil pengguna
-  const handleUserUpdate = (payload: Partial<User>) => {
-    api.profile.update(payload).then((savedUser) => {
-      setCurrentUser(savedUser);
-      localStorage.setItem('planly_user', JSON.stringify(savedUser));
-    }).catch(err => toast.error(err.message));
-  };
-
-  // --- HANDLER TUGAS (TASKS) ---
-  // Mengubah status penyelesaian tugas (selesai / belum selesai)
-  const handleToggleTaskState = (taskId: number) => {
-    api.tasks.finish(taskId).then((updatedTask) => {
-      setTasks((prev) =>
-        prev.map((t) => (t.id === taskId ? updatedTask : t))
-      );
-      calendarSyncService.syncItem('update', 'task', updatedTask.task_title, toast);
-    }).catch(err => toast.error(err.message));
-  };
-
-  // Menambahkan tugas baru ke dalam daftar
-  const handleAddTask = (newTask: Omit<Task, 'id' | 'user_id'>, silent = false) => {
-    return api.tasks.create(newTask).then((createdTask) => {
-      setTasks((prev) => [createdTask, ...prev]);
-      if (!silent) {
-        toast.success('Tugas baru berhasil ditambahkan.');
-      }
-      calendarSyncService.syncItem('create', 'task', createdTask.task_title, toast);
-      return createdTask;
-    }).catch(err => {
-      toast.error(err.message);
-      throw err;
-    });
-  };
-
-  // Memperbarui detail informasi tugas
-  const handleEditTask = (taskId: number, updatedTask: Partial<Task>) => {
-    api.tasks.update(taskId, updatedTask).then((savedTask) => {
-      setTasks((prev) => prev.map((t) => (t.id === taskId ? savedTask : t)));
-      toast.success('Tugas berhasil diperbarui.');
-      calendarSyncService.syncItem('update', 'task', savedTask.task_title, toast);
-    }).catch(err => toast.error(err.message));
-  };
-
-  // Menghapus tugas berdasarkan ID
-  const handleDeleteTask = (taskId: number) => {
-    const taskToDelete = tasks.find((t) => t.id === taskId);
-    const taskTitle = taskToDelete ? taskToDelete.task_title : 'Tugas';
-    api.tasks.delete(taskId).then(() => {
-      setTasks((prev) => prev.filter((t) => t.id !== taskId));
-      calendarSyncService.syncItem('delete', 'task', taskTitle, toast);
-    }).catch(err => toast.error(err.message));
-  };
-
-  // --- HANDLER MATA KULIAH (COURSES) ---
-  // Mendaftarkan mata kuliah baru
-  const handleAddCourse = (newCourse: Omit<Course, 'id' | 'user_id'>) => {
-    api.courses.create(newCourse).then((createdCourse) => {
-      setCourses((prev) => [...prev, createdCourse]);
-      toast.success('Mata Kuliah berhasil didaftarkan.');
-      calendarSyncService.syncItem('create', 'course', createdCourse.course_name, toast);
-    }).catch(err => toast.error(err.message));
-  };
-
-  // Memperbarui detail mata kuliah dan memuat ulang tugas serta catatan terkait untuk menjaga sinkronisasi data
-  const handleEditCourse = (courseId: number, updatedCourse: Partial<Course>) => {
-    api.courses.update(courseId, updatedCourse).then((savedCourse) => {
-      setCourses((prev) => prev.map((c) => (c.id === courseId ? savedCourse : c)));
-      api.tasks.getAll().then(setTasks);
-      api.notes.getAll().then(setNotes);
-      toast.success('Mata Kuliah berhasil diperbarui.');
-      calendarSyncService.syncItem('update', 'course', savedCourse.course_name, toast);
-    }).catch(err => toast.error(err.message));
-  };
-
-  // Menghapus mata kuliah beserta data terkait
-  const handleDeleteCourse = (courseId: number) => {
-    const courseToDelete = courses.find((c) => c.id === courseId);
-    const courseName = courseToDelete ? courseToDelete.course_name : 'Mata Kuliah';
-    api.courses.delete(courseId).then(() => {
-      setCourses((prev) => prev.filter((c) => c.id !== courseId));
-      api.tasks.getAll().then(setTasks);
-      api.notes.getAll().then(setNotes);
-      calendarSyncService.syncItem('delete', 'course', courseName, toast);
-    }).catch(err => toast.error(err.message));
-  };
-
-  // --- HANDLER CATATAN (NOTES) ---
-  // Menambahkan catatan kuliah baru
-  const handleAddNote = (newNote: Omit<Note, 'id' | 'user_id'>) => {
-    api.notes.create(newNote).then((createdNote) => {
-      setNotes((prev) => [createdNote, ...prev]);
-      toast.success('Catatan baru berhasil disimpan.');
-    }).catch(err => toast.error(err.message));
-  };
-
-  // Memperbarui isi catatan kuliah
-  const handleEditNote = (noteId: number, updatedNote: Partial<Note>) => {
-    api.notes.update(noteId, updatedNote).then((savedNote) => {
-      setNotes((prev) => prev.map((n) => (n.id === noteId ? savedNote : n)));
-      toast.success('Catatan berhasil diperbarui.');
-    }).catch(err => toast.error(err.message));
-  };
-
-  // Menghapus catatan kuliah
-  const handleDeleteNote = (noteId: number) => {
-    api.notes.delete(noteId).then(() => {
-      setNotes((prev) => prev.filter((n) => n.id !== noteId));
-    }).catch(err => toast.error(err.message));
-  };
-
-  // --- HANDLER EVENT KAMPUS ---
-  // Menambahkan event kampus baru
-  const handleAddEvent = (newEvent: Omit<CampusEvent, 'id' | 'user_id'>) => {
-    api.events.create(newEvent).then((createdEvent) => {
-      setEvents((prev) => [createdEvent, ...prev]);
-      toast.success('Event baru berhasil ditambahkan.');
-      calendarSyncService.syncItem('create', 'event', createdEvent.event_name, toast);
-    }).catch(err => toast.error(err.message));
-  };
-
-  // Memperbarui event kampus
-  const handleEditEvent = (eventId: number, updatedEvent: Partial<CampusEvent>) => {
-    api.events.update(eventId, updatedEvent).then((savedEvent) => {
-      setEvents((prev) => prev.map((e) => (e.id === eventId ? savedEvent : e)));
-      toast.success('Event berhasil diperbarui.');
-      calendarSyncService.syncItem('update', 'event', savedEvent.event_name, toast);
-    }).catch(err => toast.error(err.message));
-  };
-
-  // Menghapus event kampus
-  const handleDeleteEvent = (eventId: number) => {
-    const eventToDelete = events.find((e) => e.id === eventId);
-    const eventName = eventToDelete ? eventToDelete.event_name : 'Event';
-    api.events.delete(eventId).then(() => {
-      setEvents((prev) => prev.filter((e) => e.id !== eventId));
-      toast.success('Event berhasil dihapus.');
-      calendarSyncService.syncItem('delete', 'event', eventName, toast);
-    }).catch(err => toast.error(err.message));
-  };
-
-  // Menambahkan pemindahan jadwal (reschedule) kuliah
-  const handleAddReschedule = (session: Omit<RescheduledSession, 'id'>) => {
-    const course = courses.find((c) => c.id === session.course_id);
-    const courseName = course ? course.course_name : 'Mata Kuliah';
-    api.reschedules.create(session).then((created) => {
-      setRescheduledSessions((prev) => [created, ...prev]);
-      toast.success(session.is_canceled ? 'Sesi kuliah berhasil dibatalkan.' : 'Sesi kuliah berhasil dipindahkan.');
-      calendarSyncService.syncItem('create', 'reschedule', courseName, toast);
-    }).catch(err => toast.error(err.message));
-  };
-
-  // Menghapus pemindahan jadwal kuliah (mengembalikan ke semula)
-  const handleDeleteReschedule = (courseId: number, originalDate: string) => {
-    const course = courses.find((c) => c.id === courseId);
-    const courseName = course ? course.course_name : 'Mata Kuliah';
-    api.reschedules.delete(courseId, originalDate).then(() => {
-      setRescheduledSessions((prev) =>
-        prev.filter((r) => !(r.course_id === courseId && r.original_date === originalDate))
-      );
-      toast.success('Jadwal kuliah dikembalikan ke sesi normal.');
-      calendarSyncService.syncItem('delete', 'reschedule', courseName, toast);
-    }).catch(err => toast.error(err.message));
-  };
-
-  // Menyimpan absensi baru mahasiswa
-  const handleCreateAttendance = async (payload: AttendanceSubmitPayload) => {
-    try {
-      const newRecord = await api.attendance.submit(payload);
-      setAttendanceRecords((prev) => [newRecord, ...prev]);
-      return newRecord;
-    } catch (err: any) {
-      toast.error(err.message || 'Gagal menyimpan absensi.');
-      throw new Error(err.message || 'Gagal menyimpan absensi.');
-    }
-  };
-
-  // Menghapus riwayat absensi mahasiswa
-  const handleDeleteAttendance = async (id: number) => {
-    try {
-      await api.attendance.delete(id);
-      setAttendanceRecords((prev) => prev.filter((r) => r.id !== id));
-      toast.success('Riwayat presensi berhasil dihapus.');
-    } catch (err: any) {
-      toast.error(err.message || 'Gagal menghapus riwayat presensi.');
-    }
+  // Handler khusus buat logout
+  const handleSignOutClick = () => {
+    handleSignOut(setActiveTab);
   };
 
   // Berpindah ke tab catatan dan otomatis memfilter berdasarkan kode mata kuliah yang dipilih
@@ -427,11 +130,10 @@ export default function App() {
     }
   };
 
-  // --- SWITCH UNTUK RENDERING KONTEN TAB ---
-  // Memilih komponen view yang akan ditampilkan di area konten utama berdasarkan tab aktif
+  // --- SWITCH RENDERING VIEW TAB AKTIF ---
   const renderTabContent = () => {
     if (!currentUser) return null;
-    
+
     switch (activeTab) {
       case 'today':
         return (
@@ -561,9 +263,9 @@ export default function App() {
       case 'profile':
         return (
           <ProfileView
-            user={currentUser!}
+            user={currentUser}
             onUserUpdate={handleUserUpdate}
-            onSignOut={handleSignOut}
+            onSignOut={handleSignOutClick}
             theme={theme}
             onThemeChange={setTheme}
             courses={courses}
@@ -583,26 +285,29 @@ export default function App() {
             onDeleteAttendance={handleDeleteAttendance}
           />
         );
+      case 'ai-companion':
+        return (
+          <AICompanionView />
+        );
       default:
         return null;
     }
   };
 
   // --- RENDER HALAMAN LOGIN / REGISTER ---
-  // Jika belum terautentikasi atau data profil belum dimuat, tampilkan halaman autentikasi AuthView
   if (!isAuthenticated || !currentUser) {
     return <AuthView onLoginSuccess={handleLoginSuccess} />;
   }
 
-  // --- RENDER STRUKTUR LAYOUT UTAMA ---
+  // --- RENDER TATA LETAK UTAMA APLIKASI ---
   return (
     <div className="bg-surface text-on-surface font-sans antialiased min-h-screen flex selection:bg-slate-200">
       
-      {/* Sidebar Navigasi - Tampilan Samping Kiri (Desktop) / Drawer Slide-out (Mobile) */}
+      {/* Sidebar - Samping Kiri (Desktop) / Drawer Slide-out (Mobile) */}
       <Sidebar
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        onSignOut={handleSignOut}
+        onSignOut={handleSignOutClick}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         focusTimeLeft={focusTimeLeft}
@@ -613,10 +318,10 @@ export default function App() {
         isLectureRunning={isLectureRunning}
       />
 
-      {/* Area Konten Utama Core View */}
+      {/* Konten Utama */}
       <main className="flex-1 lg:ml-[260px] flex flex-col min-h-screen relative w-full overflow-x-hidden">
         
-        {/* Header Global Sticky - Berisi info pengguna, tombol menu burger mobile, dan kolom pencarian */}
+        {/* Header Global Sticky */}
         <Header
           user={currentUser}
           onMenuToggle={() => setIsSidebarOpen(true)}
@@ -631,12 +336,12 @@ export default function App() {
           onUserUpdate={handleUserUpdate}
         />
 
-        {/* Kontainer Utama Konten Dinamis */}
-        <div key={activeTab} className="flex-1 w-full max-w-[1280px] mx-auto px-4 sm:px-6 py-8 pb-24 lg:pb-12 animate-fade-in">
+        {/* Kontainer Render View Dinamis */}
+        <div className="flex-1 w-full max-w-[1280px] mx-auto px-4 sm:px-6 py-8 pb-24 lg:pb-12 animate-fade-in">
           {renderTabContent()}
         </div>
 
-        {/* Bilah Navigasi Bawah (Bottom Navigation Bar) khusus untuk viewport Mobile */}
+        {/* Bottom Nav khusus Mobile */}
         <nav className="fixed bottom-0 left-0 right-0 lg:hidden bg-white/90 backdrop-blur-md border-t border-[#E2E8F0] shadow-md flex justify-around items-center h-16 px-4 z-40">
           <button
             onClick={() => setActiveTab('today')}

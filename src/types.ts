@@ -82,6 +82,8 @@ export interface Note {
   title: string;
   content: string;
   attachments?: AttachmentFile[];
+  created_at?: string;
+  updated_at?: string;
 }
 
 // --- Auth DTOs (Data Transfer Objects untuk proses autentikasi Laravel) ---
@@ -174,7 +176,7 @@ export interface ProfileUpdatePayload {
 /**
  * Menentukan tab aktif pada sidebar navigasi utama aplikasi Planly.
  */
-export type SidebarTab = 'today' | 'calendar' | 'tasks' | 'courses' | 'notes' | 'profile' | 'workspace' | 'events' | 'attendance';
+export type SidebarTab = 'today' | 'calendar' | 'tasks' | 'courses' | 'notes' | 'profile' | 'workspace' | 'events' | 'attendance' | 'ai-companion';
 
 // --- Event Kampus ---
 

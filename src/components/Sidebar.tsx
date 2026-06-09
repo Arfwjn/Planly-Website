@@ -1,4 +1,4 @@
-import { BookOpen, CalendarDays, Calendar, CheckSquare, FileText, LayoutDashboard, User as UserIcon, GraduationCap, Play, Pause, RotateCcw, Timer, UserCheck } from 'lucide-react';
+import { BookOpen, CalendarDays, Calendar, CheckSquare, FileText, LayoutDashboard, User as UserIcon, GraduationCap, Play, Pause, RotateCcw, Timer, UserCheck, Sparkles } from 'lucide-react';
 import { SidebarTab } from '../types';
 
 interface SidebarProps {
@@ -31,12 +31,13 @@ export default function Sidebar({
   const menuItems = [
     { id: 'today' as SidebarTab, label: 'Hari Ini', icon: LayoutDashboard },
     { id: 'calendar' as SidebarTab, label: 'Jadwal', icon: CalendarDays },
+    { id: 'attendance' as SidebarTab, label: 'Absensi', icon: UserCheck },
     { id: 'events' as SidebarTab, label: 'Event Kampus', icon: Calendar },
-    { id: 'workspace' as SidebarTab, label: 'Ruang Belajar', icon: Timer },
     { id: 'tasks' as SidebarTab, label: 'Tugas', icon: CheckSquare },
     { id: 'courses' as SidebarTab, label: 'Mata Kuliah', icon: BookOpen },
     { id: 'notes' as SidebarTab, label: 'Catatan', icon: FileText },
-    { id: 'attendance' as SidebarTab, label: 'Absensi', icon: UserCheck },
+    { id: 'workspace' as SidebarTab, label: 'Ruang Belajar', icon: Timer },
+    { id: 'ai-companion' as SidebarTab, label: 'Asisten AI', icon: Sparkles },
     { id: 'profile' as SidebarTab, label: 'Profil', icon: UserIcon },
   ];
 
@@ -96,6 +97,11 @@ export default function Sidebar({
               >
                 <IconComponent className={`w-4 h-4 ${isActive ? 'stroke-[2.5px]' : ''}`} />
                 <span>{item.label}</span>
+                {item.id === 'ai-companion' && (
+                  <span className="ml-auto px-1.5 py-0.5 text-[8px] font-extrabold bg-amber-50 dark:bg-amber-950/35 text-amber-600 dark:text-amber-400 border border-amber-200/50 dark:border-amber-900/30 rounded-md uppercase tracking-wider">
+                    Demo
+                  </span>
+                )}
               </button>
             );
           })}
