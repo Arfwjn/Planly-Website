@@ -5,10 +5,10 @@
 // rapat himpunan/UKM, lomba kompetisi, dll) terintegrasi dengan filter visual.
 // =============================================================================
 
-import { CampusEvent, CampusEventCreatePayload } from '../types';
-import { initialEvents } from '../mockData';
-import { USE_MOCK, delay, getStored, setStored, getNextMockId } from './apiHelper';
-import httpClient from './httpClient';
+import { CampusEvent, CampusEventCreatePayload } from '../../types';
+import { initialEvents } from '../../mockData';
+import { USE_MOCK, delay, getStored, setStored, getNextMockId } from '../core/apiHelper';
+import httpClient from '../core/httpClient';
 
 export const eventsService = {
   /**
@@ -77,5 +77,5 @@ export const eventsService = {
     await httpClient.delete(`/events/${id}`);
   }
 };
-// Default export biar fleksibel
+
 export default eventsService;

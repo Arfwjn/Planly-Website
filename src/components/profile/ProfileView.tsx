@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { User as UserIcon, Bell, Palette, Calendar, X, ArrowRight, Save, Check, Globe } from 'lucide-react';
+import { User as UserIcon, Bell, Palette, Calendar, X, ArrowRight, Save, Check, Globe, RefreshCw } from 'lucide-react';
 import { User, Course, Task, RescheduledSession, CampusEvent, CalendarSyncConfig } from '../../types';
 import { useToast } from '../ui/Toast';
-import { calendarSyncService } from '../../services/calendarSync';
+import { calendarSyncService } from '../../services/calendar/calendarSync';
 import { generateICalendarData, downloadICSFile } from '../../utils/ical';
 
 // Import sub-komponen yang telah dipisah

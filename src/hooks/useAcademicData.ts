@@ -10,7 +10,7 @@ import { useState, useEffect } from 'react';
 import { Course, Task, Note, CampusEvent, RescheduledSession, AttendanceRecord, AttendanceSubmitPayload } from '../types';
 import { api } from '../services/api';
 import { useToast } from '../components/ui/Toast';
-import { calendarSyncService } from '../services/calendarSync';
+import { calendarSyncService } from '../services/calendar/calendarSync';
 
 export default function useAcademicData(isAuthenticated: boolean) {
   const toast = useToast();

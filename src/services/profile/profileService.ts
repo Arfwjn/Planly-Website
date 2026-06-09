@@ -5,10 +5,10 @@
 // parameter akademik mahasiswa (seperti IPK target, semester, dll).
 // =============================================================================
 
-import { User, ProfileUpdatePayload } from '../types';
-import { initialUser } from '../mockData';
-import { USE_MOCK, delay, getStored, setStored } from './apiHelper';
-import httpClient from './httpClient';
+import { User, ProfileUpdatePayload } from '../../types';
+import { initialUser } from '../../mockData';
+import { USE_MOCK, delay, getStored, setStored } from '../core/apiHelper';
+import httpClient from '../core/httpClient';
 
 export const profileService = {
   /**

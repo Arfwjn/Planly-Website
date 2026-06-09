@@ -5,10 +5,10 @@
 // ruangan, hari, jam, preset warna) untuk mendukung fitur jadwal kuliah.
 // =============================================================================
 
-import { Course, CourseCreatePayload, CourseUpdatePayload, Task, Note } from '../types';
-import { initialCourses, initialTasks, initialNotes } from '../mockData';
-import { USE_MOCK, delay, getStored, setStored, getNextMockId } from './apiHelper';
-import httpClient from './httpClient';
+import { Course, CourseCreatePayload, CourseUpdatePayload, Task, Note } from '../../types';
+import { initialCourses, initialTasks, initialNotes } from '../../mockData';
+import { USE_MOCK, delay, getStored, setStored, getNextMockId } from '../core/apiHelper';
+import httpClient from '../core/httpClient';
 
 export const coursesService = {
   /**

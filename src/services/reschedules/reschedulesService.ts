@@ -5,10 +5,10 @@
 // penandaan kelas batal di tanggal tertentu untuk timeline kalender mingguan/harian.
 // =============================================================================
 
-import { RescheduledSession } from '../types';
-import { initialReschedules } from '../mockData';
-import { USE_MOCK, delay, getStored, setStored, getNextMockId } from './apiHelper';
-import httpClient from './httpClient';
+import { RescheduledSession } from '../../types';
+import { initialReschedules } from '../../mockData';
+import { USE_MOCK, delay, getStored, setStored, getNextMockId } from '../core/apiHelper';
+import httpClient from '../core/httpClient';
 
 export const reschedulesService = {
   /**

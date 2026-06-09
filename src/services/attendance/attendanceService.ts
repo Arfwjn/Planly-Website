@@ -5,9 +5,9 @@
 // (snapshot webcam base64) dan geolokalasi lokasi GPS mahasiswa.
 // =============================================================================
 
-import { AttendanceRecord, AttendanceSubmitPayload } from '../types';
-import { USE_MOCK, delay, getStored, setStored, getNextMockId } from './apiHelper';
-import httpClient from './httpClient';
+import { AttendanceRecord, AttendanceSubmitPayload } from '../../types';
+import { USE_MOCK, delay, getStored, setStored, getNextMockId } from '../core/apiHelper';
+import httpClient from '../core/httpClient';
 
 export const attendanceService = {
   /**

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Flame, BookOpen } from 'lucide-react';
 import { Course, Task, Note, SidebarTab } from '../../types';
 import { useToast } from '../ui/Toast';
-import { synthAudio } from '../../services/synthAudio';
+import { synthAudio } from '../../services/audio/synthAudio';
 
 // Import sub-komponen modular
 import AmbientSoundSelector from './AmbientSoundSelector';

@@ -5,10 +5,10 @@
 // list bullet, list angka, checkpoint, formatting toolbar kustom).
 // =============================================================================
 
-import { Note, NoteCreatePayload, NoteUpdatePayload } from '../types';
-import { initialNotes } from '../mockData';
-import { USE_MOCK, delay, getStored, setStored, getNextMockId } from './apiHelper';
-import httpClient from './httpClient';
+import { Note, NoteCreatePayload, NoteUpdatePayload } from '../../types';
+import { initialNotes } from '../../mockData';
+import { USE_MOCK, delay, getStored, setStored, getNextMockId } from '../core/apiHelper';
+import httpClient from '../core/httpClient';
 
 export const notesService = {
   /**

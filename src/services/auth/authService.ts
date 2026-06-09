@@ -5,10 +5,10 @@
 // (logout) akun mahasiswa di sistem Planly, baik mode mock maupun Laravel API.
 // =============================================================================
 
-import { User, LoginResponse, RegisterResponse } from '../types';
-import { initialUser } from '../mockData';
-import { USE_MOCK, delay, getStored, setStored, getNextMockId } from './apiHelper';
-import httpClient from './httpClient';
+import { User, LoginResponse, RegisterResponse } from '../../types';
+import { initialUser } from '../../mockData';
+import { USE_MOCK, delay, getStored, setStored, getNextMockId } from '../core/apiHelper';
+import httpClient from '../core/httpClient';
 
 export const authService = {
   /**

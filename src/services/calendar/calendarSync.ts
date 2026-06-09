@@ -1,4 +1,4 @@
-import { CalendarSyncConfig } from '../types';
+import { CalendarSyncConfig } from '../../types';
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false';
 const STORAGE_KEY = 'planly_calendar_sync';

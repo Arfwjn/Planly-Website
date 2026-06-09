@@ -7,14 +7,14 @@
 // jadi komponen-komponen UI React gak ada yang perlu diubah.
 // =============================================================================
 
-import { authService } from './authService';
-import { profileService } from './profileService';
-import { coursesService } from './coursesService';
-import { tasksService } from './tasksService';
-import { notesService } from './notesService';
-import { eventsService } from './eventsService';
-import { reschedulesService } from './reschedulesService';
-import { attendanceService } from './attendanceService';
+import { authService } from './auth/authService';
+import { profileService } from './profile/profileService';
+import { coursesService } from './courses/coursesService';
+import { tasksService } from './tasks/tasksService';
+import { notesService } from './notes/notesService';
+import { eventsService } from './events/eventsService';
+import { reschedulesService } from './reschedules/reschedulesService';
+import { attendanceService } from './attendance/attendanceService';
 
 export const api = {
   auth: authService,
