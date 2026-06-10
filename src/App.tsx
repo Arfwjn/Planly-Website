@@ -11,6 +11,7 @@ import { SidebarTab } from './types';
 
 // Impor komponen-komponen view utama aplikasi
 import AuthView from './components/auth/AuthView';
+import LandingView from './components/landing/LandingView';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import TodayView from './components/today/TodayView';
@@ -23,6 +24,7 @@ import ProfileView from './components/profile/ProfileView';
 import WorkspaceView from './components/workspace/WorkspaceView';
 import AttendanceView from './components/attendance/AttendanceView';
 import AICompanionView from './components/ai-companion/AICompanionView';
+import ConfirmModal from './components/ui/ConfirmModal';
 import useDeadlineMonitor from './hooks/useDeadlineMonitor';
 
 // Impor Custom Hooks (Separation of Concerns & Encapsulation)
@@ -100,6 +102,16 @@ export default function App() {
 
   // --- STATE PENGINGAT DEADLINE & AUTO INSPECT ---
   const [autoInspectTaskId, setAutoInspectTaskId] = useState<number | null>(null);
+  const [showLandingPage, setShowLandingPage] = useState(true);
+  const [authStartRegister, setAuthStartRegister] = useState(false);
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
+
+  // Otomatis arahkan ke landing page jika status login terputus (logout)
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setShowLandingPage(true);
+    }
+  }, [isAuthenticated]);
 
   // Mengaktifkan pemantauan deadline tugas kuliah di latar belakang
   useDeadlineMonitor({
@@ -116,7 +128,7 @@ export default function App() {
 
   // Handler khusus buat logout
   const handleSignOutClick = () => {
-    handleSignOut(setActiveTab);
+    setIsLogoutConfirmOpen(true);
   };
 
   // Berpindah ke tab catatan dan otomatis memfilter berdasarkan kode mata kuliah yang dipilih
@@ -172,6 +184,7 @@ export default function App() {
             onDeleteReschedule={handleDeleteReschedule}
             onTabChange={setActiveTab}
             attendanceRecords={attendanceRecords}
+            events={events}
           />
         );
       case 'events':
@@ -294,9 +307,27 @@ export default function App() {
     }
   };
 
-  // --- RENDER HALAMAN LOGIN / REGISTER ---
+  // --- RENDER LANDING PAGE / AUTH VIEW ---
   if (!isAuthenticated || !currentUser) {
-    return <AuthView onLoginSuccess={handleLoginSuccess} />;
+    if (showLandingPage) {
+      return (
+        <LandingView 
+          theme={theme}
+          onThemeChange={setTheme}
+          onGoToAuth={(isRegister) => {
+            setShowLandingPage(false);
+            setAuthStartRegister(isRegister);
+          }} 
+        />
+      );
+    }
+    return (
+      <AuthView 
+        onLoginSuccess={handleLoginSuccess} 
+        onBackToLanding={() => setShowLandingPage(true)}
+        initialRegister={authStartRegister}
+      />
+    );
   }
 
   // --- RENDER TATA LETAK UTAMA APLIKASI ---
@@ -316,6 +347,8 @@ export default function App() {
         onResetFocusTimer={handleResetFocusTimer}
         lectureTime={lectureTime}
         isLectureRunning={isLectureRunning}
+        theme={theme}
+        pomodoroStage={pomodoroStage}
       />
 
       {/* Konten Utama */}
@@ -395,6 +428,18 @@ export default function App() {
         </nav>
 
       </main>
+
+      {/* Modal Konfirmasi Keluar (Logout) */}
+      <ConfirmModal
+        isOpen={isLogoutConfirmOpen}
+        onClose={() => setIsLogoutConfirmOpen(false)}
+        onConfirm={() => handleSignOut(setActiveTab)}
+        title="Konfirmasi Keluar"
+        message="Apakah Anda yakin ingin keluar dari Planly? Seluruh sesi belajar dan kelas aktif Anda akan ditutup."
+        confirmText="Keluar"
+        cancelText="Batal"
+        isDanger={true}
+      />
     </div>
   );
 }

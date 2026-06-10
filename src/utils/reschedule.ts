@@ -12,6 +12,9 @@ import { Course, RescheduledSession } from '../types';
 export interface ProcessedCourse extends Course {
   is_canceled?: boolean;
   is_rescheduled_in?: boolean;
+  is_time_shifted?: boolean;
+  original_start_time?: string;
+  original_end_time?: string;
   reschedule_note?: string | null;
   rescheduled_session_id?: number;
   reschedule_original_date?: string;
@@ -66,7 +69,10 @@ export function getCoursesForDate(
           ...course,
           start_time: override.new_start_time || course.start_time,
           end_time: override.new_end_time || course.end_time,
-          is_rescheduled_in: true,
+          is_rescheduled_in: false,
+          is_time_shifted: true,
+          original_start_time: course.start_time,
+          original_end_time: course.end_time,
           reschedule_note: override.note,
           rescheduled_session_id: override.id,
           reschedule_original_date: override.original_date,
@@ -80,8 +86,8 @@ export function getCoursesForDate(
 
   // 2. Cari kelas dari hari lain yang dipindahkan / masuk ke tanggal ini (Kelas Pengganti / Rescheduled In)
   rescheduledSessions.forEach((override) => {
-    // Kalo tanggal barunya pas hari ini dan statusnya gak dibatalkan, kita masukin
-    if (override.new_date === dateStr && !override.is_canceled) {
+    // Kalo tanggal barunya pas hari ini dan statusnya gak dibatalkan, DAN aslinya bukan dari hari ini (agar tidak duplikat), kita masukin
+    if (override.new_date === dateStr && !override.is_canceled && override.original_date !== dateStr) {
       const course = courses.find((c) => c.id === override.course_id);
       if (course) {
         dayCoursesProcessed.push({

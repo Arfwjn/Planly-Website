@@ -1,12 +1,11 @@
 import React from 'react';
-import { Palette, Download, Upload, LogOut } from 'lucide-react';
+import { Palette, Download, Upload, LogOut, Sun, Moon } from 'lucide-react';
 
 interface BackupRecoveryPanelProps {
   theme: 'light' | 'dark';
   onThemeChange: (theme: 'light' | 'dark') => void;
   onExportData: () => void;
   onImportData: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onSignOut: () => void;
 }
 
 /**
@@ -19,8 +18,7 @@ export default function BackupRecoveryPanel({
   theme,
   onThemeChange,
   onExportData,
-  onImportData,
-  onSignOut
+  onImportData
 }: BackupRecoveryPanelProps) {
   return (
     <div className="space-y-6">
@@ -37,27 +35,35 @@ export default function BackupRecoveryPanel({
           {/* Mode Terang */}
           <div
             onClick={() => onThemeChange('light')}
-            className={`border rounded-xl p-3 flex flex-col items-center gap-2 cursor-pointer transition-all ${
+            className={`border rounded-xl p-4 flex flex-col items-center gap-2 cursor-pointer transition-all duration-200 group hover:scale-[1.03] active:scale-[0.97] ${
               theme === 'light'
-                ? 'border-primary bg-primary/5 text-primary shadow-xs'
-                : 'border-white/60 dark:border-slate-800/40 bg-white/60 dark:bg-slate-900/60 hover:bg-white/85 dark:hover:bg-slate-900/85 text-on-surface-variant'
+                ? 'border-amber-500 bg-amber-500/5 text-amber-600 dark:text-amber-400 shadow-xs'
+                : 'border-white/60 dark:border-slate-800/40 bg-white/60 dark:bg-slate-900/60 hover:border-amber-300 dark:hover:border-amber-800/40 hover:bg-amber-50/10 dark:hover:bg-amber-950/5 text-on-surface-variant'
             }`}
           >
-            <Palette className="w-6 h-6 text-primary" />
-            <span className="text-xs font-bold text-primary">Mode Terang</span>
+            <Sun className={`w-6 h-6 transition-transform duration-500 group-hover:rotate-45 ${
+              theme === 'light' ? 'text-amber-500 fill-amber-500/20' : 'text-slate-400 group-hover:text-amber-500'
+            }`} />
+            <span className={`text-xs font-bold transition-colors duration-200 ${theme === 'light' ? 'text-amber-600 dark:text-amber-400' : 'text-on-surface-variant group-hover:text-amber-600 dark:group-hover:text-amber-400'}`}>
+              Mode Terang
+            </span>
           </div>
           
           {/* Mode Gelap */}
           <div
             onClick={() => onThemeChange('dark')}
-            className={`border rounded-xl p-3 flex flex-col items-center gap-2 cursor-pointer transition-all ${
+            className={`border rounded-xl p-4 flex flex-col items-center gap-2 cursor-pointer transition-all duration-200 group hover:scale-[1.03] active:scale-[0.97] ${
               theme === 'dark'
-                ? 'border-primary bg-primary/5 text-primary shadow-xs'
-                : 'border-white/60 dark:border-slate-800/40 bg-white/60 dark:bg-slate-900/60 hover:bg-white/85 dark:hover:bg-slate-900/85 text-on-surface-variant'
+                ? 'border-indigo-500 bg-indigo-500/5 text-indigo-650 dark:text-indigo-400 shadow-xs'
+                : 'border-white/60 dark:border-slate-800/40 bg-white/60 dark:bg-slate-900/60 hover:border-indigo-400 dark:hover:border-indigo-800/40 hover:bg-indigo-50/10 dark:hover:bg-indigo-950/5 text-on-surface-variant'
             }`}
           >
-            <Palette className="w-6 h-6 text-on-surface-variant" />
-            <span className="text-xs font-bold text-on-surface-variant">Mode Gelap</span>
+            <Moon className={`w-6 h-6 transition-transform duration-500 group-hover:-rotate-12 ${
+              theme === 'dark' ? 'text-indigo-500 fill-indigo-500/20' : 'text-slate-400 group-hover:text-indigo-550'
+            }`} />
+            <span className={`text-xs font-bold transition-colors duration-200 ${theme === 'dark' ? 'text-indigo-650 dark:text-indigo-400' : 'text-on-surface-variant group-hover:text-indigo-650 dark:group-hover:text-indigo-400'}`}>
+              Mode Gelap
+            </span>
           </div>
         </div>
       </div>
@@ -112,22 +118,6 @@ export default function BackupRecoveryPanel({
           </svg>
           <span>Peringatan: Mengimpor data akan menimpa seluruh data saat ini secara permanen.</span>
         </div>
-      </div>
-
-      {/* Sesi Keluar Akun */}
-      <div className="bg-red-50/20 dark:bg-red-950/5 border border-red-100/50 dark:border-red-900/20 backdrop-blur-md rounded-2xl p-6 text-center flex flex-col justify-center items-center">
-        <LogOut className="w-8 h-8 text-red-600 mb-2" />
-        <h3 className="text-base font-bold text-red-600 mb-1 font-sans">Keluar Sesi</h3>
-        <p className="text-xs text-on-surface-variant max-w-[280px] mb-4 font-semibold leading-relaxed">
-          Keluar dari sesi akademis Planly aktif saat ini pada perangkat peramban browser ini dengan aman.
-        </p>
-        <button
-          type="button"
-          onClick={onSignOut}
-          className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs rounded-full shadow-sm hover:shadow-md transition-all active:scale-95 cursor-pointer"
-        >
-          Keluar Sekarang
-        </button>
       </div>
     </div>
   );

@@ -11,6 +11,8 @@ import RegisterForm from './RegisterForm';
 
 interface AuthViewProps {
   onLoginSuccess: (loginResponse: LoginResponse) => void;
+  onBackToLanding: () => void;
+  initialRegister?: boolean;
 }
 
 /**
@@ -19,11 +21,11 @@ interface AuthViewProps {
  * Mengatur jalannya proses masuk (login) dan pendaftaran (register) akun pengguna.
  * Menghubungkan visualisasi error, status memuat data, serta integrasi pemanggilan API backend/services.
  */
-export default function AuthView({ onLoginSuccess }: AuthViewProps) {
+export default function AuthView({ onLoginSuccess, onBackToLanding, initialRegister = false }: AuthViewProps) {
   const toast = useToast();
 
   // State pengalih form pendaftaran (true) atau login (false)
-  const [isRegister, setIsRegister] = useState(false);
+  const [isRegister, setIsRegister] = useState(initialRegister);
   
   // State manajemen error dan pemrosesan loading
   const [error, setError] = useState<string | null>(null);
@@ -156,6 +158,16 @@ export default function AuthView({ onLoginSuccess }: AuthViewProps) {
               </>
             )}
           </p>
+        </div>
+
+        {/* Tombol kembali ke landing page */}
+        <div className="mt-6 pt-4 border-t border-[#E2E8F0] text-center select-none">
+          <button
+            onClick={onBackToLanding}
+            className="text-xs text-[#64748B] hover:text-[#334155] font-semibold transition-colors bg-transparent border-none p-0 cursor-pointer"
+          >
+            ← Kembali ke Halaman Utama
+          </button>
         </div>
 
       </div>

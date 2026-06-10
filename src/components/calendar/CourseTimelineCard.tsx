@@ -39,6 +39,9 @@ export default function CourseTimelineCard({
   const c = course as any;
   const isCanceled = c.is_canceled;
   const isRescheduledIn = c.is_rescheduled_in;
+  const isTimeShifted = c.is_time_shifted;
+  const originalStartTime = c.original_start_time;
+  const isTimeAdvanced = isTimeShifted && originalStartTime && course.start_time < originalStartTime;
   
   const isCompleted = status === 'completed' && !isCanceled;
   const isInProgress = status === 'in-progress' && !isCanceled && isInProgressDayToday;
@@ -93,6 +96,13 @@ export default function CourseTimelineCard({
               <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-red-500 uppercase tracking-wider mt-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
                 Batal Sesi
+              </span>
+            ) : isTimeShifted ? (
+              <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider mt-0.5 ${
+                isTimeAdvanced ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${isTimeAdvanced ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                {isTimeAdvanced ? 'Jadwal Maju' : 'Jadwal Mundur'}
               </span>
             ) : isRescheduledIn ? (
               <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mt-0.5">
@@ -204,7 +214,7 @@ export default function CourseTimelineCard({
             )
           )}
           
-          {isCanceled || isRescheduledIn ? (
+          {isCanceled || isRescheduledIn || isTimeShifted ? (
             <button
               type="button"
               onClick={() => {
@@ -219,7 +229,7 @@ export default function CourseTimelineCard({
             <button
               type="button"
               onClick={() => onOpenRescheduleModal(course)}
-              className="px-3.5 py-1.5 border border-primary/20 bg-primary/5 hover:bg-primary text-primary hover:text-white rounded-xl cursor-pointer hover:-translate-y-0.5 active:scale-95 transition-all duration-300 flex items-center gap-1.5 shadow-[0_2px_8px_rgba(79,70,229,0.05)] hover:shadow-[0_4px_12px_rgba(79,70,229,0.2)]"
+              className="px-3.5 py-1.5 border border-[#4F46E5]/20 dark:border-slate-850 bg-primary/5 hover:bg-primary text-primary hover:text-white rounded-xl cursor-pointer hover:-translate-y-0.5 active:scale-95 transition-all duration-300 flex items-center gap-1.5 shadow-[0_2px_8px_rgba(79,70,229,0.05)] hover:shadow-[0_4px_12px_rgba(79,70,229,0.2)]"
             >
               <CalendarIcon className="w-3.5 h-3.5" />
               <span>Pindahkan Sesi</span>

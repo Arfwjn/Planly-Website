@@ -33,14 +33,12 @@ export default function useAppAuth() {
 
   // Dipanggil pas user mau keluar akun. Hapus token lokal dan reset tab aktif ke today.
   const handleSignOut = (setActiveTab: (tab: any) => void) => {
-    if (confirm('Apakah Anda yakin ingin keluar dari Planly?')) {
-      api.auth.logout().then(() => {
-        setIsAuthenticated(false);
-        setCurrentUser(null);
-        localStorage.removeItem('planly_user');
-        setActiveTab('today');
-      });
-    }
+    api.auth.logout().then(() => {
+      setIsAuthenticated(false);
+      setCurrentUser(null);
+      localStorage.removeItem('planly_user');
+      setActiveTab('today');
+    });
   };
 
   // Dipanggil pas user ngedit data profil akademik (seperti nim, major, IPK saat ini/target)

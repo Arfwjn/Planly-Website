@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User as UserIcon, Bell, Palette, Calendar, X, ArrowRight, Save, Check, Globe, RefreshCw } from 'lucide-react';
+import { User as UserIcon, Bell, Palette, Calendar, X, ArrowRight, Save, Check, Globe, RefreshCw, LogOut } from 'lucide-react';
 import { User, Course, Task, RescheduledSession, CampusEvent, CalendarSyncConfig } from '../../types';
 import { useToast } from '../ui/Toast';
 import { calendarSyncService } from '../../services/calendar/calendarSync';
@@ -318,45 +318,107 @@ export default function ProfileView({
 
       {/* Konten Halaman Profil dengan Navigasi Sidebar */}
       <div className="flex flex-col md:flex-row gap-6 items-start">
-        {/* Sisi Kiri: Sidebar Tab Menu */}
         <div className="w-full md:w-[220px] flex-shrink-0 flex md:flex-col gap-1.5 overflow-x-auto md:overflow-visible pb-3 md:pb-0 scrollbar-none border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-800 pr-0 md:pr-4">
           <button
             type="button"
             onClick={() => setActiveSubTab('account')}
-            className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold transition-all flex-shrink-0 cursor-pointer w-auto md:w-full text-left ${
+            className={`group relative flex items-center gap-2.5 pl-5 pr-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 flex-shrink-0 cursor-pointer w-auto md:w-full text-left select-none origin-left hover:scale-[1.01] active:scale-[0.97] ${
               activeSubTab === 'account'
-                ? 'bg-primary text-white shadow-xs'
-                : 'text-on-surface-variant hover:bg-slate-50 dark:hover:bg-slate-850/40 hover:text-on-surface bg-transparent'
+                ? theme === 'light'
+                  ? 'text-primary bg-[#F5F2FF] shadow-[0_2px_8px_rgba(53,37,205,0.06)]'
+                  : 'text-indigo-300 bg-indigo-500/20 border border-indigo-500/10 shadow-[0_2px_12px_rgba(99,102,241,0.1)]'
+                : theme === 'light'
+                  ? 'text-on-surface-variant hover:text-on-surface hover:bg-slate-100/60'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
             }`}
           >
-            <UserIcon className="w-4 h-4 flex-shrink-0" />
-            <span>Akun & Akademik</span>
+            {/* Active left indicator bar */}
+            <div
+              className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full transition-all duration-300 origin-left ${
+                activeSubTab === 'account'
+                  ? theme === 'light'
+                    ? 'bg-primary scale-y-100 opacity-100'
+                    : 'bg-indigo-400 scale-y-100 opacity-100'
+                  : 'scale-y-0 opacity-0'
+              }`}
+            />
+
+            <UserIcon 
+              className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 group-hover:scale-110 ${
+                activeSubTab === 'account'
+                  ? 'stroke-[2.5px]'
+                  : 'opacity-70 group-hover:opacity-100'
+              }`} 
+            />
+            <span className="transition-transform duration-200 group-hover:translate-x-0.5">Akun & Akademik</span>
           </button>
           
           <button
             type="button"
             onClick={() => setActiveSubTab('sync')}
-            className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold transition-all flex-shrink-0 cursor-pointer w-auto md:w-full text-left ${
+            className={`group relative flex items-center gap-2.5 pl-5 pr-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 flex-shrink-0 cursor-pointer w-auto md:w-full text-left select-none origin-left hover:scale-[1.01] active:scale-[0.97] ${
               activeSubTab === 'sync'
-                ? 'bg-primary text-white shadow-xs'
-                : 'text-on-surface-variant hover:bg-slate-50 dark:hover:bg-slate-850/40 hover:text-on-surface bg-transparent'
+                ? theme === 'light'
+                  ? 'text-primary bg-[#F5F2FF] shadow-[0_2px_8px_rgba(53,37,205,0.06)]'
+                  : 'text-indigo-300 bg-indigo-500/20 border border-indigo-500/10 shadow-[0_2px_12px_rgba(99,102,241,0.1)]'
+                : theme === 'light'
+                  ? 'text-on-surface-variant hover:text-on-surface hover:bg-slate-100/60'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
             }`}
           >
-            <Calendar className="w-4 h-4 flex-shrink-0" />
-            <span>Kalender & Notifikasi</span>
+            {/* Active left indicator bar */}
+            <div
+              className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full transition-all duration-300 origin-left ${
+                activeSubTab === 'sync'
+                  ? theme === 'light'
+                    ? 'bg-primary scale-y-100 opacity-100'
+                    : 'bg-indigo-400 scale-y-100 opacity-100'
+                  : 'scale-y-0 opacity-0'
+              }`}
+            />
+
+            <Calendar 
+              className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 group-hover:scale-110 ${
+                activeSubTab === 'sync'
+                  ? 'stroke-[2.5px]'
+                  : 'opacity-70 group-hover:opacity-100'
+              }`} 
+            />
+            <span className="transition-transform duration-200 group-hover:translate-x-0.5">Kalender & Notifikasi</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveSubTab('system')}
-            className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold transition-all flex-shrink-0 cursor-pointer w-auto md:w-full text-left ${
+            className={`group relative flex items-center gap-2.5 pl-5 pr-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 flex-shrink-0 cursor-pointer w-auto md:w-full text-left select-none origin-left hover:scale-[1.01] active:scale-[0.97] ${
               activeSubTab === 'system'
-                ? 'bg-primary text-white shadow-xs'
-                : 'text-on-surface-variant hover:bg-slate-50 dark:hover:bg-slate-850/40 hover:text-on-surface bg-transparent'
+                ? theme === 'light'
+                  ? 'text-primary bg-[#F5F2FF] shadow-[0_2px_8px_rgba(53,37,205,0.06)]'
+                  : 'text-indigo-300 bg-indigo-500/20 border border-indigo-500/10 shadow-[0_2px_12px_rgba(99,102,241,0.1)]'
+                : theme === 'light'
+                  ? 'text-on-surface-variant hover:text-on-surface hover:bg-slate-100/60'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
             }`}
           >
-            <Palette className="w-4 h-4 flex-shrink-0" />
-            <span>Tampilan & Cadangan</span>
+            {/* Active left indicator bar */}
+            <div
+              className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full transition-all duration-300 origin-left ${
+                activeSubTab === 'system'
+                  ? theme === 'light'
+                    ? 'bg-primary scale-y-100 opacity-100'
+                    : 'bg-indigo-400 scale-y-100 opacity-100'
+                  : 'scale-y-0 opacity-0'
+              }`}
+            />
+
+            <Palette 
+              className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 group-hover:scale-110 ${
+                activeSubTab === 'system'
+                  ? 'stroke-[2.5px]'
+                  : 'opacity-70 group-hover:opacity-100'
+              }`} 
+            />
+            <span className="transition-transform duration-200 group-hover:translate-x-0.5">Tampilan & Cadangan</span>
           </button>
         </div>
 
@@ -533,6 +595,23 @@ export default function ProfileView({
                 gpaCurrent={user.gpa_current}
                 gpaTarget={user.gpa_target}
               />
+
+              {/* Sesi Keluar Akun */}
+              <div className="bg-red-50/20 dark:bg-red-950/5 border border-red-100/50 dark:border-red-900/20 backdrop-blur-md rounded-2xl p-6 text-center flex flex-col justify-center items-center shadow-xs">
+                <LogOut className="w-8 h-8 text-red-655 mb-2" />
+                <h3 className="text-base font-bold text-red-655 mb-1 font-sans">Keluar Sesi</h3>
+                <p className="text-xs text-on-surface-variant max-w-[280px] mb-4 font-semibold leading-relaxed">
+                  Keluar dari sesi akademis Planly aktif saat ini pada perangkat peramban browser ini dengan aman.
+                </p>
+                <button
+                  type="button"
+                  onClick={onSignOut}
+                  className="px-6 py-2.5 bg-red-600 hover:bg-red-755 text-white font-bold text-xs rounded-full shadow-sm hover:shadow-md transition-all active:scale-95 cursor-pointer border-none flex items-center justify-center gap-1.5"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Keluar Sekarang</span>
+                </button>
+              </div>
             </div>
           )}
 
@@ -627,7 +706,6 @@ export default function ProfileView({
               onThemeChange={onThemeChange}
               onExportData={handleExportData}
               onImportData={handleImportData}
-              onSignOut={onSignOut}
             />
           )}
 

@@ -94,6 +94,9 @@ export default function TodayScheduleTimeline({
             const c = course as any;
             const isCanceled = c.is_canceled;
             const isRescheduledIn = c.is_rescheduled_in;
+            const isTimeShifted = c.is_time_shifted;
+            const originalStartTime = c.original_start_time;
+            const isTimeAdvanced = isTimeShifted && originalStartTime && course.start_time < originalStartTime;
             
             const isCompleted = status === 'completed' && !isCanceled;
             const isInProgress = status === 'in-progress' && !isCanceled;
@@ -149,8 +152,16 @@ export default function TodayScheduleTimeline({
                     
                     {/* Status Lencana */}
                     {isCanceled ? (
-                      <span className="inline-flex items-center gap-1 px-3 py-1 bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400 rounded-full text-xs font-bold border border-red-205 dark:border-transparent">
+                      <span className="inline-flex items-center gap-1 px-3 py-1 bg-red-100 dark:bg-red-955/40 text-red-700 dark:text-red-400 rounded-full text-xs font-bold border border-red-205 dark:border-transparent">
                         Batal Sesi
+                      </span>
+                    ) : isTimeShifted ? (
+                      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold border ${
+                        isTimeAdvanced 
+                          ? 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-205 dark:border-transparent' 
+                          : 'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-205 dark:border-transparent'
+                      }`}>
+                        {isTimeAdvanced ? 'Jadwal Maju' : 'Jadwal Mundur'}
                       </span>
                     ) : isRescheduledIn ? (
                       <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-955/40 text-blue-700 dark:text-blue-400 rounded-full text-xs font-bold border border-blue-205 dark:border-transparent">

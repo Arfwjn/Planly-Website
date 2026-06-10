@@ -6,7 +6,7 @@
 // Pomodoro/Lecture harian, dan tombol Logout.
 // =============================================================================
 
-import { BookOpen, CalendarDays, Calendar, CheckSquare, FileText, LayoutDashboard, User as UserIcon, GraduationCap, Play, Pause, RotateCcw, Timer, UserCheck, Sparkles } from 'lucide-react';
+import { BookOpen, CalendarDays, Calendar, CheckSquare, FileText, LayoutDashboard, User as UserIcon, GraduationCap, Play, Pause, RotateCcw, Timer, UserCheck, Sparkles, LogOut } from 'lucide-react';
 import { SidebarTab } from '../types';
 
 interface SidebarProps {
@@ -21,6 +21,8 @@ interface SidebarProps {
   onResetFocusTimer: () => void;
   lectureTime?: number;
   isLectureRunning?: boolean;
+  theme: 'light' | 'dark';
+  pomodoroStage?: 'work' | 'short-break' | 'long-break';
 }
 
 export default function Sidebar({
@@ -34,7 +36,9 @@ export default function Sidebar({
   setIsFocusTimerRunning,
   onResetFocusTimer,
   lectureTime = 0,
-  isLectureRunning = false
+  isLectureRunning = false,
+  theme,
+  pomodoroStage = 'work'
 }: SidebarProps) {
   // Daftar menu navigasi utama di Planly beserta icon lucide-react-nya
   const menuItems = [
@@ -56,6 +60,12 @@ export default function Sidebar({
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
+
+  // Hitung total durasi dan progress persentase untuk ring SVG Pomodoro
+  const totalDuration = pomodoroStage === 'work' ? 1500 : pomodoroStage === 'short-break' ? 300 : 900;
+  const progressPercent = isLectureRunning ? 100 : Math.max(0, Math.min(100, (focusTimeLeft / totalDuration) * 100));
+  const strokeCircumference = 2 * Math.PI * 13; // 81.68
+  const strokeDashoffset = strokeCircumference - (progressPercent / 100) * strokeCircumference;
 
   return (
     <>
@@ -99,14 +109,37 @@ export default function Sidebar({
                   onTabChange(item.id);
                   onClose();
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all duration-150 cursor-pointer ${
+                className={`group relative w-full flex items-center gap-3 pl-5 pr-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer select-none origin-left hover:scale-[1.01] active:scale-[0.97] ${
                   isActive
-                    ? 'text-primary font-bold border-l-2 border-primary bg-[#F5F2FF]'
-                    : 'text-on-surface-variant hover:text-on-surface hover:bg-[#F1F5F9]'
+                    ? theme === 'light'
+                      ? 'text-primary bg-[#F5F2FF] shadow-[0_2px_8px_rgba(53,37,205,0.06)]'
+                      : 'text-indigo-300 bg-indigo-500/20 border border-indigo-500/10 shadow-[0_2px_12px_rgba(99,102,241,0.1)]'
+                    : theme === 'light'
+                      ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/60'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
                 }`}
               >
-                <IconComponent className={`w-4 h-4 ${isActive ? 'stroke-[2.5px]' : ''}`} />
-                <span>{item.label}</span>
+                {/* Active left indicator bar */}
+                <div
+                  className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full transition-all duration-300 origin-left ${
+                    isActive
+                      ? theme === 'light'
+                        ? 'bg-primary scale-y-100 opacity-100'
+                        : 'bg-indigo-400 scale-y-100 opacity-100'
+                      : 'scale-y-0 opacity-0'
+                  }`}
+                />
+
+                <IconComponent 
+                  className={`w-4 h-4 transition-transform duration-200 group-hover:scale-110 ${
+                    isActive 
+                      ? 'stroke-[2.5px]' 
+                      : 'opacity-70 group-hover:opacity-100'
+                  }`} 
+                />
+                <span className="transition-transform duration-200 group-hover:translate-x-0.5">
+                  {item.label}
+                </span>
                 {item.id === 'ai-companion' && (
                   <span className="ml-auto px-1.5 py-0.5 text-[8px] font-extrabold bg-amber-50 dark:bg-amber-950/35 text-amber-600 dark:text-amber-400 border border-amber-200/50 dark:border-amber-900/30 rounded-md uppercase tracking-wider">
                     Demo
@@ -120,65 +153,130 @@ export default function Sidebar({
         {/* Widget Timer Fokus Global (Pomodoro / Kuliah Live) */}
         <div className="px-4 mt-auto space-y-3">
           <div
-            onClick={() => onTabChange('workspace')}
-            className="bg-slate-50 border border-[#E2E8F0] rounded-2xl p-4 flex flex-col items-center gap-2 shadow-xs cursor-pointer hover:border-primary/50 hover:shadow-xs transition-all select-none"
+            className="group/timer relative flex items-center justify-between gap-3 p-2 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.02)] transition-all duration-300"
           >
-            <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider text-center">
-              {isLectureRunning ? 'Sesi Kuliah Aktif' : 'Sesi Fokus (Pomodoro)'}
-            </span>
-            <div className={`text-2xl font-extrabold tracking-tight transition-colors ${
-              isFocusTimerRunning || isLectureRunning ? 'text-primary' : 'text-on-surface'
-            }`}>
-              {isLectureRunning 
-                ? formatTimer(lectureTime) 
-                : formatTimer(focusTimeLeft)}
-            </div>
-            
-            {isLectureRunning ? (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
+            {/* Play/Pause Button as Circular Progress Ring */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (isLectureRunning) {
                   onTabChange('workspace');
-                }}
-                className="w-full py-1.5 bg-primary hover:bg-[#4F46E5] text-white rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-2xs"
-              >
-                <span>Buka Ruang Belajar</span>
-              </button>
-            ) : (
-              <div className="flex gap-2 w-full mt-1">
+                } else {
+                  setIsFocusTimerRunning(!isFocusTimerRunning);
+                }
+              }}
+              className="w-9 h-9 rounded-full flex items-center justify-center relative cursor-pointer group/circle transition-all duration-200 bg-white dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-850 shadow-2xs hover:shadow-xs active:scale-95 border border-slate-100 dark:border-slate-800/80 flex-shrink-0"
+              title={isLectureRunning ? "Buka Ruang Belajar" : isFocusTimerRunning ? "Jeda Fokus" : "Mulai Fokus"}
+            >
+              {/* SVG Circle Progress */}
+              <svg className="w-8 h-8 absolute inset-0 m-auto" viewBox="0 0 32 32">
+                {/* Background Ring */}
+                <circle
+                  cx="16"
+                  cy="16"
+                  r="13"
+                  className="stroke-slate-200/60 dark:stroke-slate-800/80 fill-none"
+                  strokeWidth="2.5"
+                />
+                {/* Foreground Progress Ring */}
+                <circle
+                  cx="16"
+                  cy="16"
+                  r="13"
+                  className={`fill-none stroke-linecap-round transform -rotate-90 origin-center transition-all duration-300 ${
+                    isLectureRunning 
+                      ? 'stroke-emerald-500 dark:stroke-emerald-400 animate-pulse' 
+                      : pomodoroStage === 'work'
+                        ? 'stroke-primary dark:stroke-indigo-400'
+                        : 'stroke-amber-500 dark:stroke-amber-400'
+                  }`}
+                  strokeWidth="2.5"
+                  strokeDasharray={strokeCircumference}
+                  strokeDashoffset={strokeDashoffset}
+                />
+              </svg>
+
+              {/* Play/Pause/Lecture Indicator Icon inside Ring */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                {isLectureRunning ? (
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
+                ) : (
+                  <>
+                    {/* Default state: Dot inside (or pause icon if running) */}
+                    <div className="transition-all duration-200 opacity-100 group-hover/circle:opacity-0 flex items-center justify-center">
+                      {isFocusTimerRunning ? (
+                        <Pause className={`w-2.5 h-2.5 ${pomodoroStage === 'work' ? 'text-primary dark:text-indigo-400' : 'text-amber-500 dark:text-amber-400'} fill-current`} />
+                      ) : (
+                        <div className={`w-1.5 h-1.5 rounded-full ${pomodoroStage === 'work' ? 'bg-primary dark:bg-indigo-400' : 'bg-amber-500'}`} />
+                      )}
+                    </div>
+                    {/* Hover state: Play/Pause controls */}
+                    <div className="absolute transition-all duration-200 opacity-0 group-hover/circle:opacity-100 flex items-center justify-center text-on-surface">
+                      {isFocusTimerRunning ? (
+                        <Pause className="w-2.5 h-2.5 text-slate-600 dark:text-slate-300 fill-current" />
+                      ) : (
+                        <Play className="w-2.5 h-2.5 text-slate-600 dark:text-slate-300 fill-current ml-0.5" />
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            </button>
+
+            {/* Timer digits & subtitle */}
+            <div 
+              onClick={() => onTabChange('workspace')}
+              className="flex-1 min-w-0 cursor-pointer text-left pl-1 group/text select-none"
+            >
+              <div className="font-mono text-sm font-extrabold tracking-tight text-on-surface group-hover/text:text-primary dark:group-hover/text:text-indigo-400 transition-colors">
+                {isLectureRunning 
+                  ? formatTimer(lectureTime) 
+                  : formatTimer(focusTimeLeft)}
+              </div>
+              <div className="text-[8px] font-extrabold text-on-surface-variant uppercase tracking-widest mt-0.5">
+                {isLectureRunning 
+                  ? 'Kuliah Aktif' 
+                  : pomodoroStage === 'work'
+                    ? 'Sesi Fokus'
+                    : 'Istirahat'}
+              </div>
+            </div>
+
+            {/* Action button on the right */}
+            <div className="flex-shrink-0 pr-1">
+              {isLectureRunning ? (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    setIsFocusTimerRunning(!isFocusTimerRunning);
+                    onTabChange('workspace');
                   }}
-                  className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-2xs ${
-                    isFocusTimerRunning 
-                      ? 'bg-red-500 hover:bg-red-600 text-white' 
-                      : 'bg-primary hover:bg-[#4F46E5] text-white'
-                  }`}
+                  className="w-7 h-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-emerald-500 dark:hover:text-emerald-400 text-on-surface-variant flex items-center justify-center transition-colors cursor-pointer"
+                  title="Masuk Ruang Belajar"
                 >
-                  {isFocusTimerRunning ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-                  <span>{isFocusTimerRunning ? 'Jeda' : 'Mulai'}</span>
+                  <BookOpen className="w-3.5 h-3.5" />
                 </button>
+              ) : (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     onResetFocusTimer();
                   }}
-                  className="px-2.5 py-1.5 border border-[#E2E8F0] hover:bg-slate-100 text-on-surface-variant text-[10px] font-bold rounded-lg cursor-pointer transition-colors bg-white flex items-center justify-center"
-                  aria-label="Atur Ulang Timer"
+                  className="w-7 h-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-red-500 dark:hover:text-red-400 text-on-surface-variant flex items-center justify-center transition-colors cursor-pointer group/reset"
+                  title="Atur Ulang Timer"
                 >
-                  <RotateCcw className="w-3.5 h-3.5" />
+                  <RotateCcw className="w-3.5 h-3.5 transition-transform duration-300 group-hover/reset:rotate-180" />
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
           
           <button
             onClick={onSignOut}
-            className="w-full border border-dashed border-red-200 text-red-600 hover:bg-red-50 py-2 rounded-lg text-xs font-medium cursor-pointer transition-colors"
+            className="w-full flex items-center justify-center gap-2 border border-red-200/80 dark:border-red-900/50 bg-red-50/50 dark:bg-red-950/20 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white dark:hover:bg-red-650 dark:hover:text-white py-2.5 rounded-xl text-xs font-bold cursor-pointer transition-all duration-150 active:scale-95 shadow-2xs hover:shadow-sm"
           >
-            Keluar
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Keluar Sesi</span>
           </button>
         </div>
       </aside>

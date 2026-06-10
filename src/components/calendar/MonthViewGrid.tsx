@@ -1,5 +1,5 @@
 import React from 'react';
-import { Course, RescheduledSession } from '../../types';
+import { Course, RescheduledSession, CampusEvent } from '../../types';
 import { getCoursesForDate } from '../../utils/reschedule';
 
 interface MonthViewGridProps {
@@ -9,6 +9,7 @@ interface MonthViewGridProps {
   courses: Course[];
   rescheduledSessions: RescheduledSession[];
   onSelectDate: (date: Date) => void;
+  events: CampusEvent[];
 }
 
 /**
@@ -24,7 +25,8 @@ export default function MonthViewGrid({
   selectedISODate,
   courses,
   rescheduledSessions,
-  onSelectDate
+  onSelectDate,
+  events
 }: MonthViewGridProps) {
   
   // Format Date ke "YYYY-MM-DD"
@@ -122,6 +124,19 @@ export default function MonthViewGrid({
             courses,
             rescheduledSessions
           );
+          const dayEvents = (events || []).filter((e) => e.event_date === gridDateStr);
+          const dayItems = [
+            ...dayCoursesProcessed.map((c) => ({
+              id: `course-${c.id}`,
+              color: c.is_canceled ? '#94A3B8' : c.color_hex,
+              title: `Kuliah: ${c.course_name}`
+            })),
+            ...dayEvents.map((e) => ({
+              id: `event-${e.id}`,
+              color: e.color_hex,
+              title: `Event: ${e.event_name}`
+            }))
+          ];
 
           return (
             <button
@@ -142,17 +157,17 @@ export default function MonthViewGrid({
                 {gridDay.date.getDate()}
               </span>
 
-              {/* Dots Penanda Mata Kuliah */}
+              {/* Dots Penanda Mata Kuliah & Event */}
               <div className="flex flex-wrap gap-0.5 mt-1 self-stretch items-center min-h-[8px]">
-                {dayCoursesProcessed.slice(0, 4).map((c) => (
+                {dayItems.slice(0, 4).map((item) => (
                   <span
-                    key={c.id}
+                    key={item.id}
                     className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: c.is_canceled ? '#94A3B8' : c.color_hex }}
-                    title={c.course_name}
+                    style={{ backgroundColor: item.color }}
+                    title={item.title}
                   />
                 ))}
-                {dayCoursesProcessed.length > 4 && (
+                {dayItems.length > 4 && (
                   <span className="text-[7px] font-extrabold text-[#94A3B8] leading-none">+</span>
                 )}
               </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CalendarDays, Info, Undo2, Calendar as CalendarIcon } from 'lucide-react';
-import { Course, RescheduledSession, Task, AttendanceRecord } from '../../types';
+import { Course, RescheduledSession, Task, AttendanceRecord, CampusEvent } from '../../types';
 import Skeleton from '../ui/Skeleton';
 import { getCoursesForDate } from '../../utils/reschedule';
 import { hexToRgb } from '../../utils/color';
@@ -9,6 +9,7 @@ import { hexToRgb } from '../../utils/color';
 import MonthViewGrid from './MonthViewGrid';
 import DateStrip from './DateStrip';
 import CourseTimelineCard from './CourseTimelineCard';
+import EventTimelineCard from './EventTimelineCard';
 import RescheduleModal from './RescheduleModal';
 
 interface CalendarViewProps {
@@ -22,6 +23,7 @@ interface CalendarViewProps {
   onDeleteReschedule: (courseId: number, originalDate: string) => void;
   onTabChange?: (tab: any) => void;
   attendanceRecords: AttendanceRecord[];
+  events: CampusEvent[];
 }
 
 interface DayInWeek {
@@ -47,7 +49,8 @@ export default function CalendarView({
   onAddReschedule,
   onDeleteReschedule,
   onTabChange,
-  attendanceRecords
+  attendanceRecords,
+  events
 }: CalendarViewProps) {
   
   // Format Date ke "YYYY-MM-DD"
@@ -58,14 +61,37 @@ export default function CalendarView({
     return `${y}-${m}-${d}`;
   };
 
-  // dynamic 7-day strip generation
-  const getDynamicDays = (): DayInWeek[] => {
+  const isTodayDate = (date: Date) => {
+    const today = new Date();
+    return date.getDate() === today.getDate() &&
+           date.getMonth() === today.getMonth() &&
+           date.getFullYear() === today.getFullYear();
+  };
+
+  const getDayObjFromDate = (date: Date): DayInWeek => {
+    const daysNameShort = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+    const daysFullName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    return {
+      dayName: daysNameShort[date.getDay()],
+      fullName: daysFullName[date.getDay()],
+      dateNum: date.getDate(),
+      dateObject: date
+    };
+  };
+
+  // dynamic week strip generation centered/aligned around reference date
+  const getDaysOfWeek = (refDate: Date): DayInWeek[] => {
     const daysList = [];
     const daysNameShort = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
     const daysFullName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     
+    // Cari hari Minggu terdekat yang sebelum atau sama dengan refDate
+    const startOfWeek = new Date(refDate);
+    const dayIndex = refDate.getDay(); // 0 (Sun) s.d. 6 (Sat)
+    startOfWeek.setDate(startOfWeek.getDate() - dayIndex);
+    
     for (let i = 0; i < 7; i++) {
-      const d = new Date();
+      const d = new Date(startOfWeek);
       d.setDate(d.getDate() + i);
       daysList.push({
         dayName: daysNameShort[d.getDay()],
@@ -77,11 +103,13 @@ export default function CalendarView({
     return daysList;
   };
 
-  const [daysInWeek] = useState<DayInWeek[]>(() => getDynamicDays());
-  const [selectedDayObj, setSelectedDayObj] = useState<DayInWeek>(daysInWeek[0]);
+  const [selectedDayObj, setSelectedDayObj] = useState<DayInWeek>(() => getDayObjFromDate(new Date()));
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isMonthView, setIsMonthView] = useState(false);
   const [viewedMonth, setViewedMonth] = useState(() => new Date());
+
+  // Generasikan rentang 7 hari aktif secara dinamis berdasarkan dateObject yang sedang dipilih
+  const daysInWeek = getDaysOfWeek(selectedDayObj.dateObject);
 
   // State Reschedule
   const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
@@ -101,17 +129,6 @@ export default function CalendarView({
   }, [selectedDayObj]);
 
   const selectedISODate = formatDateYYYYMMDD(selectedDayObj.dateObject);
-
-  const getDayObjFromDate = (date: Date): DayInWeek => {
-    const daysNameShort = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
-    const daysFullName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    return {
-      dayName: daysNameShort[date.getDay()],
-      fullName: daysFullName[date.getDay()],
-      dateNum: date.getDate(),
-      dateObject: date
-    };
-  };
 
   // Handler Kirim Reschedule
   const handleSubmitReschedule = (payload: {
@@ -134,6 +151,31 @@ export default function CalendarView({
     courses,
     rescheduledSessions
   );
+
+  // Saring event kampus untuk tanggal terpilih
+  const dayEvents = (events || []).filter((e) => e.event_date === selectedISODate);
+
+  // Satukan mata kuliah dan event kampus ke dalam satu timeline
+  const timelineItems: (
+    | { type: 'course'; id: string; timeKey: string; data: Course }
+    | { type: 'event'; id: string; timeKey: string; data: CampusEvent }
+  )[] = [
+    ...dayCoursesProcessed.map((c) => ({
+      type: 'course' as const,
+      id: `course-${c.id}`,
+      timeKey: c.start_time,
+      data: c
+    })),
+    ...dayEvents.map((e) => ({
+      type: 'event' as const,
+      id: `event-${e.id}`,
+      timeKey: e.start_time,
+      data: e
+    }))
+  ];
+
+  // Urutkan timeline gabungan secara kronologis berdasarkan jam mulai
+  timelineItems.sort((a, b) => a.timeKey.localeCompare(b.timeKey));
 
   const getCourseStatus = (course: Course): 'in-progress' | 'completed' | 'upcoming' => {
     const hours = currentTime.getHours();
@@ -169,6 +211,19 @@ export default function CalendarView({
   };
 
   const activeCourseNow = dayCoursesProcessed.find(c => getCourseStatus(c) === 'in-progress');
+  const activeEventNow = dayEvents.find((e) => {
+    const hours = currentTime.getHours();
+    const minutes = currentTime.getMinutes();
+    const currentMin = hours * 60 + minutes;
+    
+    const [startH, startM] = e.start_time.split(':').map(Number);
+    const [endH, endM] = e.end_time.split(':').map(Number);
+    
+    const startMin = startH * 60 + startM;
+    const endMin = endH * 60 + endM;
+    
+    return currentMin >= startMin && currentMin <= endMin;
+  });
 
   // Loading skeleton state
   if (loading) {
@@ -222,7 +277,7 @@ export default function CalendarView({
       {/* Header Panel */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
         <div className="space-y-1 text-left">
-          <h1 className="text-3xl font-bold tracking-tight text-on-surface">Jadwal Kuliah</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-on-surface">Jadwal & Kalender Kegiatan</h1>
           <p className="text-sm text-on-surface-variant font-semibold flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
             {selectedDayObj.dateObject.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
@@ -231,7 +286,7 @@ export default function CalendarView({
         <div className="flex gap-2 items-center flex-wrap">
           <button
             type="button"
-            onClick={() => setSelectedDayObj(daysInWeek[0])}
+            onClick={() => setSelectedDayObj(getDayObjFromDate(new Date()))}
             className="px-3 py-2 border border-[#E2E8F0] dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850/40 text-on-surface-variant text-xs font-semibold rounded-lg hover:text-on-surface transition-colors cursor-pointer bg-white dark:bg-slate-900"
           >
             Hari Ini
@@ -272,6 +327,7 @@ export default function CalendarView({
             setSelectedDayObj(getDayObjFromDate(date));
             setIsMonthView(false);
           }}
+          events={events}
         />
       ) : (
         /* Tampilan Mingguan (Horizontal Date Strip) */
@@ -281,11 +337,12 @@ export default function CalendarView({
           onSelectDay={setSelectedDayObj}
           courses={courses}
           rescheduledSessions={rescheduledSessions}
+          events={events}
         />
       )}
 
       {/* Baris Live Status Jam Sekarang */}
-      {selectedDayObj.fullName === daysInWeek[0].fullName && !isMonthView && (
+      {isTodayDate(selectedDayObj.dateObject) && !isMonthView && (
         <div className="bg-primary/[0.03] border border-primary/10 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-left">
           <div className="flex items-center gap-2.5 text-xs text-on-surface font-semibold">
             <span className="flex h-2.5 w-2.5 relative">
@@ -296,13 +353,26 @@ export default function CalendarView({
               Waktu Sekarang: <strong className="text-primary">{currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB</strong>
             </span>
           </div>
-          {activeCourseNow ? (
-            <div className="flex items-center gap-1.5 text-xs text-primary font-bold">
-              <Info className="w-4 h-4" />
-              <span>Sedang berlangsung kelas: {activeCourseNow.course_name}</span>
+          {activeCourseNow || activeEventNow ? (
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-xs font-bold text-primary">
+              {activeCourseNow && (
+                <div className="flex items-center gap-1.5">
+                  <Info className="w-4 h-4" />
+                  <span>Sedang berlangsung kelas: {activeCourseNow.course_name}</span>
+                </div>
+              )}
+              {activeCourseNow && activeEventNow && (
+                <span className="hidden sm:inline text-on-surface-variant/40 font-medium">|</span>
+              )}
+              {activeEventNow && (
+                <div className="flex items-center gap-1.5">
+                  {!activeCourseNow && <Info className="w-4 h-4" />}
+                  <span>Sedang berlangsung event: {activeEventNow.event_name}</span>
+                </div>
+              )}
             </div>
           ) : (
-            <span className="text-xs text-on-surface-variant font-medium">Tidak ada kelas yang sedang berlangsung saat ini.</span>
+            <span className="text-xs text-on-surface-variant font-medium">Tidak ada kelas atau event yang sedang berlangsung saat ini.</span>
           )}
         </div>
       )}
@@ -311,11 +381,11 @@ export default function CalendarView({
       <div className="relative pt-2">
         <div className="space-y-6 relative pl-2">
           
-          {dayCoursesProcessed.length > 0 && (
+          {timelineItems.length > 0 && (
             <div className="absolute left-[65px] lg:left-[75px] top-6 bottom-6 w-px bg-[#E2E8F0] dark:bg-slate-800 z-0"></div>
           )}
 
-          {dayCoursesProcessed.length === 0 ? (
+          {timelineItems.length === 0 ? (
             /* Fallback kosong */
             <div className="text-center py-12 bg-white dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center p-6">
               <div className="relative w-24 h-24 mb-4 flex items-center justify-center text-primary/30">
@@ -329,9 +399,9 @@ export default function CalendarView({
                   <circle cx="16" cy="14" r="1" fill="currentColor" />
                 </svg>
               </div>
-              <h3 className="text-sm font-bold text-on-surface">Tidak Ada Kelas Terjadwal</h3>
+              <h3 className="text-sm font-bold text-on-surface">Tidak Ada Jadwal & Event</h3>
               <p className="text-xs text-on-surface-variant mt-1 mb-6 max-w-sm font-medium">
-                Tidak ada mata kuliah yang dijadwalkan untuk hari {getIndonesianDayName(selectedDayObj.fullName)}.
+                Tidak ada mata kuliah atau event kampus yang terjadwal untuk hari {getIndonesianDayName(selectedDayObj.fullName)}.
               </p>
               <button
                 type="button"
@@ -342,31 +412,44 @@ export default function CalendarView({
               </button>
             </div>
           ) : (
-            /* Render baris kelas */
-            dayCoursesProcessed.map((course) => {
-              const status = getCourseStatus(course);
-              const hasCheckedInSelectedDate = attendanceRecords.some(
-                r => r.course_id === course.id && r.date === selectedISODate && r.status === 'Hadir'
-              );
+            /* Render baris kelas & event gabungan */
+            timelineItems.map((item) => {
+              if (item.type === 'course') {
+                const course = item.data;
+                const status = getCourseStatus(course);
+                const hasCheckedInSelectedDate = attendanceRecords.some(
+                  r => r.course_id === course.id && r.date === selectedISODate && r.status === 'Hadir'
+                );
 
-              return (
-                <CourseTimelineCard
-                  key={course.id}
-                  course={course}
-                  status={status}
-                  selectedISODate={selectedISODate}
-                  tasks={tasks}
-                  onToggleTaskState={onToggleTaskState}
-                  hasCheckedInSelectedDate={hasCheckedInSelectedDate}
-                  onTabChange={onTabChange}
-                  onDeleteReschedule={onDeleteReschedule}
-                  onOpenRescheduleModal={(c) => {
-                    setSelectedCourseForReschedule(c);
-                    setIsRescheduleModalOpen(true);
-                  }}
-                  isInProgressDayToday={selectedISODate === formatDateYYYYMMDD(currentTime)}
-                />
-              );
+                return (
+                  <CourseTimelineCard
+                    key={item.id}
+                    course={course}
+                    status={status}
+                    selectedISODate={selectedISODate}
+                    tasks={tasks}
+                    onToggleTaskState={onToggleTaskState}
+                    hasCheckedInSelectedDate={hasCheckedInSelectedDate}
+                    onTabChange={onTabChange}
+                    onDeleteReschedule={onDeleteReschedule}
+                    onOpenRescheduleModal={(c) => {
+                      setSelectedCourseForReschedule(c);
+                      setIsRescheduleModalOpen(true);
+                    }}
+                    isInProgressDayToday={selectedISODate === formatDateYYYYMMDD(currentTime)}
+                  />
+                );
+              } else {
+                const event = item.data;
+                return (
+                  <EventTimelineCard
+                    key={item.id}
+                    event={event}
+                    selectedISODate={selectedISODate}
+                    currentTime={currentTime}
+                  />
+                );
+              }
             })
           )}
         </div>
