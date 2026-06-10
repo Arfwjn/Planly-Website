@@ -124,7 +124,7 @@ export default function EventsView({
   // Tampilkan loading skeleton
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="max-w-[1000px] mx-auto w-full space-y-6">
         <div className="flex justify-between items-center">
           <div>
             <Skeleton className="h-8 w-48 mb-2 animate-pulse" />
@@ -151,13 +151,16 @@ export default function EventsView({
   }
 
   return (
-    <div className="space-y-6 animate-fade-in pb-12">
+    <div className="max-w-[1000px] mx-auto w-full space-y-6 pb-12">
       
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="text-left font-sans">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-on-surface">Event Kampus</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-on-surface flex items-center gap-2.5">
+              <CalendarHeart className="w-8 h-8 text-primary" />
+              <span>Event Kampus</span>
+            </h1>
             <span className="bg-primary/10 text-primary dark:bg-primary/20 text-xs px-2.5 py-1 rounded-full font-semibold">
               {events.length} Kegiatan
             </span>

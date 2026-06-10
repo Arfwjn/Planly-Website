@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, FileText } from 'lucide-react';
 import { Note, Course } from '../../types';
 import Skeleton from '../ui/Skeleton';
 import NoteCard from './NoteCard';
@@ -113,8 +113,16 @@ export default function NotesView({
       
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight text-on-surface">Catatan</h2>
+        <div className="text-left">
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold tracking-tight text-on-surface flex items-center gap-2.5">
+              <FileText className="w-8 h-8 text-primary" />
+              <span>Catatan</span>
+            </h1>
+            <span className="bg-primary/10 text-primary dark:bg-primary/20 text-xs px-2.5 py-1 rounded-full font-semibold">
+              {notes.length} Catatan
+            </span>
+          </div>
           <p className="text-sm text-on-surface-variant font-medium mt-1">
             Catat ide, rangkum materi kuliah, dan atur riset Anda.
           </p>

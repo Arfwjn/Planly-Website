@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, BookOpen } from 'lucide-react';
 import { Course, Task } from '../../types';
 import Skeleton from '../ui/Skeleton';
 import CourseCard from './CourseCard';
@@ -99,8 +99,19 @@ export default function CoursesView({
       
       {/* Header Halaman */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight text-on-surface">Semester Ganjil 2026</h2>
+        <div className="text-left">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-3xl font-bold tracking-tight text-on-surface flex items-center gap-2.5">
+              <BookOpen className="w-8 h-8 text-primary" />
+              <span>Mata Kuliah</span>
+            </h1>
+            <span className="bg-primary/10 text-primary dark:bg-primary/20 text-xs px-2.5 py-1 rounded-full font-semibold">
+              Semester Ganjil 2026
+            </span>
+            <span className="bg-primary/10 text-primary dark:bg-primary/20 text-xs px-2.5 py-1 rounded-full font-semibold">
+              {courses.length} Mata Kuliah
+            </span>
+          </div>
           <p className="text-sm text-on-surface-variant font-medium mt-1">
             {courses.length} Mata Kuliah Aktif Terdaftar • {totalSks} SKS Terdaftar
           </p>

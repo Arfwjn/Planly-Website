@@ -277,7 +277,10 @@ export default function CalendarView({
       {/* Header Panel */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
         <div className="space-y-1 text-left">
-          <h1 className="text-3xl font-bold tracking-tight text-on-surface">Jadwal & Kalender Kegiatan</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-on-surface flex items-center gap-2.5">
+            <CalendarDays className="w-8 h-8 text-primary" />
+            <span>Jadwal & Kalender Kegiatan</span>
+          </h1>
           <p className="text-sm text-on-surface-variant font-semibold flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
             {selectedDayObj.dateObject.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}

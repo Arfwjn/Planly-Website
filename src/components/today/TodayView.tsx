@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, BookOpen, Flame } from 'lucide-react';
+import { Clock, BookOpen, Flame, LayoutDashboard } from 'lucide-react';
 import { Course, Task, SidebarTab, CampusEvent, RescheduledSession } from '../../types';
 import NotificationBanner from '../ui/NotificationBanner';
 import Skeleton from '../ui/Skeleton';
@@ -155,8 +155,9 @@ export default function TodayView({
     <div className="max-w-[1000px] mx-auto w-full space-y-6">
       {/* Header Halaman */}
       <div className="text-left">
-        <h1 className="text-3xl font-bold tracking-tight text-on-surface mb-1">
-          Jadwal Hari Ini
+        <h1 className="text-3xl font-bold tracking-tight text-on-surface mb-1 flex items-center gap-2.5">
+          <LayoutDashboard className="w-8 h-8 text-primary" />
+          <span>Jadwal Hari Ini</span>
         </h1>
         <p className="text-sm text-on-surface-variant font-medium">
           {getTodayDateString()}

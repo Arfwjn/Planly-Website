@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, CheckSquare } from 'lucide-react';
 import { Task, Course } from '../../types';
 import Skeleton from '../ui/Skeleton';
 import TaskCard from './TaskCard';
@@ -118,8 +118,16 @@ export default function TasksView({
       
       {/* Header Halaman */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-on-surface">Tugas</h1>
+        <div className="text-left">
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold tracking-tight text-on-surface flex items-center gap-2.5">
+              <CheckSquare className="w-8 h-8 text-primary" />
+              <span>Tugas</span>
+            </h1>
+            <span className="bg-primary/10 text-primary dark:bg-primary/20 text-xs px-2.5 py-1 rounded-full font-semibold">
+              {tasks.length} Tugas
+            </span>
+          </div>
           <p className="text-sm text-on-surface-variant font-medium mt-1">
             Kelola beban akademik dan batas waktu tugas kuliah Anda.
           </p>

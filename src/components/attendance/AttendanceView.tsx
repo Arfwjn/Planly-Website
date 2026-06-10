@@ -155,26 +155,31 @@ export default function AttendanceView({
   return (
     <div className="max-w-[1000px] mx-auto w-full space-y-8 pb-12">
       {/* Header Halaman */}
-      <section className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-6 shadow-sm">
-        <div>
-          <h1 className="text-2xl font-extrabold text-on-surface flex items-center gap-2">
-            <UserCheck className="w-7 h-7 text-primary" />
-            Absensi Kuliah
-          </h1>
-          <p className="text-xs text-on-surface-variant mt-1 leading-relaxed max-w-xl">
-            Lakukan presensi kuliah harian secara real-time dengan verifikasi sensor wajah (Face Detector) dan koordinat lokasi kampus (Geolocation).
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div className="text-left">
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold tracking-tight text-on-surface flex items-center gap-2.5">
+              <UserCheck className="w-8 h-8 text-primary" />
+              <span>Absensi Kuliah</span>
+            </h1>
+            <span className="bg-primary/10 text-primary dark:bg-primary/20 text-xs px-2.5 py-1 rounded-full font-semibold">
+              {attendanceRecords.length} Presensi
+            </span>
+          </div>
+          <p className="text-sm text-on-surface-variant font-medium mt-1">
+            Lakukan presensi kuliah harian secara real-time dengan verifikasi sensor wajah dan lokasi GPS.
           </p>
         </div>
 
         {/* Jam Digital Real-time */}
-        <div className="flex items-center gap-3 bg-primary/10 px-4 py-2.5 rounded-xl border border-primary/20 self-start md:self-auto flex-shrink-0">
+        <div className="flex items-center gap-3 bg-[#F1F5F9] dark:bg-slate-800 px-4 py-2.5 rounded-xl border border-transparent self-start sm:self-auto flex-shrink-0">
           <Clock className="w-5 h-5 text-primary animate-pulse" />
-          <div className="text-left">
-            <span className="block text-[10px] font-bold text-primary uppercase tracking-wider">Waktu Sistem</span>
-            <span className="block text-xs font-bold text-on-surface">{formatClock(now)}</span>
+          <div className="text-left font-sans">
+            <span className="block text-[9px] font-black text-[#94A3B8] dark:text-slate-400 uppercase tracking-widest leading-none mb-1">Waktu Sistem</span>
+            <span className="block text-xs font-black text-on-surface leading-none">{formatClock(now)}</span>
           </div>
         </div>
-      </section>
+      </div>
 
       {/* Navigasi Tabs */}
       <div className="flex border-b border-[#E2E8F0] dark:border-slate-800/80 gap-6">

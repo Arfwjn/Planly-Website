@@ -313,6 +313,14 @@ export default function ProfileView({
 
   return (
     <div className="max-w-[1000px] mx-auto w-full space-y-8 pb-12">
+      {/* Header Halaman */}
+      <div className="flex items-center gap-2.5">
+        <h1 className="text-3xl font-bold tracking-tight text-on-surface flex items-center gap-2.5">
+          <UserIcon className="w-8 h-8 text-primary" />
+          <span>Profil Pengguna</span>
+        </h1>
+      </div>
+
       {/* Header Profil */}
       <ProfileHeader user={user} onUserUpdate={onUserUpdate} />
 

@@ -101,7 +101,7 @@ const iconColorClasses: Record<string, Record<string, string>> = {
 
 
 export interface AlertToastProps
-  extends React.HTMLAttributes<HTMLDivElement>,
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onAnimationStart' | 'onDrag' | 'onDragStart' | 'onDragEnd'>,
     VariantProps<typeof alertToastVariants> {
   /** The title of the alert. */
   title: string;

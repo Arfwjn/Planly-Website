@@ -229,7 +229,7 @@ export default function CourseTimelineCard({
             <button
               type="button"
               onClick={() => onOpenRescheduleModal(course)}
-              className="px-3.5 py-1.5 border border-[#4F46E5]/20 dark:border-slate-850 bg-primary/5 hover:bg-primary text-primary hover:text-white rounded-xl cursor-pointer hover:-translate-y-0.5 active:scale-95 transition-all duration-300 flex items-center gap-1.5 shadow-[0_2px_8px_rgba(79,70,229,0.05)] hover:shadow-[0_4px_12px_rgba(79,70,229,0.2)]"
+              className="px-3.5 py-1.5 border border-[#4F46E5]/20 dark:border-slate-850 bg-primary/5 dark:bg-primary/20 hover:bg-primary text-primary dark:text-white/70 hover:text-white rounded-xl cursor-pointer hover:-translate-y-0.5 active:scale-95 transition-all duration-300 flex items-center gap-1.5 shadow-[0_2px_8px_rgba(79,70,229,0.05)] hover:shadow-[0_4px_12px_rgba(79,70,229,0.2)]"
             >
               <CalendarIcon className="w-3.5 h-3.5" />
               <span>Pindahkan Sesi</span>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Flame, BookOpen } from 'lucide-react';
+import { Flame, BookOpen, Timer } from 'lucide-react';
 import { Course, Task, Note, SidebarTab } from '../../types';
 import { useToast } from '../ui/Toast';
 import { synthAudio } from '../../services/audio/synthAudio';
@@ -230,7 +230,10 @@ ${lectureNoteContent || '*(Tidak ada catatan materi ditulis)*'}
       {/* Header Mode Selector */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-150 dark:border-slate-800 pb-4">
         <div className="text-left">
-          <h1 className="text-3xl font-bold tracking-tight text-on-surface">Ruang Belajar</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-on-surface flex items-center gap-2.5">
+            <Timer className="w-8 h-8 text-primary" />
+            <span>Ruang Belajar</span>
+          </h1>
           <p className="text-sm text-on-surface-variant font-medium mt-1">
             Dasbor produktivitas terintegrasi mahasiswa untuk fokus Pomodoro dan mencatat perkuliahan.
           </p>

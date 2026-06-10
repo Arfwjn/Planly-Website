@@ -329,25 +329,23 @@ Jika Anda ingin kembali membahas isi video, Anda bisa bertanya tentang: "Jelaska
   };
 
   return (
-    <div className="max-w-[1200px] mx-auto w-full space-y-6 pb-12">
+    <div className="max-w-[1000px] mx-auto w-full space-y-6 pb-12">
       {/* Header View */}
-      <section className="text-left space-y-1.5">
+      <section className="text-left">
         <div className="flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-              <Sparkles className="w-5 h-5" />
+          <div className="text-left font-sans">
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-bold tracking-tight text-on-surface flex items-center gap-2.5">
+                <Sparkles className="w-8 h-8 text-primary" />
+                <span>Asisten Kuliah AI</span>
+              </h1>
+              <span className="px-2 py-0.5 text-[9px] font-extrabold bg-amber-50 dark:bg-amber-955/20 text-amber-600 dark:text-amber-400 border border-amber-200/60 dark:border-amber-900/30 rounded-full uppercase tracking-wider select-none">
+                Demo
+              </span>
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl md:text-2xl font-bold text-on-surface">Asisten Kuliah AI</h1>
-                <span className="px-2 py-0.5 text-[9px] font-extrabold bg-amber-50 dark:bg-amber-955/20 text-amber-600 dark:text-amber-400 border border-amber-200/60 dark:border-amber-900/30 rounded-full uppercase tracking-wider select-none">
-                  Demo
-                </span>
-              </div>
-              <p className="text-xs font-semibold text-on-surface-variant">
-                Ringkas materi kuliah Zoom Anda dan tanyakan konsep penting secara interaktif dengan dukungan RAG
-              </p>
-            </div>
+            <p className="text-sm text-on-surface-variant font-medium mt-1">
+              Ringkas materi kuliah Zoom Anda dan tanyakan konsep penting secara interaktif dengan dukungan RAG.
+            </p>
           </div>
           
           {stage === 'completed' && (
