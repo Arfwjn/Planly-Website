@@ -5,6 +5,7 @@ import Skeleton from '../ui/Skeleton';
 import NoteCard from './NoteCard';
 import NoteForm from './NoteForm';
 import NoteInspectorModal from './NoteInspectorModal';
+import CustomSelect from '../ui/CustomSelect';
 
 interface NotesViewProps {
   notes: Note[];
@@ -38,6 +39,7 @@ export default function NotesView({
 }: NotesViewProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const [courseFilter, setCourseFilter] = useState<string>('all');
 
   // 1. Tampilan Loading Skeleton
   if (loading) {
@@ -100,12 +102,22 @@ export default function NotesView({
     }
   };
 
-  // 3. Saring Catatan Berdasarkan Query Pencarian
+  // Generate course options for select
+  const courseOptions = [
+    { value: 'all', label: 'Semua Mata Kuliah' },
+    ...courses.map((c) => ({
+      value: String(c.id),
+      label: `${c.course_code} - ${c.course_name}`
+    }))
+  ];
+
+  // 3. Saring Catatan Berdasarkan Query Pencarian dan Mata Kuliah
   const filteredNotes = notes.filter((note) => {
-    return (
+    const matchSearch =
       note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      note.content.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+      note.content.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchCourse = courseFilter === 'all' || String(note.course_id) === courseFilter;
+    return matchSearch && matchCourse;
   });
 
   return (
@@ -134,6 +146,19 @@ export default function NotesView({
           <Plus className="w-4 h-4" />
           <span>Catatan Baru</span>
         </button>
+      </div>
+      
+      {/* Controls Row */}
+      <div className="flex justify-end border-b border-[#E2E8F0] dark:border-slate-800 pb-4 mb-6">
+        <div className="w-full sm:w-64">
+          <CustomSelect
+            value={courseFilter}
+            onChange={setCourseFilter}
+            options={courseOptions}
+            placeholder="Saring Mata Kuliah"
+            position="down"
+          />
+        </div>
       </div>
 
       {/* Formulir Tambah Catatan Baru */}

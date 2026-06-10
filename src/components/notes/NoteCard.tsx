@@ -81,7 +81,21 @@ export default function NoteCard({
 
       {/* Footer kartu catatan */}
       <div className="flex items-center gap-2 mt-2 pt-3 border-t border-[#F1F5F9] dark:border-slate-800/60">
-        <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-[#F1F5F9] dark:bg-slate-800 text-on-surface-variant border border-[#E2E8F0] dark:border-slate-700/80">
+        <span
+          className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border transition-colors ${
+            course
+              ? 'text-white border-white/10'
+              : 'bg-[#F1F5F9] dark:bg-slate-800 text-on-surface-variant border-[#E2E8F0] dark:border-slate-700/80'
+          }`}
+          style={
+            course
+              ? {
+                  backgroundColor: course.color_hex,
+                  boxShadow: `0 2px 8px rgba(var(--glow-color), 0.2)`
+                }
+              : undefined
+          }
+        >
           {courseTagName}
         </span>
         

@@ -5,6 +5,7 @@ import Skeleton from '../ui/Skeleton';
 import TaskCard from './TaskCard';
 import TaskFormDrawer from './TaskFormDrawer';
 import TaskDetailModal from './TaskDetailModal';
+import CustomSelect from '../ui/CustomSelect';
 
 interface TasksViewProps {
   tasks: Task[];
@@ -48,6 +49,8 @@ export default function TasksView({
 }: TasksViewProps) {
   const [activeTab, setActiveTab] = useState<'pending' | 'done'>('pending');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [courseFilter, setCourseFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('deadline-asc');
 
   // Auto-inspect pemicu eksternal (misal dari notifikasi/deadlines)
   useEffect(() => {
@@ -102,16 +105,34 @@ export default function TasksView({
     );
   }
 
-  // Filter tugas berdasarkan status tab dan pencarian kata kunci
+  // Generate course options for select
+  const courseOptions = [
+    { value: 'all', label: 'Semua Mata Kuliah' },
+    ...courses.map((c) => ({
+      value: String(c.id),
+      label: `${c.course_code} - ${c.course_name}`
+    }))
+  ];
+
+  // Filter tugas berdasarkan status tab, pencarian kata kunci, dan mata kuliah
   const filteredTasks = tasks
     .filter((t) => {
       const matchStatus = activeTab === 'pending' ? !t.is_finished : t.is_finished;
       const matchSearch =
         t.task_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (t.description && t.description.toLowerCase().includes(searchQuery.toLowerCase()));
-      return matchStatus && matchSearch;
+      const matchCourse = courseFilter === 'all' || String(t.course_id) === courseFilter;
+      return matchStatus && matchSearch && matchCourse;
     })
-    .sort((a, b) => a.deadline.split(' ')[0].localeCompare(b.deadline.split(' ')[0]));
+    .sort((a, b) => {
+      if (sortBy === 'deadline-asc') {
+        return a.deadline.split(' ')[0].localeCompare(b.deadline.split(' ')[0]);
+      } else if (sortBy === 'deadline-desc') {
+        return b.deadline.split(' ')[0].localeCompare(a.deadline.split(' ')[0]);
+      } else { // title-asc
+        return a.task_title.localeCompare(b.task_title);
+      }
+    });
 
   return (
     <div className="max-w-[1000px] mx-auto w-full relative">
@@ -141,28 +162,57 @@ export default function TasksView({
         </button>
       </div>
 
-      {/* Tab filter status */}
-      <div className="flex gap-6 border-b border-[#E2E8F0] dark:border-slate-800 mb-6">
-        <button
-          onClick={() => setActiveTab('pending')}
-          className={`pb-3 border-b-2 font-semibold text-sm px-1 cursor-pointer transition-all ${
-            activeTab === 'pending'
-              ? 'border-primary text-primary font-bold'
-              : 'border-transparent text-on-surface-variant hover:text-on-surface'
-          }`}
-        >
-          Belum Selesai
-        </button>
-        <button
-          onClick={() => setActiveTab('done')}
-          className={`pb-3 border-b-2 font-semibold text-sm px-1 cursor-pointer transition-all ${
-            activeTab === 'done'
-              ? 'border-primary text-primary font-bold'
-              : 'border-transparent text-on-surface-variant hover:text-on-surface'
-          }`}
-        >
-          Selesai
-        </button>
+      {/* Controls Row (Tabs on left, Dropdowns on right) */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[#E2E8F0] dark:border-slate-800 pb-3 mb-6">
+        {/* Tab filter status */}
+        <div className="flex gap-6">
+          <button
+            onClick={() => setActiveTab('pending')}
+            className={`pb-3 border-b-2 -mb-[14px] font-semibold text-sm px-1 cursor-pointer transition-all ${
+              activeTab === 'pending'
+                ? 'border-primary text-primary font-bold'
+                : 'border-transparent text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            Belum Selesai
+          </button>
+          <button
+            onClick={() => setActiveTab('done')}
+            className={`pb-3 border-b-2 -mb-[14px] font-semibold text-sm px-1 cursor-pointer transition-all ${
+              activeTab === 'done'
+                ? 'border-primary text-primary font-bold'
+                : 'border-transparent text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            Selesai
+          </button>
+        </div>
+
+        {/* Filters and Sort */}
+        <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap">
+          <div className="w-full sm:w-48">
+            <CustomSelect
+              value={courseFilter}
+              onChange={setCourseFilter}
+              options={courseOptions}
+              placeholder="Saring Mata Kuliah"
+              position="down"
+            />
+          </div>
+          <div className="w-full sm:w-44">
+            <CustomSelect
+              value={sortBy}
+              onChange={setSortBy}
+              options={[
+                { value: 'deadline-asc', label: 'Tenggat Terdekat' },
+                { value: 'deadline-desc', label: 'Tenggat Terjauh' },
+                { value: 'title-asc', label: 'Nama Tugas (A-Z)' }
+              ]}
+              placeholder="Urutkan"
+              position="down"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Render list tugas */}

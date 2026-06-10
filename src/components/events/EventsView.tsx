@@ -5,8 +5,8 @@ import Skeleton from '../ui/Skeleton';
 
 // Import sub-komponen modular
 import EventCard from './EventCard';
-import EventFilterTabs from './EventFilterTabs';
 import EventFormDrawer from './EventFormDrawer';
+import CustomSelect from '../ui/CustomSelect';
 
 interface EventsViewProps {
   events: CampusEvent[];
@@ -32,10 +32,12 @@ export default function EventsView({
   loading = false,
 }: EventsViewProps) {
   
-  // Tab kategori filter aktif
-  const [activeTab, setActiveTab] = useState<string>('semua');
-  // Sub-filter status waktu aktif
+  // Tab status waktu filter aktif
   const [statusFilter, setStatusFilter] = useState<'semua' | 'akan_datang' | 'sedang_berlangsung' | 'selesai'>('semua');
+  // Kategori filter aktif
+  const [categoryFilter, setCategoryFilter] = useState<string>('semua');
+  // Sort order aktif
+  const [sortBy, setSortBy] = useState<string>('date-asc');
 
   // Form Drawer State
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -87,8 +89,8 @@ export default function EventsView({
 
   // Filter & Search Logic
   const filteredEvents = events.filter((e) => {
-    // 1. Filter Kategori Tab
-    if (activeTab !== 'semua' && e.category !== activeTab) {
+    // 1. Filter Kategori
+    if (categoryFilter !== 'semua' && e.category !== categoryFilter) {
       return false;
     }
 
@@ -113,12 +115,21 @@ export default function EventsView({
     return true;
   });
 
-  // Urutkan event: event_date ASC, lalu start_time ASC
+  // Urutkan event berdasarkan sortBy
   const sortedEvents = [...filteredEvents].sort((a, b) => {
-    if (a.event_date !== b.event_date) {
-      return a.event_date.localeCompare(b.event_date);
+    if (sortBy === 'date-asc') {
+      if (a.event_date !== b.event_date) {
+        return a.event_date.localeCompare(b.event_date);
+      }
+      return a.start_time.localeCompare(b.start_time);
+    } else if (sortBy === 'date-desc') {
+      if (a.event_date !== b.event_date) {
+        return b.event_date.localeCompare(a.event_date);
+      }
+      return b.start_time.localeCompare(a.start_time);
+    } else { // name-asc
+      return a.event_name.localeCompare(b.event_name);
     }
-    return a.start_time.localeCompare(b.start_time);
   });
 
   // Tampilkan loading skeleton
@@ -132,10 +143,16 @@ export default function EventsView({
           </div>
           <Skeleton className="h-10 w-36 rounded-xl animate-pulse" />
         </div>
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <Skeleton key={i} className="h-9 w-24 rounded-full flex-shrink-0 animate-pulse" />
-          ))}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[#E2E8F0] dark:border-slate-800 pb-3">
+          <div className="flex gap-4">
+            <Skeleton className="h-8 w-24 rounded-lg animate-pulse" />
+            <Skeleton className="h-8 w-24 rounded-lg animate-pulse" />
+            <Skeleton className="h-8 w-24 rounded-lg animate-pulse" />
+          </div>
+          <div className="flex gap-3 w-full sm:w-auto">
+            <Skeleton className="h-10 w-full sm:w-48 rounded-lg animate-pulse" />
+            <Skeleton className="h-10 w-full sm:w-44 rounded-lg animate-pulse" />
+          </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {[1, 2, 3, 4].map((i) => (
@@ -179,14 +196,65 @@ export default function EventsView({
         </button>
       </div>
 
-      {/* Tabs Filter Bar & Status Bar */}
-      <EventFilterTabs
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
-        events={events}
-      />
+      {/* Controls Row (Tabs on left, Dropdowns on right) */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[#E2E8F0] dark:border-slate-800 pb-3 mb-6">
+        {/* Tab filter status */}
+        <div className="flex gap-6 flex-wrap">
+          {(['semua', 'akan_datang', 'sedang_berlangsung', 'selesai'] as const).map((status) => {
+            const label = status === 'semua' ? 'Semua Event' : status === 'akan_datang' ? 'Akan Datang' : status === 'sedang_berlangsung' ? 'Sedang Berlangsung' : 'Selesai';
+            const isActive = statusFilter === status;
+            return (
+              <button
+                key={status}
+                onClick={() => setStatusFilter(status)}
+                className={`pb-3 border-b-2 -mb-[14px] font-semibold text-sm px-1 cursor-pointer transition-all ${
+                  isActive
+                    ? 'border-primary text-primary font-bold'
+                    : 'border-transparent text-on-surface-variant hover:text-on-surface'
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Filters and Sort */}
+        <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap">
+          <div className="w-full sm:w-48">
+            <CustomSelect
+              value={categoryFilter}
+              onChange={setCategoryFilter}
+              options={[
+                { value: 'semua', label: 'Semua Kategori' },
+                { value: 'seminar', label: 'Seminar' },
+                { value: 'workshop', label: 'Workshop' },
+                { value: 'study_club', label: 'Study Club' },
+                { value: 'ukm', label: 'UKM' },
+                { value: 'rapat_himpunan', label: 'Rapat Himpunan' },
+                { value: 'lomba', label: 'Lomba / Kompetisi' },
+                { value: 'webinar', label: 'Webinar' },
+                { value: 'lainnya', label: 'Lainnya' }
+              ]}
+              placeholder="Kategori"
+              position="down"
+            />
+          </div>
+          <div className="w-full sm:w-44">
+            <CustomSelect
+              value={sortBy}
+              onChange={setSortBy}
+              options={[
+                { value: 'date-asc', label: 'Tanggal Terdekat' },
+                { value: 'date-desc', label: 'Tanggal Terjauh' },
+                { value: 'name-asc', label: 'Nama Event (A-Z)' }
+              ]}
+              placeholder="Urutkan"
+              position="down"
+            />
+          </div>
+        </div>
+      </div>
 
       {/* Grid List Event */}
       {sortedEvents.length > 0 ? (
