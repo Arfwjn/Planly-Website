@@ -20,6 +20,7 @@ class UpdateTaskRequest extends FormRequest
             'deadline'    => ['sometimes', 'required', 'date_format:Y-m-d H:i:s'],
             'is_finished' => ['sometimes', 'boolean'],
             'is_priority' => ['sometimes', 'boolean'],
+            'attachments' => ['nullable', 'array'],
         ];
     }
 }

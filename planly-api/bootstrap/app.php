@@ -13,7 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->statefulApi();
+        // Kita menggunakan Token Bearer (Stateless), bukan Session/Cookie (Stateful),
+        // jadi kita matikan statefulApi() agar tidak memicu CSRF 419 error pada request API.
+        // $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

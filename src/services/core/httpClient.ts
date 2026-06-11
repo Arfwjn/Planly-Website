@@ -48,7 +48,15 @@ httpClient.interceptors.request.use(
 // kita hapus token dan status login dari localStorage, terus auto-reload halaman biar user
 // langsung balik ke halaman login secara otomatis.
 httpClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Jika body response memiliki format wrapper laravel API { success: true, data: ... }
+    // kita secara otomatis men-unwrap property 'data' tersebut agar modul service
+    // langsung menerima raw data model/array sesuai tipe kembaliannya.
+    if (response.data && response.data.success === true && response.data.data !== undefined) {
+      response.data = response.data.data;
+    }
+    return response;
+  },
   (error) => {
     if (error.response?.status === 401) {
       // Hapus sisa-sisa data autentikasi yang udah gak valid dari browser

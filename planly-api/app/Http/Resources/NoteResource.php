@@ -13,8 +13,9 @@ class NoteResource extends JsonResource
             'id'        => $this->id,
             'user_id'   => $this->user_id,
             'course_id' => $this->course_id,
-            'title'     => $this->title,
-            'content'   => $this->content,
+            'title'       => $this->title,
+            'content'     => $this->content,
+            'attachments' => $this->attachments,
         ];
     }
 }

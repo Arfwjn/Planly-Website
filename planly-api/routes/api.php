@@ -11,6 +11,9 @@ use App\Http\Controllers\Api\CourseController;
 use App\Http\Controllers\Api\NoteController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\TaskController;
+use App\Http\Controllers\Api\CampusEventController;
+use App\Http\Controllers\Api\RescheduleController;
+use App\Http\Controllers\Api\AttendanceController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -87,4 +90,38 @@ Route::middleware('auth:sanctum')->group(function () {
     |
     */
     Route::apiResource('notes', NoteController::class);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Modul Campus Events (Event Kampus)
+    |--------------------------------------------------------------------------
+    |
+    | Rute CRUD untuk event kampus pribadi.
+    |
+    */
+    Route::apiResource('events', CampusEventController::class);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Modul Reschedules (Jadwal Ulang Kuliah)
+    |--------------------------------------------------------------------------
+    |
+    | Menyediakan pengambilan, penyimpanan, dan pembatalan jadwal ulang.
+    |
+    */
+    Route::get('reschedules', [RescheduleController::class, 'index']);
+    Route::post('reschedules', [RescheduleController::class, 'store']);
+    Route::delete('reschedules/{course}/{original_date}', [RescheduleController::class, 'destroy']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Modul Attendance (Presensi Kehadiran)
+    |--------------------------------------------------------------------------
+    |
+    | Menyediakan pencatatan presensi kehadiran menggunakan GPS dan/atau kamera.
+    |
+    */
+    Route::get('attendance', [AttendanceController::class, 'index']);
+    Route::post('attendance', [AttendanceController::class, 'store']);
+    Route::delete('attendance/{id}', [AttendanceController::class, 'destroy']);
 });

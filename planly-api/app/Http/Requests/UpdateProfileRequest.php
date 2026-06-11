@@ -15,11 +15,16 @@ class UpdateProfileRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name'     => ['sometimes', 'required', 'string', 'max:255'],
-            'email'    => ['sometimes', 'required', 'email', Rule::unique('users')->ignore($this->user()->id)],
-            'nim'      => ['nullable', 'string', 'max:50'],
-            'major'    => ['nullable', 'string', 'max:100'],
-            'semester' => ['nullable', 'integer', 'min:1', 'max:14'],
+            'name'               => ['sometimes', 'required', 'string', 'max:255'],
+            'email'              => ['sometimes', 'required', 'email', Rule::unique('users')->ignore($this->user()->id)],
+            'nim'                => ['nullable', 'string', 'max:50'],
+            'major'              => ['nullable', 'string', 'max:100'],
+            'semester'           => ['nullable', 'integer', 'min:1', 'max:14'],
+            'profile_photo_url'  => ['nullable', 'string'],
+            'gpa_current'        => ['nullable', 'numeric', 'min:0', 'max:4'],
+            'gpa_target'         => ['nullable', 'numeric', 'min:0', 'max:4'],
+            'target_study_hours' => ['nullable', 'integer', 'min:0'],
+            'address'            => ['nullable', 'string', 'max:500'],
         ];
     }
 }

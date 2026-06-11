@@ -19,6 +19,10 @@ class User extends Authenticatable
         'major',
         'semester',
         'profile_photo_url',
+        'gpa_current',
+        'gpa_target',
+        'target_study_hours',
+        'address',
     ];
 
     protected $hidden = [
@@ -29,9 +33,12 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password'          => 'hashed',
-            'semester'          => 'integer',
+            'email_verified_at'  => 'datetime',
+            'password'           => 'hashed',
+            'semester'           => 'integer',
+            'gpa_current'        => 'float',
+            'gpa_target'         => 'float',
+            'target_study_hours' => 'integer',
         ];
     }
 
@@ -48,5 +55,15 @@ class User extends Authenticatable
     public function notes()
     {
         return $this->hasMany(Note::class);
+    }
+
+    public function campusEvents()
+    {
+        return $this->hasMany(CampusEvent::class);
+    }
+
+    public function attendanceRecords()
+    {
+        return $this->hasMany(AttendanceRecord::class);
     }
 }

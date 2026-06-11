@@ -5,22 +5,30 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Note extends Model
+class AttendanceRecord extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'user_id',
         'course_id',
-        'title',
-        'content',
-        'attachments',
+        'course_code',
+        'course_name',
+        'date',
+        'time',
+        'status',
+        'latitude',
+        'longitude',
+        'image_base64',
+        'verified_face',
     ];
 
     protected function casts(): array
     {
         return [
-            'attachments' => 'array',
+            'verified_face' => 'boolean',
+            'latitude'      => 'float',
+            'longitude'     => 'float',
         ];
     }
 

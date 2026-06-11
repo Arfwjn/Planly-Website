@@ -14,9 +14,8 @@ interface LoginFormProps {
  * Menyediakan tautan lupa kata sandi dengan pemicu toast notifikasi.
  */
 export default function LoginForm({ onSubmit, loading, onForgotPasswordClick }: LoginFormProps) {
-  // Nilai bawaan email dan password diisi untuk mempermudah pengujian masuk
-  const [email, setEmail] = useState('arfwjn@gmail.com');
-  const [password, setPassword] = useState('••••••••');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

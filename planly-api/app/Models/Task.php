@@ -17,6 +17,7 @@ class Task extends Model
         'deadline',
         'is_finished',
         'is_priority',
+        'attachments',
     ];
 
     protected function casts(): array
@@ -25,6 +26,7 @@ class Task extends Model
             'deadline'    => 'datetime',
             'is_finished' => 'boolean',
             'is_priority' => 'boolean',
+            'attachments' => 'array',
         ];
     }
 

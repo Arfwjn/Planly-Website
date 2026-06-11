@@ -224,3 +224,13 @@ body {
 .animate-toast-in {
   animation: toastIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
+
+/* Override browser default autofill backgrounds to match the theme */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px var(--color-input-bg) inset !important;
+  -webkit-text-fill-color: var(--color-on-surface) !important;
+  transition: background-color 5000s ease-in-out 0s;
+}

@@ -5,28 +5,25 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Note extends Model
+class RescheduledSession extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
         'course_id',
-        'title',
-        'content',
-        'attachments',
+        'original_date',
+        'new_date',
+        'new_start_time',
+        'new_end_time',
+        'is_canceled',
+        'note',
     ];
 
     protected function casts(): array
     {
         return [
-            'attachments' => 'array',
+            'is_canceled' => 'boolean',
         ];
-    }
-
-    public function user()
-    {
-        return $this->belongsTo(User::class);
     }
 
     public function course()

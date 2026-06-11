@@ -20,6 +20,7 @@ class TaskResource extends JsonResource
                                 : null,
             'is_finished' => (bool) $this->is_finished,
             'is_priority' => (bool) $this->is_priority,
+            'attachments' => $this->attachments,
         ];
     }
 }

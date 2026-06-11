@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, User as UserIcon } from 'lucide-react';
+import { Mail, Lock, User as UserIcon, IdCard } from 'lucide-react';
 
 interface RegisterFormProps {
   onSubmit: (data: {
@@ -19,12 +19,11 @@ interface RegisterFormProps {
  * nama lengkap, NIM, email, kata sandi, dan konfirmasi kata sandi.
  */
 export default function RegisterForm({ onSubmit, loading }: RegisterFormProps) {
-  // Nilai bawaan diisi awal agar memudahkan pengujian pendaftaran
-  const [name, setName] = useState('Nama Anda');
-  const [nim, setNim] = useState('NIM Anda');
-  const [email, setEmail] = useState('arfwjn@gmail.com');
-  const [password, setPassword] = useState('••••••••');
-  const [confirmPassword, setConfirmPassword] = useState('••••••••');
+  const [name, setName] = useState('');
+  const [nim, setNim] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,14 +56,19 @@ export default function RegisterForm({ onSubmit, loading }: RegisterFormProps) {
         <label className="block text-xs font-semibold text-on-surface mb-1.5" htmlFor="nim">
           NIM (Nomor Induk Mahasiswa)
         </label>
-        <input
-          className="w-full h-10 px-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
-          id="nim"
-          value={nim}
-          onChange={(e) => setNim(e.target.value)}
-          placeholder="Masukkan NIM"
-          type="text"
-        />
+        <div className="relative">
+          <span className="absolute left-3 top-2.5 text-[#94A3B8]">
+            <IdCard className="w-4 h-4" />
+          </span>
+          <input
+            className="w-full h-10 pl-9 pr-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+            id="nim"
+            value={nim}
+            onChange={(e) => setNim(e.target.value)}
+            placeholder="Masukkan NIM"
+            type="text"
+          />
+        </div>
       </div>
 
       <div>
