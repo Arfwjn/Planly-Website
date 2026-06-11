@@ -296,6 +296,7 @@ export default function App() {
             attendanceRecords={attendanceRecords}
             onSubmitAttendance={handleCreateAttendance}
             onDeleteAttendance={handleDeleteAttendance}
+            onTabChange={setActiveTab}
           />
         );
       case 'ai-companion':

@@ -109,7 +109,7 @@ export default function Sidebar({
                   onTabChange(item.id);
                   onClose();
                 }}
-                className={`group relative w-full flex items-center gap-3 pl-5 pr-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer select-none origin-left hover:scale-[1.01] active:scale-[0.97] ${
+                className={`group relative w-full flex items-center gap-3 pl-5 pr-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer select-none origin-left hover:scale-[1.01] active:scale-[0.97] no-animate ${
                   isActive
                     ? theme === 'light'
                       ? 'text-primary bg-[#F5F2FF] shadow-[0_2px_8px_rgba(53,37,205,0.06)]'
@@ -166,7 +166,7 @@ export default function Sidebar({
                   setIsFocusTimerRunning(!isFocusTimerRunning);
                 }
               }}
-              className="w-9 h-9 rounded-full flex items-center justify-center relative cursor-pointer group/circle transition-all duration-200 bg-white dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-850 shadow-2xs hover:shadow-xs active:scale-95 border border-slate-100 dark:border-slate-800/80 flex-shrink-0"
+              className="w-9 h-9 rounded-full flex items-center justify-center relative cursor-pointer group/circle transition-all duration-200 bg-white dark:bg-slate-850 hover:bg-slate-100 dark:hover:bg-slate-850 shadow-2xs hover:shadow-xs active:scale-95 border border-slate-100 dark:border-slate-800/80 flex-shrink-0 no-animate"
               title={isLectureRunning ? "Buka Ruang Belajar" : isFocusTimerRunning ? "Jeda Fokus" : "Mulai Fokus"}
             >
               {/* SVG Circle Progress */}
@@ -251,7 +251,7 @@ export default function Sidebar({
                     e.stopPropagation();
                     onTabChange('workspace');
                   }}
-                  className="w-7 h-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-emerald-500 dark:hover:text-emerald-400 text-on-surface-variant flex items-center justify-center transition-colors cursor-pointer"
+                  className="w-7 h-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-emerald-500 dark:hover:text-emerald-400 text-on-surface-variant flex items-center justify-center transition-colors cursor-pointer no-animate"
                   title="Masuk Ruang Belajar"
                 >
                   <BookOpen className="w-3.5 h-3.5" />
@@ -262,7 +262,7 @@ export default function Sidebar({
                     e.stopPropagation();
                     onResetFocusTimer();
                   }}
-                  className="w-7 h-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-red-500 dark:hover:text-red-400 text-on-surface-variant flex items-center justify-center transition-colors cursor-pointer group/reset"
+                  className="w-7 h-7 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-red-500 dark:hover:text-red-400 text-on-surface-variant flex items-center justify-center transition-colors cursor-pointer group/reset no-animate"
                   title="Atur Ulang Timer"
                 >
                   <RotateCcw className="w-3.5 h-3.5 transition-transform duration-300 group-hover/reset:rotate-180" />

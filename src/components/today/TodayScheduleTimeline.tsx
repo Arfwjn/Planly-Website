@@ -1,6 +1,6 @@
 import React from 'react';
-import { Clock, MapPin, Users, Info, CheckSquare, Notebook, Coffee, Smile, CalendarCheck } from 'lucide-react';
-import { Course, Task } from '../../types';
+import { Clock, MapPin, Users, Info, CheckSquare, Notebook, Coffee, Smile, CalendarCheck, BookOpen } from 'lucide-react';
+import { Course, Task, SidebarTab } from '../../types';
 import { hexToRgb } from '../../utils/color';
 import EmptyState from '../ui/InteractiveEmptyState';
 
@@ -11,6 +11,7 @@ interface TodayScheduleTimelineProps {
   onToggleTaskState: (taskId: number) => void;
   onOpenNotesWithCourse: (courseId: number | null) => void;
   currentTime: Date;
+  onTabChange: (tab: SidebarTab) => void;
 }
 
 /**
@@ -24,7 +25,8 @@ export default function TodayScheduleTimeline({
   tasks,
   onToggleTaskState,
   onOpenNotesWithCourse,
-  currentTime
+  currentTime,
+  onTabChange
 }: TodayScheduleTimelineProps) {
   
   // Deteksi jika hari ini ada jadwal kuliah
@@ -83,6 +85,11 @@ export default function TodayScheduleTimeline({
             title="Tidak ada kelas hari ini"
             description="Nikmati hari libur kamu atau kerjakan tugas-tugas yang belum selesai."
             className="border-none shadow-none bg-transparent"
+            action={{
+              label: 'Kelola Mata Kuliah',
+              icon: <BookOpen className="w-4 h-4" />,
+              onClick: () => onTabChange('courses')
+            }}
           />
         ) : (
           /* Render List Kelas */

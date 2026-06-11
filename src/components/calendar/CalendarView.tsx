@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CalendarDays, Info, Undo2, Calendar as CalendarIcon, Coffee, Smile } from 'lucide-react';
+import { CalendarDays, Info, Undo2, Calendar as CalendarIcon, Coffee, Smile, BookOpen } from 'lucide-react';
 import { Course, RescheduledSession, Task, AttendanceRecord, CampusEvent } from '../../types';
 import Skeleton from '../ui/Skeleton';
 import { getCoursesForDate } from '../../utils/reschedule';
@@ -400,8 +400,14 @@ export default function CalendarView({
               title="Tidak Ada Jadwal & Event"
               description={`Tidak ada mata kuliah atau event kampus yang terjadwal untuk hari ${getIndonesianDayName(selectedDayObj.fullName)}.`}
               action={{
-                label: 'Tambah Mata Kuliah Baru',
-                onClick: onOpenAddNewCourseModal,
+                label: 'Kelola Mata Kuliah',
+                icon: <BookOpen className="w-4 h-4" />,
+                onClick: () => onTabChange?.('courses'),
+              }}
+              action2={{
+                label: 'Event Kampus',
+                icon: <CalendarIcon className="w-4 h-4" />,
+                onClick: () => onTabChange?.('events'),
               }}
             />
           ) : (

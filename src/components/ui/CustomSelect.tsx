@@ -58,7 +58,7 @@ export default function CustomSelect({ value, onChange, options, placeholder = '
         id={id}
         disabled={disabled}
         onClick={() => { if (!disabled) { setIsOpen(!isOpen); setSearch(''); } }}
-        className={`w-full h-10 px-3 bg-[#F8FAFC] dark:bg-input-bg border border-[#E2E8F0] dark:border-card-border rounded-lg text-sm text-on-surface font-semibold flex items-center justify-between gap-2 hover:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all ${disabled ? 'opacity-60 cursor-not-allowed pointer-events-none' : 'cursor-pointer'}`}
+        className={`w-full h-10 px-3 bg-[#F8FAFC] dark:bg-input-bg border border-[#E2E8F0] dark:border-card-border rounded-lg text-sm text-on-surface font-semibold flex items-center justify-between gap-2 hover:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all no-animate ${disabled ? 'opacity-60 cursor-not-allowed pointer-events-none' : 'cursor-pointer'}`}
       >
         <span className="flex items-center gap-2 truncate">
           {selectedOption?.icon}
@@ -104,7 +104,7 @@ export default function CustomSelect({ value, onChange, options, placeholder = '
                       setIsOpen(false);
                       setSearch('');
                     }}
-                    className={`w-full px-3 py-2.5 flex items-center gap-2.5 text-left text-sm transition-colors cursor-pointer ${
+                    className={`w-full px-3 py-2.5 flex items-center gap-2.5 text-left text-sm transition-colors cursor-pointer no-animate ${
                       isSelected
                         ? 'bg-primary/10 text-primary font-semibold'
                         : 'text-on-surface hover:bg-slate-50 dark:hover:bg-input-bg'

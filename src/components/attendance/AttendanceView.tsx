@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Camera, Clock, MapPin, CheckCircle2, Lock, UserCheck, Calendar, X, Globe } from 'lucide-react';
-import { Course, RescheduledSession, AttendanceRecord, AttendanceSubmitPayload } from '../../types';
+import { Course, RescheduledSession, AttendanceRecord, AttendanceSubmitPayload, SidebarTab } from '../../types';
 import { getCoursesForDate, ProcessedCourse } from '../../utils/reschedule';
 import { useToast } from '../ui/Toast';
 import ConfirmModal from '../ui/ConfirmModal';
@@ -15,6 +15,7 @@ interface AttendanceViewProps {
   attendanceRecords: AttendanceRecord[];
   onSubmitAttendance: (payload: AttendanceSubmitPayload) => Promise<AttendanceRecord>;
   onDeleteAttendance: (id: number) => Promise<void>;
+  onTabChange?: (tab: SidebarTab) => void;
 }
 
 /**
@@ -33,7 +34,8 @@ export default function AttendanceView({
   rescheduledSessions,
   attendanceRecords,
   onSubmitAttendance,
-  onDeleteAttendance
+  onDeleteAttendance,
+  onTabChange
 }: AttendanceViewProps) {
   const toast = useToast();
 
@@ -352,6 +354,7 @@ export default function AttendanceView({
         <AttendanceRecapGrid
           courses={courses}
           attendanceRecords={attendanceRecords}
+          onTabChange={onTabChange}
         />
       )}
 

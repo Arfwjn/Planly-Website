@@ -228,6 +228,11 @@ export default function TasksView({
             ]}
             title={searchQuery ? 'Tidak ada tugas ditemukan' : 'Kerja Bagus! 🎉'}
             description={searchQuery ? 'Sesuaikan kata kunci atau filter pencarian Anda.' : 'Semua tugas akademik Anda saat ini telah diselesaikan.'}
+            action={{
+              label: 'Tambah Tugas Baru',
+              icon: <Plus className="w-4 h-4" />,
+              onClick: () => onSetSlideOverOpen(true)
+            }}
           />
         ) : (
           /* Iterasi kartu tugas */

@@ -54,7 +54,7 @@ export default function TimePicker({ value, onChange, required, className, id, p
         type="button"
         id={id}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full h-10 px-3 bg-[#F8FAFC] dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-slate-100 font-semibold flex items-center justify-between gap-2 hover:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all cursor-pointer"
+        className="w-full h-10 px-3 bg-[#F8FAFC] dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-slate-100 font-semibold flex items-center justify-between gap-2 hover:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all cursor-pointer no-animate"
       >
         <span className="flex items-center gap-2">
           <Clock className="w-4 h-4 text-primary" />
@@ -83,7 +83,7 @@ export default function TimePicker({ value, onChange, required, className, id, p
               <button
                 type="button"
                 onClick={incHour}
-                className="p-1 rounded-lg hover:bg-primary/10 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors cursor-pointer"
+                className="p-1 rounded-lg hover:bg-primary/10 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors cursor-pointer no-animate"
               >
                 <ChevronUp className="w-5 h-5" />
               </button>
@@ -93,7 +93,7 @@ export default function TimePicker({ value, onChange, required, className, id, p
               <button
                 type="button"
                 onClick={decHour}
-                className="p-1 rounded-lg hover:bg-primary/10 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors cursor-pointer"
+                className="p-1 rounded-lg hover:bg-primary/10 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors cursor-pointer no-animate"
               >
                 <ChevronDown className="w-5 h-5" />
               </button>
@@ -108,7 +108,7 @@ export default function TimePicker({ value, onChange, required, className, id, p
               <button
                 type="button"
                 onClick={incMin}
-                className="p-1 rounded-lg hover:bg-primary/10 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors cursor-pointer"
+                className="p-1 rounded-lg hover:bg-primary/10 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors cursor-pointer no-animate"
               >
                 <ChevronUp className="w-5 h-5" />
               </button>
@@ -118,7 +118,7 @@ export default function TimePicker({ value, onChange, required, className, id, p
               <button
                 type="button"
                 onClick={decMin}
-                className="p-1 rounded-lg hover:bg-primary/10 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors cursor-pointer"
+                className="p-1 rounded-lg hover:bg-primary/10 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors cursor-pointer no-animate"
               >
                 <ChevronDown className="w-5 h-5" />
               </button>
@@ -134,7 +134,7 @@ export default function TimePicker({ value, onChange, required, className, id, p
                   key={t}
                   type="button"
                   onClick={() => { onChange(t); setIsOpen(false); }}
-                  className={`px-1 py-1 rounded-md text-[9px] font-semibold transition-all cursor-pointer ${
+                  className={`px-1 py-1 rounded-md text-[9px] font-semibold transition-all cursor-pointer no-animate ${
                     value === t
                       ? 'bg-primary text-white shadow-sm'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-650 dark:text-slate-350 hover:bg-primary/10 hover:text-primary'
@@ -150,7 +150,7 @@ export default function TimePicker({ value, onChange, required, className, id, p
           <button
             type="button"
             onClick={() => setIsOpen(false)}
-            className="w-full mt-3 py-1.5 bg-primary text-white text-xs font-bold rounded-lg hover:bg-primary/90 transition-colors cursor-pointer"
+            className="w-full mt-3 py-1.5 bg-primary text-white text-xs font-bold rounded-lg hover:bg-primary/90 transition-colors cursor-pointer no-animate"
           >
             Selesai
           </button>

@@ -83,7 +83,7 @@ export default function DateStrip({
               key={day.fullName}
               type="button"
               onClick={() => onSelectDay(day)}
-              className={`group flex-1 min-w-[64px] max-w-[130px] flex flex-col items-center justify-between h-[84px] py-2.5 px-2 rounded-xl border transition-all duration-205 cursor-pointer select-none ${
+              className={`group flex-1 min-w-[64px] max-w-[130px] flex flex-col items-center justify-between h-[84px] py-2.5 px-2 rounded-xl border transition-all duration-205 cursor-pointer select-none no-animate ${
                 isSelected
                   ? 'bg-gradient-to-br from-primary to-indigo-600 text-white border-transparent shadow-md shadow-primary/20'
                   : 'border-date-btn-border dark:border-slate-800 bg-date-btn-bg dark:bg-slate-950 text-on-surface-variant hover:bg-primary/[0.04] dark:hover:bg-slate-800/40 hover:border-primary/30 hover:text-primary'

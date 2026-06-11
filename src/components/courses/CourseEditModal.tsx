@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, AlertCircle } from 'lucide-react';
+import { X, AlertCircle, ChevronUp, ChevronDown } from 'lucide-react';
 import { Course } from '../../types';
 import CustomSelect from '../ui/CustomSelect';
 import TimePicker from '../ui/TimePicker';
@@ -140,15 +140,37 @@ export default function CourseEditModal({
               <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">
                 SKS (Kredit) <span className="text-red-500">*</span>
               </label>
-              <input
-                type="number"
-                min={1}
-                max={6}
-                required
-                value={sks}
-                onChange={(e) => setSks(parseInt(e.target.value))}
-                className="w-full h-10 px-3 bg-[#F8FAFC] dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-700 rounded-lg text-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary font-medium"
-              />
+              <div className="w-full bg-[#F8FAFC] dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-700 rounded-lg h-10 overflow-hidden grid grid-cols-[1fr_28px] grid-rows-2 focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
+                <input
+                  type="number"
+                  min={1}
+                  max={6}
+                  required
+                  value={sks}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    if (!isNaN(val)) {
+                      setSks(Math.max(1, Math.min(6, val)));
+                    }
+                  }}
+                  className="bg-transparent text-on-surface font-medium px-3 py-1 row-span-2 border-none outline-none focus:outline-none text-sm"
+                  style={{ appearance: 'textfield', WebkitAppearance: 'none', MozAppearance: 'textfield' } as any}
+                />
+                <button
+                  type="button"
+                  onClick={() => setSks(Math.min(6, sks + 1))}
+                  className="flex items-center justify-center text-on-surface-variant hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer border-l border-[#E2E8F0] dark:border-slate-700 bg-transparent border-none p-0"
+                >
+                  <ChevronUp className="w-3 h-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSks(Math.max(1, sks - 1))}
+                  className="flex items-center justify-center text-on-surface-variant hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer border-l border-t border-[#E2E8F0] dark:border-slate-700 bg-transparent border-none p-0"
+                >
+                  <ChevronDown className="w-3 h-3" />
+                </button>
+              </div>
             </div>
             <div>
               <label className="block text-xs font-bold text-on-surface uppercase tracking-wider mb-1.5">

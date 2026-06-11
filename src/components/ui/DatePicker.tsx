@@ -124,7 +124,7 @@ export default function DatePicker({
         id={id}
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full h-10 px-3 bg-[#F8FAFC] dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-slate-100 font-semibold flex items-center justify-between gap-2 hover:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all ${
+        className={`w-full h-10 px-3 bg-[#F8FAFC] dark:bg-slate-800 border border-[#E2E8F0] dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-slate-100 font-semibold flex items-center justify-between gap-2 hover:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all no-animate ${
           disabled 
             ? 'opacity-60 cursor-not-allowed pointer-events-none bg-slate-100 dark:bg-slate-850' 
             : 'cursor-pointer'
@@ -157,7 +157,7 @@ export default function DatePicker({
             <button
               type="button"
               onClick={prevMonth}
-              className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors cursor-pointer"
+              className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors cursor-pointer no-animate"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -167,7 +167,7 @@ export default function DatePicker({
             <button
               type="button"
               onClick={nextMonth}
-              className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors cursor-pointer"
+              className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors cursor-pointer no-animate"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -195,7 +195,7 @@ export default function DatePicker({
                   key={idx}
                   type="button"
                   onClick={() => handleSelectDay(dayDate)}
-                  className={`h-8 w-8 text-xs font-semibold rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+                  className={`h-8 w-8 text-xs font-semibold rounded-lg flex items-center justify-center transition-all cursor-pointer no-animate ${
                     isSelected
                       ? 'bg-primary text-white shadow-sm font-bold'
                       : isToday

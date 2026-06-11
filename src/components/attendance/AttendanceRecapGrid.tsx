@@ -1,11 +1,12 @@
 import React from 'react';
-import { Award, ShieldAlert, BookMarked, ClipboardCheck } from 'lucide-react';
-import { Course, AttendanceRecord } from '../../types';
+import { Award, ShieldAlert, BookMarked, ClipboardCheck, Plus } from 'lucide-react';
+import { Course, AttendanceRecord, SidebarTab } from '../../types';
 import EmptyState from '../ui/InteractiveEmptyState';
 
 interface AttendanceRecapGridProps {
   courses: Course[];
   attendanceRecords: AttendanceRecord[];
+  onTabChange?: (tab: SidebarTab) => void;
 }
 
 /**
@@ -19,7 +20,8 @@ interface AttendanceRecapGridProps {
  */
 export default function AttendanceRecapGrid({
   courses,
-  attendanceRecords
+  attendanceRecords,
+  onTabChange
 }: AttendanceRecapGridProps) {
   
   // Hitung data kehadiran mandiri untuk masing-masing kelas kuliah
@@ -66,6 +68,11 @@ export default function AttendanceRecapGrid({
           ]}
           title="Tidak ada kelas terdaftar"
           description="Daftarkan mata kuliah Anda terlebih dahulu untuk memantau rekap persentase kehadiran kuliah."
+          action={{
+            label: 'Daftar Mata Kuliah',
+            icon: <Plus className="w-4 h-4" />,
+            onClick: () => onTabChange && onTabChange('courses')
+          }}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

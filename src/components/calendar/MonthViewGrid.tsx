@@ -86,14 +86,14 @@ export default function MonthViewGrid({
           <button
             type="button"
             onClick={handlePrevMonth}
-            className="p-1.5 border border-[#E2E8F0] dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-on-surface-variant cursor-pointer transition-colors bg-white dark:bg-slate-900"
+            className="p-1.5 border border-[#E2E8F0] dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-on-surface-variant cursor-pointer transition-colors bg-white dark:bg-slate-900 no-animate"
           >
             &larr;
           </button>
           <button
             type="button"
             onClick={handleNextMonth}
-            className="p-1.5 border border-[#E2E8F0] dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-on-surface-variant cursor-pointer transition-colors bg-white dark:bg-slate-900"
+            className="p-1.5 border border-[#E2E8F0] dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-on-surface-variant cursor-pointer transition-colors bg-white dark:bg-slate-900 no-animate"
           >
             &rarr;
           </button>
@@ -143,7 +143,7 @@ export default function MonthViewGrid({
               key={idx}
               type="button"
               onClick={() => onSelectDate(gridDay.date)}
-              className={`min-h-[60px] flex flex-col justify-between p-1.5 border rounded-xl transition-all cursor-pointer ${
+              className={`min-h-[60px] flex flex-col justify-between p-1.5 border rounded-xl transition-all cursor-pointer no-animate ${
                 gridDay.isCurrentMonth
                   ? isSelected
                     ? 'bg-[#F5F2FF] dark:bg-slate-800 border-primary text-primary font-bold shadow-xs'

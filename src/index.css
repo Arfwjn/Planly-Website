@@ -234,3 +234,54 @@ input:-webkit-autofill:active {
   -webkit-text-fill-color: var(--color-on-surface) !important;
   transition: background-color 5000s ease-in-out 0s;
 }
+
+/* Hilangkan tombol naik turun bawaan browser pada input type number secara menyeluruh */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield !important;
+  appearance: textfield !important;
+}
+
+/* =============================================================================
+   Planly — Interactive Premium Button Animations
+   ============================================================================= */
+
+/* Efek hover & tap interaktif premium untuk tombol biasa se-aplikasi */
+button:not(.empty-state-btn):not(.no-animate):not([disabled]) {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease !important;
+}
+
+button:not(.empty-state-btn):not(.no-animate):not([disabled]):hover {
+  transform: translateY(-2px) scale(1.02);
+}
+
+button:not(.empty-state-btn):not(.no-animate):not([disabled]):active {
+  transform: translateY(0px) scale(0.96);
+}
+
+/* Animasi ayunan ikon dalam tombol biasa saat hover */
+button:not(.empty-state-btn):not(.no-animate):not([disabled]):hover svg {
+  animation: button-icon-swing 0.5s ease-in-out forwards;
+}
+
+@keyframes button-icon-swing {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  25% {
+    transform: rotate(-15deg) scale(1.15);
+  }
+  50% {
+    transform: rotate(10deg) scale(1.15);
+  }
+  75% {
+    transform: rotate(-5deg) scale(1.15);
+  }
+  100% {
+    transform: rotate(0deg) scale(1.15);
+  }
+}

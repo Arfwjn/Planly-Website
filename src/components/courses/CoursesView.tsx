@@ -157,6 +157,11 @@ export default function CoursesView({
               ]}
               title={searchQuery ? 'Tidak ada mata kuliah ditemukan' : 'Belum ada mata kuliah terdaftar'}
               description={searchQuery ? 'Tidak ada mata kuliah yang cocok dengan pencarian Anda.' : 'Anda belum mendaftarkan mata kuliah apa pun untuk semester ini.'}
+              action={{
+                label: 'Mata Kuliah Baru',
+                icon: <Plus className="w-4 h-4" />,
+                onClick: () => onSetEnrollModalOpen(true)
+              }}
             />
           </div>
         ) : (

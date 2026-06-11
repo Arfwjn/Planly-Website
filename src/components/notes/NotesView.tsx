@@ -184,6 +184,11 @@ export default function NotesView({
               ]}
               title={searchQuery ? 'Tidak ada catatan ditemukan' : 'Belum ada catatan'}
               description={searchQuery ? 'Coba gunakan kata kunci pencarian yang berbeda.' : 'Mulai catat ide, rangkuman kuliah, atau rencana belajar Anda.'}
+              action={{
+                label: 'Catatan Baru',
+                icon: <Plus className="w-4 h-4" />,
+                onClick: () => setIsAdding(true)
+              }}
             />
           </div>
         ) : (

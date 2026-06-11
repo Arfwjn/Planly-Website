@@ -51,6 +51,11 @@ export default function TodayEventsPanel({
           title="Tidak Ada Event Hari Ini"
           description="Tidak ada event non-kuliah yang terjadwal untuk hari ini."
           className="border-none shadow-none bg-transparent"
+          action={{
+            label: 'Kelola Event Kampus',
+            icon: <Calendar className="w-4 h-4" />,
+            onClick: () => onTabChange('events')
+          }}
         />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">

@@ -49,7 +49,7 @@ export default function AttendanceHistoryTable({
 
       {attendanceRecords.length === 0 ? (
         <EmptyState
-          size="sm"
+          size="default"
           icons={[
             <ClipboardCheck className="w-5 h-5" />,
             <History className="w-5 h-5" />,
@@ -58,6 +58,13 @@ export default function AttendanceHistoryTable({
           title="Belum ada riwayat presensi"
           description="Riwayat presensi Anda akan muncul di sini setelah Anda melakukan check-in."
           className="border-0 shadow-none bg-transparent"
+          action={{
+            label: 'Lakukan Presensi',
+            icon: <ClipboardCheck className="w-4 h-4" />,
+            onClick: () => {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+          }}
         />
       ) : (
         <div className="overflow-x-auto">

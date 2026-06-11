@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, BookOpen, Flame, LayoutDashboard } from 'lucide-react';
+import { Clock, BookOpen, Flame, LayoutDashboard, Coffee, CalendarCheck, Calendar, Sparkles } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { Course, Task, SidebarTab, CampusEvent, RescheduledSession } from '../../types';
 import NotificationBanner from '../ui/NotificationBanner';
 import Skeleton from '../ui/Skeleton';
 import { getCoursesForDate } from '../../utils/reschedule';
+import EmptyState from '../ui/InteractiveEmptyState';
 
 // Import sub-komponen modular
 import TodayStatsRow from './TodayStatsRow';
@@ -191,21 +193,55 @@ export default function TodayView({
         onTabChange={onTabChange}
       />
 
-      {/* Timeline Kuliah Hari Ini */}
-      <TodayScheduleTimeline
-        todayCourses={dayCoursesProcessed}
-        todayDayName={getTodayDayOfWeek()}
-        tasks={tasks}
-        onToggleTaskState={onToggleTaskState}
-        onOpenNotesWithCourse={onOpenNotesWithCourse}
-        currentTime={currentTime}
-      />
+      {/* Timeline Kuliah & Panel Event Hari Ini */}
+      {(() => {
+        const todayStr = new Date().toLocaleDateString('en-CA');
+        const todayEventsCount = (events || []).filter(e => e.event_date === todayStr).length;
 
-      {/* Panel Event Hari Ini */}
-      <TodayEventsPanel
-        events={events}
-        onTabChange={onTabChange}
-      />
+        if (dayCoursesProcessed.length === 0 && todayEventsCount === 0) {
+          return (
+            <EmptyState
+              icons={[
+                <BookOpen className="w-5 h-5" />,
+                <Coffee className="w-5 h-5" />,
+                <Sparkles className="w-5 h-5" />,
+              ]}
+              title="Hari Ini Bebas Kelas & Event!"
+              description="Tidak ada perkuliahan maupun kegiatan kampus yang terjadwal untuk hari ini. Gunakan waktu luang Anda untuk belajar mandiri, bersantai, atau menyelesaikan tugas."
+              action={{
+                label: 'Kelola Mata Kuliah',
+                icon: <BookOpen className="w-4 h-4" />,
+                onClick: () => onTabChange('courses'),
+              }}
+              action2={{
+                label: 'Kelola Event Kampus',
+                icon: <Calendar className="w-4 h-4" />,
+                onClick: () => onTabChange('events'),
+              }}
+              className="w-full"
+            />
+          );
+        }
+
+        return (
+          <>
+            <TodayScheduleTimeline
+              todayCourses={dayCoursesProcessed}
+              todayDayName={getTodayDayOfWeek()}
+              tasks={tasks}
+              onToggleTaskState={onToggleTaskState}
+              onOpenNotesWithCourse={onOpenNotesWithCourse}
+              currentTime={currentTime}
+              onTabChange={onTabChange}
+            />
+
+            <TodayEventsPanel
+              events={events || []}
+              onTabChange={onTabChange}
+            />
+          </>
+        );
+      })()}
     </div>
   );
 }

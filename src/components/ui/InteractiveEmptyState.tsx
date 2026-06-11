@@ -1,5 +1,5 @@
 import React, { memo, useId, forwardRef } from 'react';
-import { motion, LazyMotion, domAnimation } from 'framer-motion';
+import { motion, LazyMotion, domAnimation, HTMLMotionProps } from 'framer-motion';
 
 // =============================================================================
 // Planly — InteractiveEmptyState
@@ -103,14 +103,14 @@ interface EmptyStateAction {
   disabled?: boolean;
 }
 
-interface EmptyStateProps extends React.HTMLAttributes<HTMLElement> {
+interface EmptyStateProps extends Omit<HTMLMotionProps<'section'>, 'title' | 'description'> {
   title: string;
   description?: string;
   icons?: React.ReactNode[];
   action?: EmptyStateAction;
+  action2?: EmptyStateAction;
   size?: 'sm' | 'default' | 'lg';
   isIconAnimated?: boolean;
-  className?: string;
 }
 
 const SIZE_CLASSES = {
@@ -144,6 +144,7 @@ export const EmptyState = forwardRef<HTMLElement, EmptyStateProps>(
       description,
       icons,
       action,
+      action2,
       size = 'default',
       isIconAnimated = true,
       className = '',
@@ -174,7 +175,7 @@ export const EmptyState = forwardRef<HTMLElement, EmptyStateProps>(
           {...props}
         >
           <Background />
-          <div className="relative z-10 flex flex-col items-center">
+          <div className="relative z-10 flex flex-col items-center w-full">
             {icons && icons.length >= 3 && (
               <div className="mb-6">
                 <MultiIconDisplay icons={icons} />
@@ -196,7 +197,7 @@ export const EmptyState = forwardRef<HTMLElement, EmptyStateProps>(
                   id={descriptionId}
                   className={cn(
                     DESC_SIZE[size],
-                    'text-on-surface-variant max-w-md leading-relaxed transition-colors duration-200'
+                    'text-on-surface-variant max-w-md leading-relaxed transition-colors duration-200 mx-auto'
                   )}
                 >
                   {description}
@@ -204,32 +205,79 @@ export const EmptyState = forwardRef<HTMLElement, EmptyStateProps>(
               )}
             </motion.div>
 
-            {action && (
-              <motion.div variants={BUTTON_VARIANTS}>
-                <motion.button
-                  type="button"
-                  onClick={action.onClick}
-                  disabled={action.disabled}
-                  className={cn(
-                    'inline-flex items-center gap-2 rounded-lg font-medium shadow-sm hover:shadow-md transition-all duration-200 relative overflow-hidden group/button cursor-pointer',
-                    'disabled:opacity-50 disabled:cursor-not-allowed',
-                    'bg-primary text-white hover:bg-[#3525cd]',
-                    'dark:bg-[#4F46E5] dark:hover:bg-[#6366F1]',
-                    'border-none',
-                    BUTTON_SIZE[size]
-                  )}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  {action.icon && (
-                    <motion.div
-                      className="transition-transform group-hover/button:rotate-90"
-                      whileHover={{ rotate: 90 }}
-                    >
-                      {action.icon}
-                    </motion.div>
-                  )}
-                  <span className="relative z-10">{action.label}</span>
-                </motion.button>
+            {(action || action2) && (
+              <motion.div
+                variants={BUTTON_VARIANTS}
+                className="flex flex-wrap items-center justify-center gap-3 mt-2 max-w-fit mx-auto"
+              >
+                {action && (
+                  <motion.button
+                    type="button"
+                    onClick={action.onClick}
+                    disabled={action.disabled}
+                    className={cn(
+                      'inline-flex items-center gap-2 rounded-lg font-medium shadow-sm hover:shadow-md transition-colors duration-200 relative overflow-hidden group/button cursor-pointer',
+                      'disabled:opacity-50 disabled:cursor-not-allowed',
+                      'bg-primary text-white hover:bg-[#3525cd]',
+                      'dark:bg-[#4F46E5] dark:hover:bg-[#6366F1]',
+                      'border-none',
+                      BUTTON_SIZE[size]
+                    )}
+                    whileHover="hover"
+                    initial="initial"
+                    whileTap={{ scale: 0.96 }}
+                    variants={{
+                      initial: { y: 0 },
+                      hover: { y: -2, scale: 1.02 }
+                    }}
+                  >
+                    {action.icon && (
+                      <motion.div
+                        variants={{
+                          initial: { rotate: 0, scale: 1 },
+                          hover: { rotate: [0, -15, 10, -5, 0], scale: 1.15, transition: { duration: 0.5 } }
+                        }}
+                      >
+                        {action.icon}
+                      </motion.div>
+                    )}
+                    <span className="relative z-10">{action.label}</span>
+                  </motion.button>
+                )}
+
+                {action2 && (
+                  <motion.button
+                    type="button"
+                    onClick={action2.onClick}
+                    disabled={action2.disabled}
+                    className={cn(
+                      'inline-flex items-center gap-2 rounded-lg font-medium shadow-sm hover:shadow-md transition-colors duration-250 relative overflow-hidden group/button cursor-pointer',
+                      'disabled:opacity-50 disabled:cursor-not-allowed',
+                      'bg-white border border-[#E2E8F0] text-on-surface-variant hover:text-on-surface hover:bg-slate-50',
+                      'dark:bg-[#1f2937] dark:border-[#374151] dark:text-slate-200 dark:hover:text-white dark:hover:bg-[#374151]',
+                      BUTTON_SIZE[size]
+                    )}
+                    whileHover="hover"
+                    initial="initial"
+                    whileTap={{ scale: 0.96 }}
+                    variants={{
+                      initial: { y: 0 },
+                      hover: { y: -2, scale: 1.02 }
+                    }}
+                  >
+                    {action2.icon && (
+                      <motion.div
+                        variants={{
+                          initial: { rotate: 0, scale: 1 },
+                          hover: { rotate: [0, -15, 10, -5, 0], scale: 1.15, transition: { duration: 0.5 } }
+                        }}
+                      >
+                        {action2.icon}
+                      </motion.div>
+                    )}
+                    <span className="relative z-10">{action2.label}</span>
+                  </motion.button>
+                )}
               </motion.div>
             )}
           </div>
