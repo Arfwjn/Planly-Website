@@ -1,6 +1,7 @@
 import React from 'react';
-import { Award, ShieldAlert } from 'lucide-react';
+import { Award, ShieldAlert, BookMarked, ClipboardCheck } from 'lucide-react';
 import { Course, AttendanceRecord } from '../../types';
+import EmptyState from '../ui/InteractiveEmptyState';
 
 interface AttendanceRecapGridProps {
   courses: Course[];
@@ -29,7 +30,7 @@ export default function AttendanceRecapGrid({
     const sickCount = courseRecords.filter(r => r.status === 'Sakit').length;
     const permittedCount = courseRecords.filter(r => r.status === 'Izin').length;
     const absentCount = courseRecords.filter(r => r.status === 'Alpha').length;
-
+ 
     const attendanceRate = targetSessions > 0 ? (attendedCount / targetSessions) * 100 : 0;
     
     return {
@@ -55,8 +56,20 @@ export default function AttendanceRecapGrid({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {recapStats.map((stat) => (
+      {courses.length === 0 ? (
+        <EmptyState
+          size="sm"
+          icons={[
+            <BookMarked className="w-5 h-5" />,
+            <Award className="w-5 h-5" />,
+            <ClipboardCheck className="w-5 h-5" />,
+          ]}
+          title="Tidak ada kelas terdaftar"
+          description="Daftarkan mata kuliah Anda terlebih dahulu untuk memantau rekap persentase kehadiran kuliah."
+        />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {recapStats.map((stat) => (
           <div 
             key={stat.id} 
             className={`p-5 rounded-2xl border transition-all duration-300 flex items-center justify-between gap-4 ${
@@ -120,10 +133,10 @@ export default function AttendanceRecapGrid({
                 {Math.round(stat.attendanceRate)}%
               </div>
             </div>
-
           </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

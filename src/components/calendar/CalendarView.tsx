@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { CalendarDays, Info, Undo2, Calendar as CalendarIcon } from 'lucide-react';
+import { CalendarDays, Info, Undo2, Calendar as CalendarIcon, Coffee, Smile } from 'lucide-react';
 import { Course, RescheduledSession, Task, AttendanceRecord, CampusEvent } from '../../types';
 import Skeleton from '../ui/Skeleton';
 import { getCoursesForDate } from '../../utils/reschedule';
 import { hexToRgb } from '../../utils/color';
+import EmptyState from '../ui/InteractiveEmptyState';
 
 // Import sub-komponen modular
 import MonthViewGrid from './MonthViewGrid';
@@ -390,30 +391,19 @@ export default function CalendarView({
 
           {timelineItems.length === 0 ? (
             /* Fallback kosong */
-            <div className="text-center py-12 bg-white dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center p-6">
-              <div className="relative w-24 h-24 mb-4 flex items-center justify-center text-primary/30">
-                <svg className="w-20 h-20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="3" y="4" width="18" height="16" rx="3" stroke="currentColor" strokeWidth="1.5" />
-                  <path d="M3 10H21" stroke="currentColor" strokeWidth="1.5" />
-                  <path d="M8 2V5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  <path d="M16 2V5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  <circle cx="8" cy="14" r="1" fill="currentColor" />
-                  <circle cx="12" cy="14" r="1" fill="currentColor" />
-                  <circle cx="16" cy="14" r="1" fill="currentColor" />
-                </svg>
-              </div>
-              <h3 className="text-sm font-bold text-on-surface">Tidak Ada Jadwal & Event</h3>
-              <p className="text-xs text-on-surface-variant mt-1 mb-6 max-w-sm font-medium">
-                Tidak ada mata kuliah atau event kampus yang terjadwal untuk hari {getIndonesianDayName(selectedDayObj.fullName)}.
-              </p>
-              <button
-                type="button"
-                onClick={onOpenAddNewCourseModal}
-                className="px-4 py-2 bg-primary hover:bg-[#4F46E5] text-white text-xs font-semibold rounded-lg shadow-sm transition-colors cursor-pointer border-none font-sans"
-              >
-                Tambah Mata Kuliah Baru
-              </button>
-            </div>
+            <EmptyState
+              icons={[
+                <Coffee className="w-5 h-5" />,
+                <CalendarIcon className="w-5 h-5" />,
+                <Smile className="w-5 h-5" />,
+              ]}
+              title="Tidak Ada Jadwal & Event"
+              description={`Tidak ada mata kuliah atau event kampus yang terjadwal untuk hari ${getIndonesianDayName(selectedDayObj.fullName)}.`}
+              action={{
+                label: 'Tambah Mata Kuliah Baru',
+                onClick: onOpenAddNewCourseModal,
+              }}
+            />
           ) : (
             /* Render baris kelas & event gabungan */
             timelineItems.map((item) => {

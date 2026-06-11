@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Plus, CalendarHeart } from 'lucide-react';
+import { Plus, CalendarHeart, PartyPopper, Sparkles } from 'lucide-react';
+import EmptyState from '../ui/InteractiveEmptyState';
 import { CampusEvent, EventCategory, CampusEventCreatePayload } from '../../types';
 import Skeleton from '../ui/Skeleton';
 
@@ -270,31 +271,20 @@ export default function EventsView({
         </div>
       ) : (
         /* Fallback Kosong */
-        <div className="text-center py-12 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl flex flex-col items-center justify-center p-6">
-          <div className="relative w-24 h-24 mb-4 flex items-center justify-center text-primary/30">
-            <CalendarHeart className="w-20 h-20" />
-            <div className="absolute top-2 right-2 animate-bounce">
-              <svg className="w-6 h-6 text-yellow-500/60" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor" />
-              </svg>
-            </div>
-          </div>
-          <h3 className="text-sm font-bold text-on-surface">
-            {searchQuery ? 'Tidak Ada Event Ditemukan' : 'Belum Ada Event Kampus'}
-          </h3>
-          <p className="text-xs text-on-surface-variant mt-1 mb-6 max-w-sm font-medium">
-            {searchQuery ? 'Tidak ada kegiatan kampus yang cocok dengan kata kunci pencarian Anda.' : 'Tambahkan event pertama Anda seperti seminar, workshop, kegiatan UKM, atau rapat organisasi mahasiswa.'}
-          </p>
-          {!searchQuery && (
-            <button
-              type="button"
-              onClick={handleOpenAdd}
-              className="px-4 py-2 bg-primary hover:bg-[#4F46E5] text-white text-xs font-semibold rounded-lg shadow-sm transition-colors cursor-pointer border-none font-sans"
-            >
-              Tambah Event Baru
-            </button>
-          )}
-        </div>
+        <EmptyState
+          icons={[
+            <PartyPopper className="w-5 h-5" />,
+            <CalendarHeart className="w-5 h-5" />,
+            <Sparkles className="w-5 h-5" />,
+          ]}
+          title={searchQuery ? 'Tidak Ada Event Ditemukan' : 'Belum Ada Event Kampus'}
+          description={searchQuery ? 'Tidak ada kegiatan kampus yang cocok dengan kata kunci pencarian Anda.' : 'Tambahkan event pertama Anda seperti seminar, workshop, kegiatan UKM, atau rapat organisasi mahasiswa.'}
+          action={!searchQuery ? {
+            label: 'Tambah Event Baru',
+            icon: <Plus className="w-4 h-4" />,
+            onClick: handleOpenAdd,
+          } : undefined}
+        />
       )}
 
       {/* Drawer Form Slide-over */}

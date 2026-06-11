@@ -1,7 +1,8 @@
 import React from 'react';
-import { Clock, MapPin, Users } from 'lucide-react';
+import { Clock, MapPin, Users, Calendar, PartyPopper, Sparkles } from 'lucide-react';
 import { CampusEvent, SidebarTab } from '../../types';
 import { hexToRgb } from '../../utils/color';
+import EmptyState from '../ui/InteractiveEmptyState';
 
 interface TodayEventsPanelProps {
   events: CampusEvent[];
@@ -40,9 +41,17 @@ export default function TodayEventsPanel({
 
       {/* Grid List Event */}
       {todayEvents.length === 0 ? (
-        <div className="text-center py-6 text-on-surface-variant text-xs font-medium">
-          Tidak ada event non-kuliah yang terjadwal untuk hari ini.
-        </div>
+        <EmptyState
+          size="sm"
+          icons={[
+            <Calendar className="w-5 h-5" />,
+            <PartyPopper className="w-5 h-5" />,
+            <Sparkles className="w-5 h-5" />,
+          ]}
+          title="Tidak Ada Event Hari Ini"
+          description="Tidak ada event non-kuliah yang terjadwal untuk hari ini."
+          className="border-none shadow-none bg-transparent"
+        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
           {todayEvents.map(event => (

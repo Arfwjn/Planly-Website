@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Plus, X, FileText } from 'lucide-react';
+import { Plus, X, FileText, PenLine, BookMarked } from 'lucide-react';
+import EmptyState from '../ui/InteractiveEmptyState';
 import { Note, Course } from '../../types';
 import Skeleton from '../ui/Skeleton';
 import NoteCard from './NoteCard';
@@ -174,24 +175,16 @@ export default function NotesView({
       <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-6 space-y-6">
         {filteredNotes.length === 0 ? (
           /* Tampilan Kosong (Empty State) */
-          <div className="break-inside-avoid bg-white dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-800 rounded-2xl p-6 text-center shadow-sm w-full flex flex-col items-center justify-center">
-            <div className="relative w-20 h-20 mb-3 flex items-center justify-center text-primary/30">
-              <svg className="w-16 h-16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M7 7H17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                <path d="M7 11H17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                <path d="M7 15H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-              <div className="absolute -top-1 -right-1 animate-pulse">
-                <svg className="w-5 h-5 text-yellow-500/60" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2L14.85 8.56L22 9.27L16.5 14L18.18 21L12 17.27L5.82 21L7.5 14L2 9.27L9.15 8.56L12 2Z" fill="currentColor" />
-                </svg>
-              </div>
-            </div>
-            <p className="text-sm font-bold text-on-surface">Tidak ada catatan ditemukan</p>
-            <p className="text-xs text-on-surface-variant mt-1 max-w-xs font-medium leading-relaxed">
-              {searchQuery ? 'Coba gunakan kata kunci pencarian yang berbeda.' : 'Mulai catat ide, rangkuman kuliah, atau rencana belajar Anda.'}
-            </p>
+          <div className="break-inside-avoid w-full">
+            <EmptyState
+              icons={[
+                <PenLine className="w-5 h-5" />,
+                <FileText className="w-5 h-5" />,
+                <BookMarked className="w-5 h-5" />,
+              ]}
+              title={searchQuery ? 'Tidak ada catatan ditemukan' : 'Belum ada catatan'}
+              description={searchQuery ? 'Coba gunakan kata kunci pencarian yang berbeda.' : 'Mulai catat ide, rangkuman kuliah, atau rencana belajar Anda.'}
+            />
           </div>
         ) : (
           /* Render kartu catatan */

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, CheckSquare } from 'lucide-react';
+import { Plus, CheckSquare, CheckCircle, ListChecks, ClipboardList } from 'lucide-react';
+import EmptyState from '../ui/InteractiveEmptyState';
 import { Task, Course } from '../../types';
 import Skeleton from '../ui/Skeleton';
 import TaskCard from './TaskCard';
@@ -219,25 +220,15 @@ export default function TasksView({
       <div className="space-y-3">
         {filteredTasks.length === 0 ? (
           /* Tampilan kosong */
-          <div className="text-center py-12 bg-white dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center p-6">
-            <div className="relative w-24 h-24 mb-4 flex items-center justify-center text-primary/30">
-              <svg className="w-20 h-20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M9 12L11 14L15 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M7 6H17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                <path d="M7 18H17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-              <div className="absolute top-2 right-2 animate-bounce">
-                <svg className="w-6 h-6 text-green-500/60" viewBox="0 0 24 24" fill="none">
-                  <path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" fill="currentColor" />
-                </svg>
-              </div>
-            </div>
-            <p className="text-sm font-bold text-on-surface">Tidak ada tugas ditemukan</p>
-            <p className="text-xs text-on-surface-variant mt-1 max-w-sm font-medium">
-              {searchQuery ? 'Sesuaikan kata kunci atau filter pencarian Anda.' : 'Kerja bagus! Semua tugas akademik Anda saat ini telah diselesaikan.'}
-            </p>
-          </div>
+          <EmptyState
+            icons={[
+              <ListChecks className="w-5 h-5" />,
+              <ClipboardList className="w-5 h-5" />,
+              <CheckCircle className="w-5 h-5" />,
+            ]}
+            title={searchQuery ? 'Tidak ada tugas ditemukan' : 'Kerja Bagus! 🎉'}
+            description={searchQuery ? 'Sesuaikan kata kunci atau filter pencarian Anda.' : 'Semua tugas akademik Anda saat ini telah diselesaikan.'}
+          />
         ) : (
           /* Iterasi kartu tugas */
           filteredTasks.map((task) => (

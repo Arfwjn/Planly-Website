@@ -1,7 +1,8 @@
 import React from 'react';
-import { Clock, MapPin, Users, Info, CheckSquare, Notebook } from 'lucide-react';
+import { Clock, MapPin, Users, Info, CheckSquare, Notebook, Coffee, Smile, CalendarCheck } from 'lucide-react';
 import { Course, Task } from '../../types';
 import { hexToRgb } from '../../utils/color';
+import EmptyState from '../ui/InteractiveEmptyState';
 
 interface TodayScheduleTimelineProps {
   todayCourses: Course[];
@@ -15,9 +16,7 @@ interface TodayScheduleTimelineProps {
 /**
  * Komponen TodayScheduleTimeline
  * 
- * Timeline vertikal yang memetakan seluruh kelas kuliah mahasiswa khusus hari ini.
- * Menyajikan status kelas yang sedang berjalan secara real-time, tugas-tugas terkait,
- * serta akses cepat menuju tab Catatan Kuliah.
+ * Menampilkan jadwal perkuliahan untuk hari ini dalam format urutan timeline waktu.
  */
 export default function TodayScheduleTimeline({
   todayCourses,
@@ -28,45 +27,40 @@ export default function TodayScheduleTimeline({
   currentTime
 }: TodayScheduleTimelineProps) {
   
-  const getCourseStatus = (course: Course): 'in-progress' | 'completed' | 'upcoming' => {
-    const currentMin = currentTime.getHours() * 60 + currentTime.getMinutes();
-    
-    const [startH, startM] = course.start_time.split(':').map(Number);
-    const [endH, endM] = course.end_time.split(':').map(Number);
-    
-    const startMin = startH * 60 + startM;
-    const endMin = endH * 60 + endM;
-    
-    if (currentMin >= startMin && currentMin <= endMin) {
-      return 'in-progress';
-    } else if (currentMin > endMin) {
-      return 'completed';
-    } else {
-      return 'upcoming';
-    }
-  };
+  // Deteksi jika hari ini ada jadwal kuliah
+  const hasCoursesToday = todayCourses.length > 0;
 
-  const getIndonesianDayName = (day: string) => {
-    const map: Record<string, string> = {
-      'Sunday': 'Minggu',
+  // Nama hari dalam bahasa Indonesia untuk label penanda
+  const getIndonesianDayName = (day: string): string => {
+    const dayMap: { [key: string]: string } = {
       'Monday': 'Senin',
       'Tuesday': 'Selasa',
       'Wednesday': 'Rabu',
       'Thursday': 'Kamis',
       'Friday': 'Jumat',
-      'Saturday': 'Sabtu'
+      'Saturday': 'Sabtu',
+      'Sunday': 'Minggu',
     };
-    return map[day] || day;
+    return dayMap[day] || day;
   };
 
-  const hasCoursesToday = todayCourses.length > 0;
+  // Logika penentu status waktu mata kuliah aktif
+  const getCourseStatus = (course: Course): 'upcoming' | 'in-progress' | 'completed' => {
+    const nowTimeStr = currentTime.toTimeString().split(' ')[0].substring(0, 5); // format HH:MM
+    if (nowTimeStr < course.start_time) return 'upcoming';
+    if (nowTimeStr >= course.start_time && nowTimeStr <= course.end_time) return 'in-progress';
+    return 'completed';
+  };
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-800 rounded-2xl p-8 shadow-sm">
-      {/* Header Timeline */}
-      <div className="flex items-center justify-between mb-8 border-b border-[#E2E8F0] dark:border-slate-800 pb-4">
-        <h3 className="text-lg font-bold text-on-surface">Jadwal Kuliah</h3>
-        <span className="text-xs text-on-surface-variant font-medium bg-[#F1F5F9] dark:bg-slate-800 px-3 py-1 rounded-full">
+    <div className="bg-white dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-800 rounded-2xl p-6 shadow-sm">
+      {/* Header Widget */}
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center gap-2">
+          <div className="w-1.5 h-6 bg-primary rounded-full"></div>
+          <h3 className="text-lg font-bold text-on-surface">Jadwal Hari Ini</h3>
+        </div>
+        <span className="text-xs bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full font-bold text-on-surface-variant">
           Hari {getIndonesianDayName(todayDayName)}
         </span>
       </div>
@@ -80,13 +74,16 @@ export default function TodayScheduleTimeline({
 
         {!hasCoursesToday ? (
           /* Fallback Kosong */
-          <div className="text-center py-12 bg-white dark:bg-slate-900 border border-dashed border-[#C7C4D8] dark:border-slate-800 rounded-xl flex flex-col items-center justify-center">
-            <Clock className="w-12 h-12 text-[#94A3B8] mb-3 opacity-60 animate-pulse" />
-            <h3 className="text-sm font-semibold text-on-surface">Tidak ada kelas hari ini</h3>
-            <p className="text-xs text-on-surface-variant mt-1">
-              Nikmati hari libur kamu atau kerjakan tugas-tugas yang belum selesai.
-            </p>
-          </div>
+          <EmptyState
+            icons={[
+              <Coffee className="w-5 h-5" />,
+              <CalendarCheck className="w-5 h-5" />,
+              <Smile className="w-5 h-5" />,
+            ]}
+            title="Tidak ada kelas hari ini"
+            description="Nikmati hari libur kamu atau kerjakan tugas-tugas yang belum selesai."
+            className="border-none shadow-none bg-transparent"
+          />
         ) : (
           /* Render List Kelas */
           todayCourses.map((course) => {

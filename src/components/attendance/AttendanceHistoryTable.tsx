@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { History, Globe, Eye, Check, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { History, Globe, Eye, Check, Trash2, ChevronLeft, ChevronRight, ClipboardCheck, Clock3 } from 'lucide-react';
+import EmptyState from '../ui/InteractiveEmptyState';
 import { AttendanceRecord } from '../../types';
 
 interface AttendanceHistoryTableProps {
@@ -47,9 +48,17 @@ export default function AttendanceHistoryTable({
       </h3>
 
       {attendanceRecords.length === 0 ? (
-        <p className="text-xs text-on-surface-variant italic py-8 text-center font-medium">
-          Belum ada riwayat presensi yang terekam di sistem.
-        </p>
+        <EmptyState
+          size="sm"
+          icons={[
+            <ClipboardCheck className="w-5 h-5" />,
+            <History className="w-5 h-5" />,
+            <Clock3 className="w-5 h-5" />,
+          ]}
+          title="Belum ada riwayat presensi"
+          description="Riwayat presensi Anda akan muncul di sini setelah Anda melakukan check-in."
+          className="border-0 shadow-none bg-transparent"
+        />
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left">

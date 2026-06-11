@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Plus, BookOpen } from 'lucide-react';
+import { Plus, BookOpen, GraduationCap, Library } from 'lucide-react';
+import EmptyState from '../ui/InteractiveEmptyState';
 import { Course, Task } from '../../types';
 import Skeleton from '../ui/Skeleton';
 import CourseCard from './CourseCard';
@@ -147,24 +148,16 @@ export default function CoursesView({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredCourses.length === 0 ? (
           /* Tampilan Kosong */
-          <div className="col-span-full text-center py-12 bg-white dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center p-6">
-            <div className="relative w-24 h-24 mb-4 flex items-center justify-center text-primary/30">
-              <svg className="w-20 h-20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M4 19.5C4 18.6716 4.67157 18 5.5 18H20V22H5.5C4.67157 22 4 21.3284 4 19.5Z" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M4 19.5C4 18.6716 4.67157 18 5.5 18H20V4H5.5C4.67157 4 4 4.67157 4 5.5V19.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-                <path d="M6 8H18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                <path d="M6 12H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-              <div className="absolute top-2 right-2 animate-bounce">
-                <svg className="w-6 h-6 text-indigo-500/60" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 3L1 9L12 15L21 10.09V17H23V9L12 3Z" fill="currentColor" />
-                </svg>
-              </div>
-            </div>
-            <p className="text-sm font-bold text-on-surface">Belum ada mata kuliah terdaftar</p>
-            <p className="text-xs text-on-surface-variant mt-1 max-w-sm font-medium">
-              {searchQuery ? 'Tidak ada mata kuliah yang cocok dengan pencarian Anda.' : 'Anda belum mendaftarkan mata kuliah apa pun untuk semester ini.'}
-            </p>
+          <div className="col-span-full">
+            <EmptyState
+              icons={[
+                <Library className="w-5 h-5" />,
+                <BookOpen className="w-5 h-5" />,
+                <GraduationCap className="w-5 h-5" />,
+              ]}
+              title={searchQuery ? 'Tidak ada mata kuliah ditemukan' : 'Belum ada mata kuliah terdaftar'}
+              description={searchQuery ? 'Tidak ada mata kuliah yang cocok dengan pencarian Anda.' : 'Anda belum mendaftarkan mata kuliah apa pun untuk semester ini.'}
+            />
           </div>
         ) : (
           /* Iterasi list matakuliah */
