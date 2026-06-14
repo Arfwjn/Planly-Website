@@ -226,7 +226,7 @@ export default function TasksView({
               <ClipboardList className="w-5 h-5" />,
               <CheckCircle className="w-5 h-5" />,
             ]}
-            title={searchQuery ? 'Tidak ada tugas ditemukan' : 'Kerja Bagus! 🎉'}
+            title={searchQuery ? 'Tidak ada tugas ditemukan' : 'Kerja Bagus!'}
             description={searchQuery ? 'Sesuaikan kata kunci atau filter pencarian Anda.' : 'Semua tugas akademik Anda saat ini telah diselesaikan.'}
             action={{
               label: 'Tambah Tugas Baru',

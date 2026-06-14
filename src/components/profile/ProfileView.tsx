@@ -11,6 +11,7 @@ import GpaProgressCard from './GpaProgressCard';
 import CalendarSyncPanel from './CalendarSyncPanel';
 import DailySummaryEmailModal from './DailySummaryEmailModal';
 import BackupRecoveryPanel from './BackupRecoveryPanel';
+import FaceEnrollment from './FaceEnrollment';
 
 interface ProfileViewProps {
   user: User;
@@ -583,13 +584,24 @@ export default function ProfileView({
                     <p className="text-xs leading-relaxed text-on-surface-variant mb-6 font-medium">
                       Kelola informasi profil, nomor induk mahasiswa (NIM), program studi, target akademik, dan target jam belajar harian kamu di sini.
                     </p>
-                    <button
-                      onClick={handleStartEditing}
-                      className="self-start text-primary font-bold text-xs flex items-center gap-1 hover:underline group cursor-pointer bg-transparent border-none p-0"
-                    >
-                      <span>Perbarui profil</span>
-                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                    </button>
+                    <div className="flex justify-between items-center">
+                      <button
+                        onClick={handleStartEditing}
+                        className="text-primary font-bold text-xs flex items-center gap-1 hover:underline group cursor-pointer bg-transparent border-none p-0"
+                      >
+                        <span>Perbarui profil</span>
+                        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={onSignOut}
+                        className="text-red-600 hover:text-red-755 dark:text-red-400 dark:hover:text-red-300 font-bold text-xs flex items-center gap-1 hover:underline group cursor-pointer bg-transparent border-none p-0"
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                        <span>Keluar Sesi</span>
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -604,22 +616,10 @@ export default function ProfileView({
                 gpaTarget={user.gpa_target}
               />
 
-              {/* Sesi Keluar Akun */}
-              <div className="bg-red-50/20 dark:bg-red-950/5 border border-red-100/50 dark:border-red-900/20 backdrop-blur-md rounded-2xl p-6 text-center flex flex-col justify-center items-center shadow-xs">
-                <LogOut className="w-8 h-8 text-red-655 mb-2" />
-                <h3 className="text-base font-bold text-red-655 mb-1 font-sans">Keluar Sesi</h3>
-                <p className="text-xs text-on-surface-variant max-w-[280px] mb-4 font-semibold leading-relaxed">
-                  Keluar dari sesi akademis Planly aktif saat ini pada perangkat peramban browser ini dengan aman.
-                </p>
-                <button
-                  type="button"
-                  onClick={onSignOut}
-                  className="px-6 py-2.5 bg-red-600 hover:bg-red-755 text-white font-bold text-xs rounded-full shadow-sm hover:shadow-md transition-all active:scale-95 cursor-pointer border-none flex items-center justify-center gap-1.5"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span>Keluar Sekarang</span>
-                </button>
-              </div>
+              {/* Verifikasi Wajah Presensi */}
+              <FaceEnrollment theme={theme} />
+
+
             </div>
           )}
 
