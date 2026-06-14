@@ -301,7 +301,7 @@ export default function App() {
         );
       case 'ai-companion':
         return (
-          <AICompanionView />
+          <AICompanionView onAddNote={handleAddNote} onTabChange={setActiveTab} />
         );
       default:
         return null;

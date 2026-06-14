@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Brain, Globe, Play, User as UserIcon } from 'lucide-react';
+import { Brain, Globe, Play, User as UserIcon, RotateCcw } from 'lucide-react';
 import { ChatMessage } from './types';
 
 interface CompanionChatTabProps {
@@ -9,6 +9,7 @@ interface CompanionChatTabProps {
   isTyping: boolean;
   onSendMessage: (e: React.FormEvent) => void;
   handleSeek: (timeInSeconds: number) => void;
+  onResetChat?: () => void;
 }
 
 /**
@@ -24,6 +25,7 @@ export default function CompanionChatTab({
   isTyping,
   onSendMessage,
   handleSeek,
+  onResetChat,
 }: CompanionChatTabProps) {
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -32,44 +34,61 @@ export default function CompanionChatTab({
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  // Parser teks untuk mendeteksi penanda waktu [MM:SS] dan mengubahnya menjadi tombol seekable
+  // Parser teks untuk mendeteksi penanda waktu [MM:SS] dan tag bold <b> / **
   const renderMessageText = (text: string) => {
-    const regex = /\[(\d{2}):(\d{2})\]/g;
-    const parts = [];
-    let lastIndex = 0;
-    let match;
-
-    while ((match = regex.exec(text)) !== null) {
-      const matchIndex = match.index;
-      if (matchIndex > lastIndex) {
-        parts.push(text.substring(lastIndex, matchIndex));
+    // 1. Pecah teks berdasarkan tag <b>...</b> atau markdown **...**
+    const htmlParts = text.split(/(<b>.*?<\/b>|\*\*.*?\*\*)/g);
+    
+    return htmlParts.map((part, partIdx) => {
+      // Jika bagian tersebut adalah tag bold HTML
+      if (part.startsWith('<b>') && part.endsWith('</b>')) {
+        const boldText = part.slice(3, -4);
+        return <b key={`b-${partIdx}`} className="font-bold">{boldText}</b>;
+      }
+      // Jika bagian tersebut adalah markdown bold
+      if (part.startsWith('**') && part.endsWith('**')) {
+        const boldText = part.slice(2, -2);
+        return <b key={`md-${partIdx}`} className="font-bold">{boldText}</b>;
       }
       
-      const mins = parseInt(match[1]);
-      const secs = parseInt(match[2]);
-      const totalSeconds = mins * 60 + secs;
-      const timestampText = match[0]; 
+      // 2. Jika teks biasa, deteksi penanda waktu [MM:SS]
+      const regex = /\[(\d{2}):(\d{2})\]/g;
+      const subParts = [];
+      let lastIndex = 0;
+      let match;
 
-      parts.push(
-        <button
-          key={matchIndex}
-          type="button"
-          onClick={() => handleSeek(totalSeconds)}
-          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 mx-0.5 bg-primary/10 hover:bg-primary text-primary hover:text-white font-mono font-bold text-[10px] rounded transition-colors cursor-pointer border-none"
-        >
-          <Play className="w-2.5 h-2.5 stroke-[3px]" />
-          <span>{timestampText}</span>
-        </button>
-      );
+      while ((match = regex.exec(part)) !== null) {
+        const matchIndex = match.index;
+        if (matchIndex > lastIndex) {
+          subParts.push(part.substring(lastIndex, matchIndex));
+        }
+        
+        const mins = parseInt(match[1]);
+        const secs = parseInt(match[2]);
+        const totalSeconds = mins * 60 + secs;
+        const timestampText = match[0]; 
 
-      lastIndex = regex.lastIndex;
-    }
+        subParts.push(
+          <button
+            key={`ts-${partIdx}-${matchIndex}`}
+            type="button"
+            onClick={() => handleSeek(totalSeconds)}
+            className="inline-flex items-center gap-0.5 px-1.5 py-0.5 mx-0.5 bg-primary/10 hover:bg-primary text-primary hover:text-white font-mono font-bold text-[10px] rounded transition-colors cursor-pointer border-none"
+          >
+            <Play className="w-2.5 h-2.5 stroke-[3px]" />
+            <span>{timestampText}</span>
+          </button>
+        );
 
-    if (lastIndex < text.length) {
-      parts.push(text.substring(lastIndex));
-    }
+        lastIndex = regex.lastIndex;
+      }
 
-    return parts.length > 0 ? parts : text;
+      if (lastIndex < part.length) {
+        subParts.push(part.substring(lastIndex));
+      }
+
+      return subParts.length > 0 ? subParts : part;
+    });
   };
 
   return (
@@ -136,6 +155,16 @@ export default function CompanionChatTab({
         onSubmit={onSendMessage}
         className="p-3 border-t border-slate-150 dark:border-slate-800 bg-white dark:bg-slate-900 flex gap-2 items-center flex-shrink-0 border-none"
       >
+        {onResetChat && (
+          <button
+            type="button"
+            onClick={onResetChat}
+            title="Reset Percakapan"
+            className="w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors"
+          >
+            <RotateCcw className="w-4 h-4" />
+          </button>
+        )}
         <input
           type="text"
           value={chatInput}

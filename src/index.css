@@ -285,3 +285,12 @@ button:not(.empty-state-btn):not(.no-animate):not([disabled]):hover svg {
     transform: rotate(0deg) scale(1.15);
   }
 }
+
+/* Utilitas menyembunyikan scrollbars secara lintas-browser */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+}
+.no-scrollbar {
+  -ms-overflow-style: none !important;  /* IE dan Edge */
+  scrollbar-width: none !important;  /* Firefox */
+}

@@ -96,7 +96,7 @@ export default function CompanionVideoPanel({
         <div className="flex gap-2">
           <Clock className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
           <span className="font-semibold">
-            Klik penanda waktu (*timestamp*) pada baris transkrip di sebelah kanan untuk melompat langsung ke penjelasan materi dosen pada video.
+            Klik penanda waktu (<b>timestamp</b>) pada baris transkrip di sebelah kanan untuk melompat langsung ke penjelasan materi dosen pada video.
           </span>
         </div>
       </div>

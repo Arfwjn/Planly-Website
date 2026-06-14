@@ -33,6 +33,21 @@ export default function CompanionTranscriptTab({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Helper untuk memformat teks dengan bold (<b> atau **) menjadi tag b
+  const formatText = (text: string) => {
+    if (!text) return '';
+    const parts = text.split(/(<b>[\s\S]*?<\/b>|\*\*[\s\S]*?\*\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('<b>') && part.endsWith('</b>')) {
+        return <b key={i} className="font-bold">{part.slice(3, -4)}</b>;
+      }
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <b key={i} className="font-bold">{part.slice(2, -2)}</b>;
+      }
+      return part;
+    });
+  };
+
   // Filter transkrip berdasarkan pencarian kata kunci
   const filteredTranscript = transcript.filter(line => 
     line.text.toLowerCase().includes(transcriptSearch.toLowerCase()) ||
@@ -101,7 +116,7 @@ export default function CompanionTranscriptTab({
                   <p className={`text-xs font-medium leading-relaxed ${
                     isActive ? 'text-on-surface font-semibold' : 'text-on-surface-variant'
                   }`}>
-                    {line.text}
+                    {formatText(line.text)}
                   </p>
                 </div>
               </div>

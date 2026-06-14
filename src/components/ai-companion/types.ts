@@ -27,3 +27,27 @@ export interface ProcessedSession {
   dateStr: string;
   isDemo: boolean;
 }
+
+export interface AcademicEnrichmentCard {
+  title: string;
+  formula: string;
+  description: string;
+}
+
+export interface AcademicEnrichmentSource {
+  label: string;
+  url: string;
+}
+
+export interface AcademicEnrichment {
+  explanation: string;
+  cards: AcademicEnrichmentCard[];
+  sources: AcademicEnrichmentSource[];
+}
+
+export interface LectureChapter {
+  time: number;
+  title: string;
+  desc: string;
+}
+
