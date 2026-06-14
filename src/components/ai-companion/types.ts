@@ -30,7 +30,7 @@ export interface ProcessedSession {
 
 export interface AcademicEnrichmentCard {
   title: string;
-  formula: string;
+  formula?: string;
   description: string;
 }
 

@@ -584,3 +584,24 @@ Di sisi server Laravel, pastikan aturan integritas data (*database integrity*) b
    * Field `course_id` pada tabel `tasks` dan `notes` terkait harus diset menjadi `NULL` (terbantu oleh `onDelete('set null')`).
 2. **Hapus Akun Pengguna (`users`)**:
    * Menghapus baris `users` akan menghapus seluruh data mata kuliah, tugas, catatan, event, dan riwayat absensi miliknya secara permanen (`onDelete('cascade')`).
+
+---
+
+## 7. Catatan Tambahan Skema Database (Revisi & Base64)
+
+### 7.1 Tipe Data Foto Profil (`profile_photo_url`)
+Pada migrasi awal, kolom `profile_photo_url` bertipe `string` (yang dibatasi 255 karakter). Karena Planly mendukung penyimpanan foto registrasi wajah / avatar klien dalam bentuk Base64 Data URI yang panjang, buatlah migrasi revisi untuk mengubah tipe kolom tersebut menjadi `longText`:
+
+Jalankan: `php artisan make:migration change_profile_photo_url_to_long_text_in_users_table --table=users`
+```php
+public function up(): void
+{
+    Schema::table('users', function (Blueprint $table) {
+        $table->longText('profile_photo_url')->nullable()->change();
+    });
+}
+```
+
+### 7.2 Struktur JSON Cast di PHP
+Untuk `attachments` pada model `Task` dan `Note` serta koordinat GPS pada `AttendanceRecord`, pastikan cast tipe data bawaan dideklarasikan dengan benar pada Eloquent model agar PHP otomatis men-serialize dan de-serialize JSON string dari MySQL tanpa perlu memanggil `json_encode` atau `json_decode` secara manual di controller.
+

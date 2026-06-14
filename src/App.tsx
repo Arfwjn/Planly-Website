@@ -279,6 +279,7 @@ export default function App() {
             setActiveLectureCourseId={setActiveLectureCourseId}
             lectureNoteContent={lectureNoteContent}
             setLectureNoteContent={setLectureNoteContent}
+            loading={loadingData}
           />
         );
       case 'profile':
@@ -294,6 +295,7 @@ export default function App() {
             notesCount={notes.length}
             rescheduledSessions={rescheduledSessions}
             events={events}
+            loading={loadingData}
           />
         );
       case 'attendance':
@@ -305,11 +307,12 @@ export default function App() {
             onSubmitAttendance={handleCreateAttendance}
             onDeleteAttendance={handleDeleteAttendance}
             onTabChange={setActiveTab}
+            loading={loadingData}
           />
         );
       case 'ai-companion':
         return (
-          <AICompanionView onAddNote={handleAddNote} onTabChange={setActiveTab} />
+          <AICompanionView onAddNote={handleAddNote} onTabChange={setActiveTab} loading={loadingData} />
         );
       default:
         return null;

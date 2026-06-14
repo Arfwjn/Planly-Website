@@ -1011,3 +1011,90 @@ Menghapus riwayat absensi masuk (jika terjadi kesalahan pemrosesan wajah atau un
     "message": "Riwayat absensi berhasil dihapus"
   }
   ```
+
+---
+
+# 9. Gemini AI Integration (Client-Side Direct API)
+
+Fitur **Asisten Kuliah AI (AI Companion)** pada aplikasi Planly dirancang menggunakan model **Gemini 2.5 Flash** (`gemini-2.5-flash`) yang diakses langsung dari aplikasi klien (frontend) tanpa perantara server backend (API Laravel).
+
+### 9.1 Alur Deteksi & Keamanan API Key (Mobile Parity)
+1. **Penyimpanan Lokal**: Kunci API Gemini disimpan di penyimpanan lokal peramban (`localStorage`) dengan enkripsi custom XOR + Sidik Jari (Fingerprint) Browser unik untuk menghindari pembajakan credential dalam bentuk plain-text oleh ekstensi berbahaya.
+2. **Implementasi Mobile (Flutter)**: Developer Flutter **wajib** menyimpan Kunci API Gemini menggunakan **Flutter Secure Storage** (`flutter_secure_storage` yang menggunakan Keychain pada iOS dan AES/EncryptedSharedPreferences pada Android) alih-alih menggunakan `shared_preferences` biasa.
+3. **Injeksi Langsung**: Kunci API tersebut di-inject secara dinamis ke instance Client Google Gen AI saat inisialisasi fitur Asisten AI.
+
+### 9.2 Pipeline Analisis Rekaman Kuliah
+1. **Kompresi Audio (Client-side extraction)**: Berkas video MP4 didecode oleh peramban, diturunkan frekuensinya (*down-sampled*) ke format **16000Hz mono WAV** menggunakan Web Audio API, kemudian dikirimkan sebagai payload Base64 (mimeType: `audio/wav`). Hal ini menghemat bandwidth hingga 50x.
+   *(Di Flutter, gunakan plugin `ffmpeg_kit_flutter` atau library audio decoding serupa untuk mengekstrak trek audio WAV 16kHz sebelum mengirimkannya ke Gemini)*.
+2. **Kueri Gemini**: Mengirimkan audio WAV beserta prompt instruksi terstruktur untuk menghasilkan JSON response yang mematuhi `responseSchema`.
+3. **Format Markdown & Bold HTML**: Gemini diinstruksikan untuk menggunakan penanda `<b>teks</b>` HTML untuk cetak tebal (bold) alih-alih asterisk `**` guna menyederhanakan parser UI, serta mendukung LaTeX untuk formula matematika.
+
+### 9.3 Kontrak Skema Respons Analisis Gemini
+Respons dari model Gemini API bertipe `application/json` dan mematuhi skema berikut:
+```json
+{
+  "transcript": [
+    {
+      "time": 0,
+      "speaker": "Dosen",
+      "text": "Kalimat verbatim transkrip di sini..."
+    }
+  ],
+  "chapters": [
+    {
+      "time": 0,
+      "title": "Judul Bab Pembahasan",
+      "desc": "Ringkasan penjelasan materi pada bab ini."
+    }
+  ],
+  "takeaways": [
+    "Poin penting 1 dalam teks",
+    "Poin penting 2 dalam teks"
+  ],
+  "enrichment": {
+    "explanation": "Penjelasan pengayaan akademik terkait topik dari internet...",
+    "cards": [
+      {
+        "title": "Nama Konsep Pengayaan",
+        "description": "Penjelasan cara kerja konsep...",
+        "formula": "f(x) = \\max(0, x)"
+      }
+    ],
+    "sources": [
+      {
+        "label": "Nama Situs Referensi",
+        "url": "https://example.com/source"
+      }
+    ]
+  }
+}
+```
+*Catatan: Properti `formula` bersifat opsional (`formula?: string`) pada kartu konsep (`cards`). Jika kartu konsep tidak memiliki rumus matematika pendukung, properti `formula` harus dihilangkan dari objek JSON.*
+
+---
+
+# 10. Spesifikasi Payload Lampiran & Biometrik Wajah
+
+### 10.1 Format Struktur Lampiran Berkas (`AttachmentFile`)
+Kolom `attachments` pada API Tugas (`/tasks`) dan Catatan (`/notes`) menyimpan array data berkas yang dikompresi ke format Base64 Data URI di sisi klien:
+```json
+{
+  "name": "nama_berkas_tugas.pdf",
+  "type": "application/pdf",
+  "size": 14520,
+  "data_url": "data:application/pdf;base64,JVBERi..."
+}
+```
+*   **Batas Ukuran**: Klien web membatasi ukuran berkas maksimal **1.5MB** per berkas untuk efisiensi penyimpanan DB/localStorage.
+
+### 10.2 Format Penyimpanan Biometrik Wajah (Local & API)
+Data verifikasi wajah presensi diproses 100% di sisi klien menggunakan pustaka pengenalan wajah:
+1. **Descriptor Wajah (Pendaftaran Wajah)**:
+   - Wajah dipindai menggunakan kamera depan.
+   - Pustaka mendeteksi landmark wajah dan mengekstrak **128-float array descriptor**.
+   - Array ini di-string-kan (JSON format) dan disimpan di perangkat lokal klien.
+2. **Payload Presensi Kehadiran (`POST /attendance`)**:
+   - Saat mahasiswa melakukan check-in, descriptor wajah dihitung ulang secara real-time dan dicocokkan dengan descriptor terdaftar (Euclidean Distance <= 0.6 dianggap sukses).
+   - Snapshot wajah saat itu diambil sebagai berkas JPG Base64 dan dikirimkan ke server API:
+     - `image_base64`: `"data:image/jpeg;base64,/9j/4AAQSkZJRg..."`
+     - Koordinat GPS (`latitude` dan `longitude`) divalidasi dengan radius lokasi kelas di sisi klien sebelum/saat pengiriman.

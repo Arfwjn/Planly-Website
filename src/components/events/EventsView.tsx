@@ -136,31 +136,48 @@ export default function EventsView({
   // Tampilkan loading skeleton
   if (loading) {
     return (
-      <div className="max-w-[1000px] mx-auto w-full space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <Skeleton className="h-8 w-48 mb-2 animate-pulse" />
-            <Skeleton className="h-4 w-72 animate-pulse" />
+      <div className="max-w-[1000px] mx-auto w-full space-y-6 pb-12">
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-9 w-44 rounded-lg" />
+              <Skeleton className="h-5 w-16 rounded-full" />
+            </div>
+            <Skeleton className="h-4 w-72 rounded-md" />
           </div>
-          <Skeleton className="h-10 w-36 rounded-xl animate-pulse" />
+          <Skeleton className="h-10 w-36 rounded-xl" />
         </div>
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[#E2E8F0] dark:border-slate-800 pb-3">
-          <div className="flex gap-4">
-            <Skeleton className="h-8 w-24 rounded-lg animate-pulse" />
-            <Skeleton className="h-8 w-24 rounded-lg animate-pulse" />
-            <Skeleton className="h-8 w-24 rounded-lg animate-pulse" />
+
+        {/* Controls Row */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[#E2E8F0] dark:border-slate-800 pb-3 mb-6">
+          <div className="flex gap-6">
+            <Skeleton className="h-5 w-24 rounded-md" />
+            <Skeleton className="h-5 w-24 rounded-md" />
+            <Skeleton className="h-5 w-20 rounded-md" />
           </div>
-          <div className="flex gap-3 w-full sm:w-auto">
-            <Skeleton className="h-10 w-full sm:w-48 rounded-lg animate-pulse" />
-            <Skeleton className="h-10 w-full sm:w-44 rounded-lg animate-pulse" />
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <Skeleton className="h-10 w-full sm:w-48 rounded-xl" />
+            <Skeleton className="h-10 w-full sm:w-44 rounded-xl" />
           </div>
         </div>
+
+        {/* Grid List Event Skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="p-5 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-3">
-              <Skeleton className="h-6 w-20 rounded-full animate-pulse" />
-              <Skeleton className="h-6 w-3/4 animate-pulse" />
-              <Skeleton className="h-4 w-1/2 animate-pulse" />
+            <div key={i} className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-5 space-y-4 flex flex-col justify-between h-[180px]">
+              <div className="space-y-3">
+                <div className="flex justify-between items-start">
+                  <Skeleton className="h-6 w-20 rounded-full" />
+                  <Skeleton className="h-5 w-24 rounded-full" />
+                </div>
+                <Skeleton className="h-6 w-3/4 rounded-md" />
+                <Skeleton className="h-4 w-full rounded-md" />
+              </div>
+              <div className="flex gap-4 pt-2">
+                <Skeleton className="h-4 w-24 rounded-md" />
+                <Skeleton className="h-4 w-28 rounded-md" />
+              </div>
             </div>
           ))}
         </div>

@@ -8,6 +8,7 @@ import AttendanceScanner from './AttendanceScanner';
 import AttendanceHistoryTable from './AttendanceHistoryTable';
 import AttendanceRecapGrid from './AttendanceRecapGrid';
 import EmptyState from '../ui/InteractiveEmptyState';
+import Skeleton from '../ui/Skeleton';
 
 interface AttendanceViewProps {
   courses: Course[];
@@ -16,6 +17,7 @@ interface AttendanceViewProps {
   onSubmitAttendance: (payload: AttendanceSubmitPayload) => Promise<AttendanceRecord>;
   onDeleteAttendance: (id: number) => Promise<void>;
   onTabChange?: (tab: SidebarTab) => void;
+  loading?: boolean;
 }
 
 /**
@@ -35,8 +37,92 @@ export default function AttendanceView({
   attendanceRecords,
   onSubmitAttendance,
   onDeleteAttendance,
-  onTabChange
+  onTabChange,
+  loading = false
 }: AttendanceViewProps) {
+  if (loading) {
+    return (
+      <div className="max-w-[1000px] mx-auto w-full space-y-8 pb-12">
+        {/* Header Halaman */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Skeleton className="w-44 h-9 rounded-lg" />
+              <Skeleton className="w-16 h-5 rounded-full" />
+            </div>
+            <Skeleton className="w-3/4 sm:w-[500px] h-4 rounded-md" />
+          </div>
+          {/* Jam Digital Widget */}
+          <div className="w-[140px] h-[46px] rounded-xl flex items-center bg-[#F1F5F9] dark:bg-slate-800 px-4 py-2.5 border border-transparent self-start sm:self-auto flex-shrink-0">
+            <div className="flex-1 space-y-1">
+              <Skeleton className="w-10 h-2 rounded-sm" />
+              <Skeleton className="w-16 h-4 rounded-sm" />
+            </div>
+          </div>
+        </div>
+
+        {/* Navigasi Tabs */}
+        <div className="flex border-b border-[#E2E8F0] dark:border-slate-800/80 gap-6 pb-3">
+          <Skeleton className="w-28 h-5 rounded-md" />
+          <Skeleton className="w-28 h-5 rounded-md" />
+        </div>
+
+        {/* Content Area Skeleton */}
+        <div className="space-y-6">
+          {/* Card Matakuliah Aktif */}
+          <div className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-8 shadow-sm flex flex-col gap-6">
+            <Skeleton className="w-44 h-5 rounded-full" />
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+              <div className="flex-1 space-y-4">
+                <div className="space-y-2">
+                  <Skeleton className="w-20 h-3 rounded-sm" />
+                  <Skeleton className="w-2/3 h-6 rounded-md" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Skeleton className="w-16 h-3 rounded-sm" />
+                    <Skeleton className="w-32 h-4 rounded-sm" />
+                  </div>
+                  <div className="space-y-2">
+                    <Skeleton className="w-16 h-3 rounded-sm" />
+                    <Skeleton className="w-32 h-4 rounded-sm" />
+                  </div>
+                </div>
+              </div>
+              <Skeleton className="w-full md:w-40 h-12 rounded-xl" />
+            </div>
+          </div>
+
+          {/* History/Tabel Section */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <Skeleton className="w-32 h-6 rounded-md" />
+              <Skeleton className="w-48 h-8 rounded-lg" />
+            </div>
+            <div className="bg-white dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+              <div className="p-4 border-b border-[#E2E8F0] dark:border-slate-800 flex gap-4">
+                <Skeleton className="w-1/4 h-4 rounded-sm" />
+                <Skeleton className="w-1/4 h-4 rounded-sm" />
+                <Skeleton className="w-1/4 h-4 rounded-sm" />
+                <Skeleton className="w-1/4 h-4 rounded-sm" />
+              </div>
+              <div className="p-4 space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex gap-4">
+                    <Skeleton className="w-1/4 h-4 rounded-sm" />
+                    <Skeleton className="w-1/4 h-4 rounded-sm" />
+                    <Skeleton className="w-1/4 h-4 rounded-sm" />
+                    <Skeleton className="w-1/4 h-4 rounded-sm" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const toast = useToast();
 
   const [activeTab, setActiveTab] = useState<'checkin' | 'recap'>('checkin');

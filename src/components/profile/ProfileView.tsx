@@ -12,6 +12,9 @@ import CalendarSyncPanel from './CalendarSyncPanel';
 import DailySummaryEmailModal from './DailySummaryEmailModal';
 import BackupRecoveryPanel from './BackupRecoveryPanel';
 import FaceEnrollment from './FaceEnrollment';
+import { encryptApiKey, decryptApiKey } from '../../utils/security';
+
+import Skeleton from '../ui/Skeleton';
 
 interface ProfileViewProps {
   user: User;
@@ -24,6 +27,7 @@ interface ProfileViewProps {
   notesCount: number;
   rescheduledSessions: RescheduledSession[];
   events: CampusEvent[];
+  loading?: boolean;
 }
 
 /**
@@ -42,9 +46,92 @@ export default function ProfileView({
   tasks,
   notesCount,
   rescheduledSessions,
-  events
+  events,
+  loading = false
 }: ProfileViewProps) {
+  if (loading) {
+    return (
+      <div className="max-w-[1000px] mx-auto w-full space-y-8 pb-12">
+        {/* Header */}
+        <div className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-8 shadow-sm flex flex-col md:flex-row items-center gap-6">
+          <Skeleton className="w-20 h-20 rounded-full" />
+          <div className="flex-1 space-y-2 text-center md:text-left">
+            <Skeleton className="w-48 h-7 rounded-md mx-auto md:mx-0" />
+            <Skeleton className="w-36 h-4 rounded-md mx-auto md:mx-0" />
+          </div>
+        </div>
+
+        {/* GPA Progress & Academic Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-2 bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-6 shadow-sm space-y-4">
+            <Skeleton className="w-32 h-5 rounded-md" />
+            <Skeleton className="w-full h-8 rounded-lg" />
+            <div className="grid grid-cols-3 gap-4">
+              <Skeleton className="h-12 rounded-lg" />
+              <Skeleton className="h-12 rounded-lg" />
+              <Skeleton className="h-12 rounded-lg" />
+            </div>
+          </div>
+          <div className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-6 shadow-sm space-y-4">
+            <Skeleton className="w-32 h-5 rounded-md" />
+            <Skeleton className="w-full h-24 rounded-lg" />
+          </div>
+        </div>
+
+        {/* Bottom panel: Settings tabs & content */}
+        <div className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-8 shadow-sm space-y-6">
+          <div className="flex gap-4 border-b border-[#E2E8F0] dark:border-slate-800 pb-3">
+            <Skeleton className="w-24 h-5 rounded-md" />
+            <Skeleton className="w-36 h-5 rounded-md" />
+            <Skeleton className="w-28 h-5 rounded-md" />
+          </div>
+          <div className="space-y-4">
+            <Skeleton className="w-48 h-6 rounded-md" />
+            <Skeleton className="w-full h-32 rounded-lg" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const toast = useToast();
+
+  // State Gemini API Key
+  const [localApiKey, setLocalApiKey] = useState(() => {
+    const saved = localStorage.getItem('planly_gemini_api_key');
+    if (!saved) return '';
+    return decryptApiKey(saved);
+  });
+
+  const [useSystemKey, setUseSystemKey] = useState(() => {
+    return localStorage.getItem('planly_use_system_key') === 'true';
+  });
+
+  const envApiKey = import.meta.env.GEMINI_API_KEY;
+  const isEnvKeyValid = envApiKey && envApiKey !== 'MY_GEMINI_API_KEY' && envApiKey !== '';
+
+  const handleSaveApiKey = (key: string) => {
+    setLocalApiKey(key);
+    const encrypted = encryptApiKey(key);
+    localStorage.setItem('planly_gemini_api_key', encrypted);
+    toast.success('Kunci API Gemini berhasil disimpan secara terenkripsi.');
+  };
+
+  const handleDeleteApiKey = () => {
+    setLocalApiKey('');
+    localStorage.removeItem('planly_gemini_api_key');
+    toast.info('Kunci API Gemini telah dihapus.');
+  };
+
+  const handleToggleSystemKey = (val: boolean) => {
+    setUseSystemKey(val);
+    localStorage.setItem('planly_use_system_key', String(val));
+    if (val) {
+      toast.success('Berhasil mengaktifkan API Key sistem bawaan.');
+    } else {
+      toast.info('API Key sistem bawaan dinonaktifkan.');
+    }
+  };
 
   // Hitung jumlah data akademis
   const coursesCount = courses.length;
@@ -714,6 +801,12 @@ export default function ProfileView({
               onThemeChange={onThemeChange}
               onExportData={handleExportData}
               onImportData={handleImportData}
+              localApiKey={localApiKey}
+              onSaveApiKey={handleSaveApiKey}
+              onDeleteApiKey={handleDeleteApiKey}
+              isEnvKeyValid={!!isEnvKeyValid}
+              useSystemKey={useSystemKey}
+              onToggleSystemKey={handleToggleSystemKey}
             />
           )}
 

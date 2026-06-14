@@ -11,6 +11,7 @@ import PomodoroControls from './PomodoroControls';
 import LectureNotePanel from './LectureNotePanel';
 import LectureTaskPanel from './LectureTaskPanel';
 import CustomSelect from '../ui/CustomSelect';
+import Skeleton from '../ui/Skeleton';
 
 interface WorkspaceViewProps {
   courses: Course[];
@@ -44,6 +45,7 @@ interface WorkspaceViewProps {
   setActiveLectureCourseId: (val: number | null) => void;
   lectureNoteContent: string;
   setLectureNoteContent: (val: string) => void;
+  loading?: boolean;
 }
 
 /**
@@ -77,8 +79,45 @@ export default function WorkspaceView({
   activeLectureCourseId,
   setActiveLectureCourseId,
   lectureNoteContent,
-  setLectureNoteContent
+  setLectureNoteContent,
+  loading = false
 }: WorkspaceViewProps) {
+  if (loading) {
+    return (
+      <div className="max-w-[1000px] mx-auto w-full space-y-6 pb-12">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div className="space-y-2">
+            <Skeleton className="w-44 h-8 rounded-lg" />
+            <Skeleton className="w-72 h-4 rounded-md" />
+          </div>
+          <Skeleton className="w-48 h-10 rounded-lg" />
+        </div>
+
+        {/* Layout Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Panel: Timer skeleton */}
+          <div className="lg:col-span-2 bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-8 shadow-sm flex flex-col items-center justify-center min-h-[400px]">
+            <Skeleton className="w-56 h-56 rounded-full" />
+            <Skeleton className="w-32 h-6 rounded-md mt-6" />
+            <Skeleton className="w-48 h-10 rounded-lg mt-4" />
+          </div>
+          {/* Right Panel: Notes/Tasks panel skeletons */}
+          <div className="lg:col-span-1 space-y-6">
+            <div className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-6 shadow-sm space-y-4">
+              <Skeleton className="w-24 h-5 rounded-md" />
+              <Skeleton className="w-full h-32 rounded-lg" />
+            </div>
+            <div className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-6 shadow-sm space-y-4">
+              <Skeleton className="w-24 h-5 rounded-md" />
+              <Skeleton className="w-full h-32 rounded-lg" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const toast = useToast();
   const [selectedSound, setSelectedSound] = useState('none');
   const [isAudioMuted, setIsAudioMuted] = useState(false);

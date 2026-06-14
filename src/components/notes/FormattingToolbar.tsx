@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckSquare, List, ListOrdered, Bold, Italic, Heading1, Heading2 } from 'lucide-react';
+import { CheckSquare, List, ListOrdered, Bold, Italic, Heading1, Heading2, Link2, Sigma } from 'lucide-react';
 
 interface FormattingToolbarProps {
   textareaId: string;
@@ -101,6 +101,23 @@ export default function FormattingToolbar({
         className="p-1 hover:bg-white dark:hover:bg-slate-700 text-slate-500 hover:text-primary rounded-lg transition-colors cursor-pointer"
       >
         <Heading2 className="w-3.5 h-3.5" />
+      </button>
+      <span className="w-px h-3.5 bg-slate-200 dark:bg-slate-700 mx-0.5" />
+      <button
+        type="button"
+        title="Tambah Link"
+        onClick={() => insertTextAtCursor('[Nama Link](https://example.com)')}
+        className="p-1 hover:bg-white dark:hover:bg-slate-700 text-slate-500 hover:text-primary rounded-lg transition-colors cursor-pointer"
+      >
+        <Link2 className="w-3.5 h-3.5" />
+      </button>
+      <button
+        type="button"
+        title="Tambah Rumus LaTeX"
+        onClick={() => insertTextAtCursor('$$Rumus$$')}
+        className="p-1 hover:bg-white dark:hover:bg-slate-700 text-slate-500 hover:text-primary rounded-lg transition-colors cursor-pointer"
+      >
+        <Sigma className="w-3.5 h-3.5" />
       </button>
     </div>
   );

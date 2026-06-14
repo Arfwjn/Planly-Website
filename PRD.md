@@ -61,20 +61,22 @@ Semua fitur berikut telah diimplementasikan di versi web v1.0:
 - Autentikasi (Login, Register, Logout) dengan pre-fill data pengguna dummy
 - Dashboard / Hari Ini (Jadwal Hari Ini) dengan Header Live Status & Timeline Interaktif
 - Kalender Jadwal Mingguan (Schedule)
-- Manajemen Tugas (Tugas) — CRUD lengkap dengan prioritas & tenggat waktu relatif
+- Manajemen Tugas (Tugas) — CRUD lengkap dengan prioritas & tenggat waktu relatif beserta lampiran file (Base64)
+- Keamanan & Privasi Gemini API Key — Masking bullet points, visibility toggle, dan browser fingerprint encryption
+- Asisten Kuliah AI (AI Companion) — Ekstraksi audio WAV client, transkrip bertimestamp, chatbot materi (RAG), dan pengayaan akademik Google Search
 - Manajemen Mata Kuliah (Mata Kuliah) — CRUD lengkap dengan kode warna & perhitungan total SKS
-- Manajemen Catatan (Catatan) — CRUD + Search (mendukung deteksi tipe to-do list & visualisasi khusus)
-- Profil Pengguna dengan data spesifik Teknik Informatika
+- Manajemen Catatan (Catatan) — CRUD + Search (mendukung deteksi tipe to-do list, visualisasi KaTeX LaTeX, bold/italic, dan direct-to-link)
+- Verifikasi Kehadiran Cerdas — Kamera depan Face Recognition (descriptor distance matching) & GPS radius proximity check
+- Mode Gelap & Mode Terang (Dark/Light Mode) adaptif tema visual se-aplikasi
+- Ekspor & Impor Data — Backup dan recovery data lokal (.json)
+- Ekspor Kalender Eksternal — Dokumen .ics iCalendar dan Subscription link feed
 - Global Pomodoro Focus Timer Widget di Sidebar & Tab Hari Ini
 - Dukungan Dual-Mode API (Mock Mode via LocalStorage dan Live API Mode via Laravel Backend)
 - Antarmuka seluruhnya dilokalkan ke **Bahasa Indonesia**
 
 ### 4.2 Out of Scope (v1.0)
-- Push notification browser (v2.0)
-- Upload foto profil (v2.0)
-- Mode gelap (v2.0)
-- Kolaborasi / berbagi catatan (v3.0)
-- Import/export data (v2.0)
+- Push notification browser/mobile push notifications (v2.0)
+- Kolaborasi / berbagi catatan *realtime* (v3.0)
 - Offline mode / PWA (v2.0)
 
 ---
@@ -602,7 +604,7 @@ Pendaratan / Landing (Splash)
 17. Refaktorisasi indikator live kelas di Hari Ini dengan Live Status Header Bar (menghapus garis merah)
 18. Penerjemahan menyeluruh (100% Indonesian localization) untuk semua sub-formulir dan pesan error
 
-### Phase 3 — Refinement & Polish (P2) [IN PROGRESS / PLANNED]
+### Phase 3 — Refinement & Polish (P2) [COMPLETED]
 19. Menambahkan loading skeleton di semua halaman sebelum data selesai dimuat dari API
 20. Implementasi Error Boundary global dan kustomisasi halaman Error 404
 21. Optimalisasi responsivitas penuh untuk browser seluler/mobile (lebar 375px)
@@ -618,5 +620,42 @@ Pendaratan / Landing (Splash)
 | 1 | Apakah backend Laravel web berbagi instance dengan mobile? | Backend Team | **Resolved** | Berbagi database MySQL dan endpoint API terintegrasi yang sama. |
 | 2 | Apakah database web dan mobile berbagi instance yang sama? | Database Admin | **Resolved** | Ya, menggunakan database MySQL tunggal yang sama. |
 | 3 | Penyimpanan token di frontend menggunakan metode apa? | Security Lead | **Resolved** | Disimpan secara aman di `localStorage` pada browser klien. |
-| 4 | Fitur notifikasi browser realtime. | Product Owner | **Decided** | Ditunda ke rilis v2.0 (Fokus v1.0 adalah fungsionalitas inti). |
+| 4 | Fitur notifikasi browser/mobile realtime. | Product Owner | **Decided** | Ditunda ke rilis v2.0 (Fokus v1.0 adalah fungsionalitas inti). |
 | 5 | Server hosting untuk server live API. | DevOps Team | **Resolved** | Dihost menggunakan web server lokal (XAMPP/MySQL & Artisan Serve) untuk fase pengembangan saat ini. |
+
+---
+
+## 12. Panduan Paritas Pengembangan Aplikasi Mobile Flutter
+
+Dokumen ini menjadi acuan utama bagi pengembang aplikasi mobile Flutter untuk menyejajarkan fitur (*feature parity*) dengan versi Web Planly.
+
+### 12.1 Keamanan & Kunci API Gemini (Direct Client-side)
+*   **Keamanan Penyimpanan**: Berbeda dengan browser yang menggunakan sidik jari peramban untuk mengenkripsi kunci di `localStorage`, aplikasi Flutter **wajib** menggunakan **`flutter_secure_storage`** untuk menyimpan API Key Gemini yang dimasukkan pengguna secara aman (berbasis Keychain di iOS dan Keystore/EncryptedSharedPreferences di Android). Jangan pernah menyimpannya di `shared_preferences` dalam bentuk plain-text.
+*   **Masking Tampilan**: Form input API Key di halaman profil/asisten mobile wajib menggunakan parameter `obscureText: true` (tipe kata sandi) dengan tombol visibilitas (mata coret) untuk menjaga privasi.
+*   **Integrasi SDK**: Gunakan paket resmi **`google_generative_ai`** di Dart untuk membuat koneksi langsung dari perangkat klien ke API Gemini Flash 2.5.
+
+### 12.2 Analisis Kuliah AI & Pemrosesan Audio
+*   **Ekstraksi Audio Lokal**: Pada versi Web, biner audio WAV 16kHz diekstrak dari video MP4 langsung di browser untuk menghemat data. Di Flutter, gunakan plugin **`ffmpeg_kit_flutter`** untuk mengekstrak audio dari video lokal sebelum diunggah ke Gemini:
+    ```bash
+    -i input.mp4 -vn -acodec pcm_s16le -ar 16000 -ac 1 output.wav
+    ```
+*   **Grounding & RAG Chatbot**: Chatbot asisten kuliah di Flutter harus menyertakan isi transkrip sebagai sistem instruksi awal di riwayat percakapan chat. Batasi domain agar chatbot menolak menjawab pertanyaan di luar materi transkrip.
+*   **Opsi Formula**: Selaras dengan Web, parsing kartu pengayaan akademik di Flutter harus memeriksa eksistensi bidang `formula` (`formula?`). Jika data formula kosong/null, sembunyikan kolom visual render rumus LaTeX dan hanya tampilkan teks penjelasan saja.
+
+### 12.3 Verifikasi Kehadiran Wajah & GPS (Biometrics)
+*   **Deteksi Wajah Lokal**: Di Flutter, gunakan plugin **`google_ml_kit`** (untuk pendeteksian wajah di kamera depan) atau interpreter **`tflite_flutter`** dengan model FaceNet untuk menghasilkan array descriptor wajah 128-float.
+*   **Pencocokan Presensi**: Simpan descriptor wajah terdaftar di secure storage lokal. Saat mahasiswa check-in absensi, ambil descriptor live dan hitung jarak Euclidean terhadap descriptor terdaftar. Kunci tombol absensi jika nilai jarak di atas `0.6` (tidak cocok).
+*   **Kamera Stream Lifecycle**: Pastikan kamera ditutup secara eksplisit saat halaman absensi/pendaftaran wajah di-dispose agar lampu kamera ponsel mati sepenuhnya.
+*   **GPS Radius**: Gunakan paket **`geolocator`** untuk mengambil koordinat presisi tinggi dan hitung jarak meter terhadap koordinat ruangan kelas kuliah.
+
+### 12.4 Render Rumus Matematika LaTeX & Tautan Catatan
+*   **Render KaTeX**: Catatan belajar di Flutter yang mengandung rumus matematika block (`$$...$$`) atau inline (`$...$`) harus dirender secara visual. Rekomendasi paket: **`flutter_math_fork`** untuk render ekspresi matematika murni, atau menggunakan widget mini webview lokal untuk memuat pustaka KaTeX asli agar output LaTeX terlihat rapi.
+*   **Parsing Baris LaTeX Multiline**: Parser catatan di Flutter harus mendukung pendeteksian rumus multiline (dimulai dari baris `$$` hingga ditemukan baris penutup `$$`) agar baris-baris tersebut digabungkan ke dalam display render mode tunggal sebelum dilewatkan ke mesin LaTeX.
+*   **Pill Link (Direct-to-Link)**: Ubah pola tautan markdown `[Label](URL)` di dalam teks catatan menjadi komponen tombol visual khusus (seperti widget Chip atau Card mini) berikon tautan eksternal yang jika diklik akan memicu **`url_launcher`** untuk membuka web browser eksternal.
+*   **Pemberantasan Asterisk**: Terjemahkan format asterisk bold `**teks**` dan italic `*teks*` ke visual styling `FontWeight.bold` dan `FontStyle.italic` di Flutter TextSpan, alih-alih merender karakter asterisk mentah.
+
+### 12.5 Tampilan Skeleton & Status Halaman
+*   **Theme-Adaptive Skeleton**: Sediakan loading placeholder menggunakan plugin **`shimmer`** dengan warna gradien yang menyesuaikan tema aktif (gelap/terang).
+*   **Persistence Tab**: Simpan index tab/halaman terakhir yang dibuka menggunakan `shared_preferences` agar aplikasi mobile tidak kembali ke halaman awal (Today) saat dibuka ulang atau berpindah fokus.
+*   **Interactive Empty States**: Standardisasikan widget `EmptyState` di Flutter yang mendukung input list widget ikon melayang (floating animation), deskripsi, serta tombol aksi (CTA) yang memicu bottom sheet/drawer form data baru.
+

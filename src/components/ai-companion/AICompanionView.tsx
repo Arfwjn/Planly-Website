@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Sparkles, ArrowLeft, Clock, FileText, MessageSquare, Settings, BookOpen } from 'lucide-react';
+import { Sparkles, ArrowLeft, Clock, FileText, MessageSquare, Settings, BookOpen, Shield, ShieldAlert, Key, CheckCircle2 } from 'lucide-react';
 import { useToast } from '../ui/Toast';
 import ConfirmModal from '../ui/ConfirmModal';
+import ApiKeyModal from '../ui/ApiKeyModal';
+import { encryptApiKey, decryptApiKey } from '../../utils/security';
 import { api } from '../../services/api';
 import { Note, SidebarTab } from '../../types';
+import Skeleton from '../ui/Skeleton';
 
 // Impor tipe data (TypeScript interfaces & types)
 import { 
@@ -90,6 +93,7 @@ const DEMO_VIDEO_URL = "https://assets.mixkit.co/videos/preview/mixkit-keyboard-
 export interface AICompanionViewProps {
   onAddNote?: (note: Omit<Note, 'id' | 'user_id'>) => void;
   onTabChange?: (tab: SidebarTab) => void;
+  loading?: boolean;
 }
 
 /**
@@ -99,7 +103,73 @@ export interface AICompanionViewProps {
  * Menghubungkan dropzone pengunggahan, pemutar video, sinkronisasi transkrip kuliah,
  * ringkasan materi akademik kelas, dan RAG chatbot interaktif.
  */
-export default function AICompanionView({ onAddNote, onTabChange }: AICompanionViewProps = {}) {
+export default function AICompanionView({ onAddNote, onTabChange, loading = false }: AICompanionViewProps = {}) {
+  if (loading) {
+    return (
+      <div className="max-w-[1000px] mx-auto w-full space-y-6 pb-12">
+        {/* Header View */}
+        <section className="text-left">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-8 w-48 rounded-lg" />
+                <Skeleton className="h-5 w-14 rounded-full" />
+              </div>
+              <Skeleton className="h-4 w-72 rounded-md" />
+            </div>
+          </div>
+        </section>
+
+        {/* API Key Panel Skeleton */}
+        <div className="bg-white/60 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-md rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-2 flex-1">
+            <Skeleton className="h-4 w-36 rounded-md" />
+            <Skeleton className="h-3 w-3/4 rounded-md" />
+          </div>
+          <Skeleton className="h-9 w-full md:w-64 rounded-xl" />
+        </div>
+
+        {/* Main Panel (CompanionIdlePanel) Skeleton */}
+        <div className="bg-white/65 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/40 backdrop-blur-md rounded-2xl p-6 min-h-[450px] flex flex-col justify-center items-center gap-6">
+          <div className="w-full max-w-[650px] text-center space-y-6">
+            {/* Upload Area Box */}
+            <div className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-10 flex flex-col items-center justify-center gap-4">
+              <Skeleton className="w-14 h-14 rounded-2xl" />
+              <div className="space-y-2 flex flex-col items-center">
+                <Skeleton className="h-4 w-48 rounded-md" />
+                <Skeleton className="h-3 w-64 rounded-md" />
+              </div>
+            </div>
+            
+            {/* Demo Button Area */}
+            <div className="flex justify-center pt-2">
+              <Skeleton className="h-8 w-48 rounded-xl" />
+            </div>
+          </div>
+
+          {/* History Panel Skeleton */}
+          <div className="w-full max-w-[650px] bg-slate-50/50 dark:bg-slate-855/20 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 space-y-3">
+            <Skeleton className="h-3 w-32 rounded-md border-b border-transparent pb-1.5" />
+            <div className="space-y-2">
+              {[1, 2].map((i) => (
+                <div key={i} className="p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl flex items-center justify-between">
+                  <div className="flex items-center gap-3 flex-1">
+                    <Skeleton className="w-8 h-8 rounded-lg" />
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-3 w-1/3 rounded-md" />
+                      <Skeleton className="h-2 w-1/4 rounded-md" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-4 w-10 rounded-md" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const toast = useToast();
   
   // State manajemen alur pemrosesan AI
@@ -124,12 +194,22 @@ export default function AICompanionView({ onAddNote, onTabChange }: AICompanionV
   // State API Key lokal/environment
   const [localApiKey, setLocalApiKey] = useState(() => {
     const saved = localStorage.getItem('planly_gemini_api_key');
-    return saved || '';
+    if (!saved) return '';
+    return decryptApiKey(saved);
+  });
+
+  const [useSystemKey, setUseSystemKey] = useState(() => {
+    return localStorage.getItem('planly_use_system_key') === 'true';
   });
 
   const envApiKey = import.meta.env.GEMINI_API_KEY;
   const isEnvKeyValid = envApiKey && envApiKey !== 'MY_GEMINI_API_KEY' && envApiKey !== '';
-  const activeApiKey = isEnvKeyValid ? envApiKey : localApiKey;
+  // Prioritaskan kunci kustom lokal, fallback ke kunci sistem environment (.env) jika diizinkan oleh user
+  const activeApiKey = localApiKey || (isEnvKeyValid && useSystemKey ? envApiKey : '');
+
+  // State Kontrol Modal API Key & Pelacakan Prompt Pertama
+  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
+  const [hasPromptedKey, setHasPromptedKey] = useState(false);
 
   // State percakapan dengan Chatbot (RAG)
   const [chatInput, setChatInput] = useState('');
@@ -163,6 +243,18 @@ export default function AICompanionView({ onAddNote, onTabChange }: AICompanionV
       }
     }
   }, [currentTime, activeTab]);
+
+  // Otomatis munculkan pop-up API Key jika belum teratur sama sekali
+  useEffect(() => {
+    const hasKey = isEnvKeyValid || localApiKey;
+    if (!hasKey && !hasPromptedKey && stage === 'idle') {
+      const timer = setTimeout(() => {
+        setIsApiKeyModalOpen(true);
+        setHasPromptedKey(true);
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [isEnvKeyValid, localApiKey, hasPromptedKey, stage]);
 
   // Alur pemrosesan asli menggunakan Gemini API & Client WAV extraction
   const startActualAIProcessing = async (
@@ -365,7 +457,8 @@ export default function AICompanionView({ onAddNote, onTabChange }: AICompanionV
     } else {
       // Mode analisis baru biasa
       if (!activeApiKey) {
-        toast.warning('Kunci API Gemini belum diatur. Harap masukkan API Key di panel konfigurasi terlebih dahulu untuk menganalisis video Anda.');
+        toast.warning('Kunci API Gemini belum diatur. Silakan konfigurasi API Key terlebih dahulu.');
+        setIsApiKeyModalOpen(true);
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
@@ -373,6 +466,19 @@ export default function AICompanionView({ onAddNote, onTabChange }: AICompanionV
       }
       startActualAIProcessing(file, file.name, sizeStr, objectUrl);
     }
+  };
+
+  const handleSaveApiKey = (newKey: string) => {
+    setLocalApiKey(newKey);
+    const encrypted = encryptApiKey(newKey);
+    localStorage.setItem('planly_gemini_api_key', encrypted);
+    toast.success('Kunci API Gemini berhasil disimpan secara terenkripsi.');
+  };
+
+  const handleDeleteApiKey = () => {
+    setLocalApiKey('');
+    localStorage.removeItem('planly_gemini_api_key');
+    toast.info('Kunci API Gemini telah dihapus.');
   };
 
   const handleReset = () => {
@@ -568,14 +674,6 @@ Jika Anda ingin kembali membahas isi video, Anda bisa bertanya tentang: "Jelaska
       return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     };
 
-    // Bersihkan tag html <b> dan ** markdown agar teks bersih dari karakter asterisk (*)
-    const cleanHtmlTags = (text: string) => {
-      if (!text) return '';
-      return text
-        .replace(/<\/?b>/g, '') // Hapus <b> dan </b>
-        .replace(/\*\*/g, '');  // Hapus **
-    };
-
     // Tanggal hari ini
     const todayStr = new Date().toLocaleDateString('id-ID', {
       weekday: 'long',
@@ -584,7 +682,7 @@ Jika Anda ingin kembali membahas isi video, Anda bisa bertanya tentang: "Jelaska
       day: 'numeric'
     });
 
-    // Generate konten markdown terstruktur
+    // Generate konten markdown terstruktur dengan format bold/link/math yang utuh
     let markdownContent = `# Ringkasan Analisis AI\n`;
     markdownContent += `Sesi Kuliah: ${videoMeta.name}\n`;
     markdownContent += `Tanggal Analisis: ${todayStr}\n\n`;
@@ -592,7 +690,7 @@ Jika Anda ingin kembali membahas isi video, Anda bisa bertanya tentang: "Jelaska
     if (takeaways && takeaways.length > 0) {
       markdownContent += `## 💡 Poin Rangkuman AI (Key Takeaways)\n`;
       takeaways.forEach((t) => {
-        markdownContent += `- ${cleanHtmlTags(t)}\n`;
+        markdownContent += `- ${t}\n`;
       });
       markdownContent += `\n`;
     }
@@ -600,7 +698,7 @@ Jika Anda ingin kembali membahas isi video, Anda bisa bertanya tentang: "Jelaska
     if (chapters && chapters.length > 0) {
       markdownContent += `## 📚 Daftar Pembahasan Kuliah (Chapters)\n`;
       chapters.forEach((c) => {
-        markdownContent += `- [${formatTime(c.time)}] ${cleanHtmlTags(c.title)}: ${cleanHtmlTags(c.desc)}\n`;
+        markdownContent += `- [${formatTime(c.time)}] ${c.title}: ${c.desc}\n`;
       });
       markdownContent += `\n`;
     }
@@ -608,14 +706,14 @@ Jika Anda ingin kembali membahas isi video, Anda bisa bertanya tentang: "Jelaska
     if (enrichment) {
       markdownContent += `## 🌐 Pengayaan Akademik (Sumber Internet & Google Search)\n`;
       if (enrichment.explanation) {
-        markdownContent += `${cleanHtmlTags(enrichment.explanation)}\n\n`;
+        markdownContent += `${enrichment.explanation}\n\n`;
       }
       if (enrichment.cards && enrichment.cards.length > 0) {
         enrichment.cards.forEach((card) => {
-          markdownContent += `### 📌 ${cleanHtmlTags(card.title)}\n`;
-          markdownContent += `${cleanHtmlTags(card.description)}\n`;
+          markdownContent += `### 📌 ${card.title}\n`;
+          markdownContent += `${card.description}\n`;
           if (card.formula) {
-            markdownContent += `\nFormula / Rumus:\n$$\n${card.formula}\n$$\n`;
+            markdownContent += `\nFormula / Rumus:\n$$${card.formula}$$\n`;
           }
           markdownContent += `\n`;
         });
@@ -623,7 +721,7 @@ Jika Anda ingin kembali membahas isi video, Anda bisa bertanya tentang: "Jelaska
       if (enrichment.sources && enrichment.sources.length > 0) {
         markdownContent += `### 🔗 Referensi Sumber:\n`;
         enrichment.sources.forEach((src) => {
-          markdownContent += `- ${src.label}: ${src.url}\n`;
+          markdownContent += `- [${src.label}](${src.url})\n`;
         });
         markdownContent += `\n`;
       }
@@ -703,53 +801,86 @@ Jika Anda ingin kembali membahas isi video, Anda bisa bertanya tentang: "Jelaska
             </div>
           )}
         </div>
-      </section>
-
-      {/* API Key Configuration Panel */}
+         {/* API Key Configuration Panel */}
       {stage === 'idle' && (
-        <div className="bg-white/60 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-md rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 text-left transition-all">
-          <div className="space-y-1 max-w-lg">
-            <h3 className="text-xs font-bold text-on-surface flex items-center gap-1.5 uppercase tracking-wider">
-              <Settings className="w-3.5 h-3.5 text-primary" />
-              <span>Konfigurasi Gemini API Key</span>
-            </h3>
-            <p className="text-[11px] text-on-surface-variant leading-relaxed font-medium">
-              {isEnvKeyValid ? (
-                <span className="text-green-600 dark:text-green-400 font-bold">✓ API Key aktif dari environment variable (.env).</span>
-              ) : (
-                <span>Untuk menganalisis video kuliah mandiri, masukkan kunci API Gemini Anda di bawah. Kunci disimpan aman secara lokal di browser Anda.</span>
-              )}
-            </p>
-          </div>
-          {!isEnvKeyValid && (
-            <div className="flex items-center gap-2 w-full md:w-auto">
-              <input
-                type="password"
-                placeholder="Masukkan API Key Gemini (AIzaSy...)"
-                value={localApiKey}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setLocalApiKey(val);
-                  localStorage.setItem('planly_gemini_api_key', val);
-                }}
-                className="px-3 py-1.5 border border-slate-200 dark:border-slate-800 rounded-xl text-xs bg-slate-50/50 dark:bg-slate-900/50 text-on-surface font-mono focus:ring-1 focus:ring-primary w-full md:w-[260px] outline-none"
-              />
-              {localApiKey && (
-                <button
-                  onClick={() => {
-                    setLocalApiKey('');
-                    localStorage.removeItem('planly_gemini_api_key');
-                    toast.info('API Key dihapus.');
-                  }}
-                  className="px-2.5 py-1.5 text-xs text-red-500 bg-red-50 dark:bg-red-955/20 border border-red-200 dark:border-red-900/40 rounded-xl font-bold cursor-pointer transition-colors"
-                >
-                  Hapus
-                </button>
-              )}
+        <div className="bg-white/60 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-md rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-left transition-all hover:shadow-xs duration-350">
+          <div className="flex gap-3 items-start">
+            <div className={`p-2.5 rounded-xl flex-shrink-0 flex items-center justify-center ${
+              activeApiKey ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-500' : 'bg-amber-50 dark:bg-amber-955/20 text-amber-500'
+            }`}>
+              {activeApiKey ? <CheckCircle2 className="w-5 h-5" /> : <ShieldAlert className="w-5 h-5" />}
             </div>
-          )}
+            <div className="space-y-1">
+              <h3 className="text-xs font-extrabold text-on-surface flex items-center gap-1.5 uppercase tracking-wider">
+                <span>Status Gemini API Key</span>
+                <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold tracking-normal uppercase ${
+                  localApiKey 
+                    ? 'bg-emerald-100 dark:bg-emerald-950/45 text-emerald-600 dark:text-emerald-400' 
+                    : (isEnvKeyValid && useSystemKey)
+                    ? 'bg-blue-100 dark:bg-blue-955/30 text-blue-600 dark:text-blue-400' 
+                    : 'bg-amber-100 dark:bg-amber-955/40 text-amber-600 dark:text-amber-400'
+                }`}>
+                  {localApiKey 
+                    ? 'Kunci Kustom' 
+                    : (isEnvKeyValid && useSystemKey) 
+                    ? 'Kunci Sistem' 
+                    : 'Tidak Aktif'}
+                </span>
+              </h3>
+              <p className="text-[11px] text-on-surface-variant leading-relaxed font-semibold">
+                {localApiKey ? (
+                  <span>API Key kustom aktif, terpasang aman dan terenkripsi di lokal browser Anda.</span>
+                ) : (isEnvKeyValid && useSystemKey) ? (
+                  <span>API Key aktif dari sistem environment (.env). Masukkan kunci kustom jika ingin meng-override.</span>
+                ) : isEnvKeyValid ? (
+                  <span>Kunci bawaan (.env) tersedia. Klik tombol di kanan untuk mengaktifkan atau atur kunci kustom.</span>
+                ) : (
+                  <span>Masukkan API Key untuk menganalisis video kuliah dan menggunakan chatbot AI.</span>
+                )}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {localApiKey && (
+              <button
+                onClick={handleDeleteApiKey}
+                className="px-3.5 py-2 text-xs text-red-500 hover:text-red-600 bg-red-50 dark:bg-red-955/20 border border-red-100 dark:border-red-900/30 rounded-xl font-bold cursor-pointer transition-colors"
+              >
+                Hapus
+              </button>
+            )}
+            {!localApiKey && isEnvKeyValid && (
+              <button
+                onClick={() => {
+                  const newVal = !useSystemKey;
+                  setUseSystemKey(newVal);
+                  localStorage.setItem('planly_use_system_key', String(newVal));
+                  toast.success(newVal ? 'Berhasil mengaktifkan API Key sistem bawaan.' : 'API Key sistem bawaan dinonaktifkan.');
+                }}
+                className={`px-3.5 py-2 text-xs font-bold rounded-xl cursor-pointer transition-all border ${
+                  useSystemKey 
+                    ? 'bg-amber-50 dark:bg-amber-955/20 border-amber-200 dark:border-amber-900/35 text-amber-600 dark:text-amber-400' 
+                    : 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/35 text-emerald-600 dark:text-emerald-400'
+                }`}
+              >
+                {useSystemKey ? 'Nonaktifkan Kunci Sistem' : 'Gunakan Kunci Sistem'}
+              </button>
+            )}
+            <button
+              onClick={() => setIsApiKeyModalOpen(true)}
+              className={`px-4 py-2 text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer transition-all border-none ${
+                activeApiKey 
+                  ? 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-on-surface' 
+                  : 'bg-primary hover:bg-[#4F46E5] text-white shadow-xs'
+              }`}
+            >
+              <Key className="w-3.5 h-3.5" />
+              <span>{localApiKey ? 'Ubah Kunci Kustom' : 'Atur Kunci Kustom'}</span>
+            </button>
+          </div>
         </div>
       )}
+      </section>
 
       {/* 1. STAGE: IDLE - Dropzone pengunggahan berkas */}
       {stage === 'idle' && (
@@ -881,6 +1012,14 @@ Jika Anda ingin kembali membahas isi video, Anda bisa bertanya tentang: "Jelaska
         confirmText="Hapus Permanen"
         cancelText="Batal"
         isDanger={true}
+      />
+
+      {/* Modal Konfigurasi Gemini API Key */}
+      <ApiKeyModal
+        isOpen={isApiKeyModalOpen}
+        onClose={() => setIsApiKeyModalOpen(false)}
+        onSave={handleSaveApiKey}
+        currentKey={localApiKey}
       />
 
     </div>

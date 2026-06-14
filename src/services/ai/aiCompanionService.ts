@@ -207,8 +207,8 @@ Buatlah output data terstruktur dalam Bahasa Indonesia yang berisi:
 4. Pengayaan materi akademik tambahan ("enrichment"):
    - Berikan tambahan informasi akademik pendukung dari luar rekaman kuliah.
    - Cantumkan penjelasan tambahan ("explanation").
-    - Sediakan daftar kartu konsep ("cards") yang memiliki properti: judul ("title"), rumus/formula matematika/pseudocode pendukung jika ada ("formula" - jika berupa rumus matematika, gunakan format penulisan LaTeX standar tanpa tanda dollar/pembatas seperti \frac{1}{1 + e^{-x}} atau f(x) = \max(0, x)), dan penjelasan detil cara kerja konsep tersebut ("description").
-    - Sediakan daftar pranala referensi web terpercaya ("sources") yang memiliki properti nama sumber ("label") dan alamat URL lengkap ("url").`;
+     - Sediakan daftar kartu konsep ("cards") yang memiliki properti: judul ("title"), penjelasan detil cara kerja konsep tersebut ("description"), dan rumus/formula matematika/pseudocode pendukung HANYA JIKA ADA ("formula" - jika tidak ada rumus, hilangkan properti "formula" ini atau jangan sertakan dalam objek kartu konsep tersebut. Jika berupa rumus matematika, gunakan format penulisan LaTeX standar tanpa tanda dollar/pembatas seperti \frac{1}{1 + e^{-x}} atau f(x) = \max(0, x)).
+     - Sediakan daftar pranala referensi web terpercaya ("sources") yang memiliki properti nama sumber ("label") dan alamat URL lengkap ("url").`;
 
   try {
     const response = await ai.models.generateContent({
@@ -273,7 +273,7 @@ Buatlah output data terstruktur dalam Bahasa Indonesia yang berisi:
                       formula: { type: 'string' },
                       description: { type: 'string' }
                     },
-                    required: ['title', 'formula', 'description']
+                    required: ['title', 'description']
                   }
                 },
                 sources: {
