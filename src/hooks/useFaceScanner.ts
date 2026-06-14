@@ -86,8 +86,14 @@ export function useFaceScanner({ onScanComplete, requiredHits = 25 }: UseFaceSca
       requestRef.current = null;
     }
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach(track => {
+        track.stop();
+        track.enabled = false;
+      });
       streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
     }
     setCameraActive(false);
     setScanProgress(0);
@@ -184,11 +190,20 @@ export function useFaceScanner({ onScanComplete, requiredHits = 25 }: UseFaceSca
   // Clean up on unmount
   useEffect(() => {
     return () => {
+      isProcessingRef.current = false;
       if (requestRef.current) {
         cancelAnimationFrame(requestRef.current);
+        requestRef.current = null;
       }
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current.getTracks().forEach(track => {
+          track.stop();
+          track.enabled = false;
+        });
+        streamRef.current = null;
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
       }
     };
   }, []);
