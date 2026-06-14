@@ -92,9 +92,17 @@ export default function App() {
   } = useAcademicData(isAuthenticated);
 
   // --- STATE NAVIGASI LOKAL & PENCARIAN ---
-  const [activeTab, setActiveTab] = useState<SidebarTab>('today');
+  const [activeTab, setActiveTab] = useState<SidebarTab>(() => {
+    const saved = localStorage.getItem('planly_active_tab');
+    return (saved as SidebarTab) || 'today';
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // Simpan halaman terakhir yang sedang dibuka ke localStorage saat berpindah tab
+  useEffect(() => {
+    localStorage.setItem('planly_active_tab', activeTab);
+  }, [activeTab]);
 
   // --- KONTROL MODAL OVERLAY LOKAL ---
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);

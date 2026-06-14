@@ -37,6 +37,7 @@ export default function useAppAuth() {
       setIsAuthenticated(false);
       setCurrentUser(null);
       localStorage.removeItem('planly_user');
+      localStorage.setItem('planly_active_tab', 'today'); // Reset active tab on logout
       setActiveTab('today');
     });
   };

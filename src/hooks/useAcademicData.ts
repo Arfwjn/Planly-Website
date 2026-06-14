@@ -22,7 +22,9 @@ export default function useAcademicData(isAuthenticated: boolean) {
   const [events, setEvents] = useState<CampusEvent[]>([]);
   const [rescheduledSessions, setRescheduledSessions] = useState<RescheduledSession[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
-  const [loadingData, setLoadingData] = useState(false);
+  const [loadingData, setLoadingData] = useState(() => {
+    return localStorage.getItem('planly_auth') === 'true';
+  });
 
   // Ambil semua data akademik dari API secara paralel (paralel fetching) pas user terautentikasi
   useEffect(() => {
