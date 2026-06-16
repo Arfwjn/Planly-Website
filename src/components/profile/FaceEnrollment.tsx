@@ -4,6 +4,7 @@ import { useToast } from '../ui/Toast';
 import FaceEnrollmentCard from './face-enrollment/FaceEnrollmentCard';
 import FaceEnrollmentModal from './face-enrollment/FaceEnrollmentModal';
 import FaceEnrollmentPreviewModal from './face-enrollment/FaceEnrollmentPreviewModal';
+import ConfirmModal from '../ui/ConfirmModal';
 
 interface FaceEnrollmentProps {
   theme: 'light' | 'dark';
@@ -17,6 +18,7 @@ export default function FaceEnrollment({ theme }: FaceEnrollmentProps) {
   
   const [showModal, setShowModal] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Load registration status from localStorage
   const loadRegistrationStatus = () => {
@@ -76,17 +78,19 @@ export default function FaceEnrollment({ theme }: FaceEnrollmentProps) {
   };
 
   const handleDeleteFace = () => {
-    if (confirm('Apakah Anda yakin ingin menghapus data wajah terdaftar? Anda tidak akan bisa melakukan absensi wajah tanpa mendaftarkan ulang.')) {
-      localStorage.removeItem('planly_registered_face');
-      localStorage.removeItem('planly_registered_face_photo');
-      localStorage.removeItem('planly_registered_face_time');
-      
-      setRegistered(false);
-      setPhotoUrl(null);
-      setRegisterDate(null);
-      
-      toast.info('Data wajah terdaftar berhasil dihapus.');
-    }
+    setShowDeleteConfirm(true);
+  };
+
+  const performDeleteFace = () => {
+    localStorage.removeItem('planly_registered_face');
+    localStorage.removeItem('planly_registered_face_photo');
+    localStorage.removeItem('planly_registered_face_time');
+    
+    setRegistered(false);
+    setPhotoUrl(null);
+    setRegisterDate(null);
+    
+    toast.info('Data wajah terdaftar berhasil dihapus.');
   };
 
   return (
@@ -110,6 +114,17 @@ export default function FaceEnrollment({ theme }: FaceEnrollmentProps) {
         photoUrl={photoUrl}
         registerDate={registerDate}
         onClose={() => setShowPreview(false)}
+      />
+
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={performDeleteFace}
+        title="Hapus Data Wajah"
+        message="Apakah Anda yakin ingin menghapus data wajah terdaftar? Anda tidak akan bisa melakukan absensi wajah tanpa mendaftarkan ulang."
+        confirmText="Hapus Wajah"
+        cancelText="Batal"
+        isDanger={true}
       />
     </>
   );

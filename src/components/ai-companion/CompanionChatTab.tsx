@@ -95,7 +95,7 @@ export default function CompanionChatTab({
     <div className="flex-1 flex flex-col min-h-0 bg-slate-50/30 dark:bg-slate-950/20 text-left">
       
       {/* Kontainer Aliran Pesan (Message Feed) */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
         {messages.map((msg, idx) => (
           <div 
             key={idx}

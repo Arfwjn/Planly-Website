@@ -9,15 +9,12 @@
 const getBrowserFingerprint = (): string => {
   if (typeof window === 'undefined') return 'planly_default_fallback_salt_321';
   
-  const nav = window.navigator || {};
-  const scr = window.screen || {};
-  
   // Gabungkan userAgent, bahasa peramban, dan dimensi layar
   const components = [
-    nav.userAgent || 'unknown_agent',
-    nav.language || 'id-ID',
-    (scr.width || 1920).toString(),
-    (scr.height || 1080).toString(),
+    window.navigator?.userAgent || 'unknown_agent',
+    window.navigator?.language || 'id-ID',
+    (window.screen?.width || 1920).toString(),
+    (window.screen?.height || 1080).toString(),
     'PlanlySecureSalt_1928374' // Kunci garam statis tambahan
   ];
   

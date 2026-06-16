@@ -89,7 +89,7 @@ export default function CompanionIdlePanel({
             Riwayat Kuliah Terproses
           </span>
           
-          <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1 scrollbar-thin">
+          <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
             {sessions.map((sess) => (
               <div 
                 key={sess.id}

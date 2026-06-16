@@ -295,7 +295,7 @@ export default function Header({
                       className={`h-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                         user.semester === sem
                           ? 'bg-primary text-white shadow-2xs'
-                          : 'bg-slate-100 hover:bg-slate-200 dark:bg-input-bg dark:hover:bg-slate-800 text-on-surface-variant'
+                          : 'bg-slate-100 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-on-surface-variant'
                       }`}
                     >
                       {sem}
@@ -337,11 +337,8 @@ export default function Header({
               <div className="border-t border-card-border pt-3 space-y-1 text-left">
                 <div className="text-[9px] text-[#94A3B8] font-bold uppercase tracking-widest flex items-center gap-1">
                   <HelpCircle className="w-3.5 h-3.5" />
-                  Planly v1.2.0
-                </div>
-                <div className="text-[8px] text-on-surface-variant font-semibold">
-                  Mode: {import.meta.env.DEV ? 'Sinkronisasi Lokal (Mock)' : 'Sinkronisasi Live API Server'}
-                </div>
+                  Planly v1.0
+                </div>                
               </div>
             </div>
           )}

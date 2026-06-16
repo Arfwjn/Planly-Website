@@ -56,7 +56,7 @@ export default function CompanionSummaryTab({
   };
 
   return (
-    <div className="flex-1 overflow-y-auto overflow-x-hidden w-full max-w-full min-w-0 p-5 space-y-6 scrollbar-thin text-left">
+    <div className="flex-1 overflow-y-auto overflow-x-hidden w-full max-w-full min-w-0 p-5 space-y-6 custom-scrollbar text-left">
       
       {/* Bagian 1: Daftar Bab Kuliah (Chapters) */}
       <div className="space-y-3">
@@ -236,7 +236,7 @@ const KatexRenderer = ({ formula }: { formula: string }) => {
   }
 
   return (
-    <div className="bg-slate-50 dark:bg-slate-850 p-2 rounded overflow-x-auto flex justify-center text-xs text-on-surface scrollbar-thin">
+    <div className="bg-slate-50 dark:bg-slate-850 p-2 rounded overflow-x-auto flex justify-center text-xs text-on-surface custom-scrollbar">
       <div ref={containerRef} />
     </div>
   );

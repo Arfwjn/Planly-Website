@@ -73,7 +73,7 @@ export default function CompanionTranscriptTab({
       {/* Kontainer transkrip yang dapat digulirkan (scrollable) */}
       <div 
         ref={transcriptContainerRef}
-        className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin"
+        className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar"
       >
         {filteredTranscript.length === 0 ? (
           <div className="text-center py-12 space-y-2">
