@@ -25,10 +25,7 @@ class AttendanceController extends Controller
     {
         $attendance = $this->attendanceService->getAttendanceForUser($request->user());
 
-        return response()->json([
-            'success' => true,
-            'data'    => AttendanceRecordResource::collection($attendance),
-        ], 200);
+        return response()->json(AttendanceRecordResource::collection($attendance)->resolve(), 200);
     }
 
     /**
@@ -38,11 +35,7 @@ class AttendanceController extends Controller
     {
         $record = $this->attendanceService->recordAttendance($request->user(), $request->validated());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Attendance recorded successfully',
-            'data'    => new AttendanceRecordResource($record),
-        ], 201);
+        return response()->json((new AttendanceRecordResource($record))->resolve(), 201);
     }
 
     /**
@@ -54,13 +47,11 @@ class AttendanceController extends Controller
 
         if (!$deleted) {
             return response()->json([
-                'success' => false,
                 'message' => 'Attendance record not found',
             ], 404);
         }
 
         return response()->json([
-            'success' => true,
             'message' => 'Riwayat presensi berhasil dihapus.',
         ], 200);
     }

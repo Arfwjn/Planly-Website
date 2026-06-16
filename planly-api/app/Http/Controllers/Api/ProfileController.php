@@ -15,10 +15,7 @@ class ProfileController extends Controller
      */
     public function show(Request $request): JsonResponse
     {
-        return response()->json([
-            'success' => true,
-            'data'    => new UserResource($request->user()),
-        ], 200);
+        return response()->json((new UserResource($request->user()))->resolve(), 200);
     }
 
     /**
@@ -29,10 +26,6 @@ class ProfileController extends Controller
         $user = $request->user();
         $user->update($request->validated());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Profile updated successfully',
-            'data'    => new UserResource($user),
-        ], 200);
+        return response()->json((new UserResource($user))->resolve(), 200);
     }
 }

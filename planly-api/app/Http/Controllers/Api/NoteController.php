@@ -19,10 +19,7 @@ class NoteController extends Controller
     {
         $notes = $request->user()->notes()->latest()->get();
 
-        return response()->json([
-            'success' => true,
-            'data'    => NoteResource::collection($notes),
-        ], 200);
+        return response()->json(NoteResource::collection($notes)->resolve(), 200);
     }
 
     /**
@@ -32,11 +29,7 @@ class NoteController extends Controller
     {
         $note = $request->user()->notes()->create($request->validated());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Note created successfully',
-            'data'    => new NoteResource($note),
-        ], 201);
+        return response()->json((new NoteResource($note))->resolve(), 201);
     }
 
     /**
@@ -48,10 +41,7 @@ class NoteController extends Controller
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        return response()->json([
-            'success' => true,
-            'data'    => new NoteResource($note),
-        ], 200);
+        return response()->json((new NoteResource($note))->resolve(), 200);
     }
 
     /**
@@ -65,11 +55,7 @@ class NoteController extends Controller
 
         $note->update($request->validated());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Note updated successfully',
-            'data'    => new NoteResource($note),
-        ], 200);
+        return response()->json((new NoteResource($note))->resolve(), 200);
     }
 
     /**
@@ -83,9 +69,6 @@ class NoteController extends Controller
 
         $note->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Note deleted successfully',
-        ], 200);
+        return response()->json(['message' => 'Note deleted successfully'], 200);
     }
 }

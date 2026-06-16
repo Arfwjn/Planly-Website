@@ -25,10 +25,7 @@ class RescheduleController extends Controller
     {
         $reschedules = $this->rescheduleService->getReschedulesForUser($request->user());
 
-        return response()->json([
-            'success' => true,
-            'data'    => RescheduledSessionResource::collection($reschedules),
-        ], 200);
+        return response()->json(RescheduledSessionResource::collection($reschedules)->resolve(), 200);
     }
 
     /**
@@ -38,11 +35,7 @@ class RescheduleController extends Controller
     {
         $reschedule = $this->rescheduleService->createOrUpdateReschedule($request->validated());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Rescheduled session saved successfully',
-            'data'    => new RescheduledSessionResource($reschedule),
-        ], 201);
+        return response()->json((new RescheduledSessionResource($reschedule))->resolve(), 201);
     }
 
     /**
@@ -59,13 +52,11 @@ class RescheduleController extends Controller
 
         if (!$deleted) {
             return response()->json([
-                'success' => false,
                 'message' => 'Rescheduled session not found',
             ], 404);
         }
 
         return response()->json([
-            'success' => true,
             'message' => 'Jadwal kuliah berhasil dikembalikan ke normal',
         ], 200);
     }

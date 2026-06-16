@@ -19,10 +19,7 @@ class CourseController extends Controller
     {
         $courses = $request->user()->courses;
 
-        return response()->json([
-            'success' => true,
-            'data'    => CourseResource::collection($courses),
-        ], 200);
+        return response()->json(CourseResource::collection($courses)->resolve(), 200);
     }
 
     /**
@@ -32,11 +29,7 @@ class CourseController extends Controller
     {
         $course = $request->user()->courses()->create($request->validated());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Course created successfully',
-            'data'    => new CourseResource($course),
-        ], 201);
+        return response()->json((new CourseResource($course))->resolve(), 201);
     }
 
     /**
@@ -48,10 +41,7 @@ class CourseController extends Controller
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        return response()->json([
-            'success' => true,
-            'data'    => new CourseResource($course),
-        ], 200);
+        return response()->json((new CourseResource($course))->resolve(), 200);
     }
 
     /**
@@ -65,11 +55,7 @@ class CourseController extends Controller
 
         $course->update($request->validated());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Course updated successfully',
-            'data'    => new CourseResource($course),
-        ], 200);
+        return response()->json((new CourseResource($course))->resolve(), 200);
     }
 
     /**
@@ -83,9 +69,6 @@ class CourseController extends Controller
 
         $course->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Course deleted successfully',
-        ], 200);
+        return response()->json(['message' => 'Course deleted successfully'], 200);
     }
 }

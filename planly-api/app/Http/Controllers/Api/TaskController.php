@@ -31,10 +31,7 @@ class TaskController extends Controller
 
         $tasks = $query->get();
 
-        return response()->json([
-            'success' => true,
-            'data'    => TaskResource::collection($tasks),
-        ], 200);
+        return response()->json(TaskResource::collection($tasks)->resolve(), 200);
     }
 
     /**
@@ -44,11 +41,7 @@ class TaskController extends Controller
     {
         $task = $request->user()->tasks()->create($request->validated());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Task created successfully',
-            'data'    => new TaskResource($task),
-        ], 201);
+        return response()->json((new TaskResource($task))->resolve(), 201);
     }
 
     /**
@@ -60,10 +53,7 @@ class TaskController extends Controller
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        return response()->json([
-            'success' => true,
-            'data'    => new TaskResource($task),
-        ], 200);
+        return response()->json((new TaskResource($task))->resolve(), 200);
     }
 
     /**
@@ -77,11 +67,7 @@ class TaskController extends Controller
 
         $task->update($request->validated());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Task updated successfully',
-            'data'    => new TaskResource($task),
-        ], 200);
+        return response()->json((new TaskResource($task))->resolve(), 200);
     }
 
     /**
@@ -95,11 +81,7 @@ class TaskController extends Controller
 
         $task->update(['is_finished' => true]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Task marked as finished',
-            'data'    => new TaskResource($task),
-        ], 200);
+        return response()->json((new TaskResource($task))->resolve(), 200);
     }
 
     /**
@@ -113,9 +95,6 @@ class TaskController extends Controller
 
         $task->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Task deleted successfully',
-        ], 200);
+        return response()->json(['message' => 'Task deleted successfully'], 200);
     }
 }
