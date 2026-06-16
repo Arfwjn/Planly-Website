@@ -53,7 +53,7 @@ export default function CompanionIdlePanel({
           className={`border-2 border-dashed rounded-2xl p-10 flex flex-col items-center justify-center gap-4 cursor-pointer transition-all duration-300 ${
             dragActive 
               ? 'border-primary bg-primary/5 scale-98 shadow-inner' 
-              : 'border-slate-200 dark:border-slate-800 hover:border-primary/50 hover:bg-slate-50/50 dark:hover:bg-slate-850/20'
+              : 'border-slate-200 dark:border-slate-800 hover:border-primary/50 hover:bg-slate-50/50 dark:hover:bg-slate-800'
           }`}
         >
           <div className="w-14 h-14 rounded-2xl bg-[#F5F2FF] dark:bg-slate-850 flex items-center justify-center text-primary shadow-xs">

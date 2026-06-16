@@ -6,6 +6,7 @@ import ApiKeyModal from '../ui/ApiKeyModal';
 import { api } from '../../services/api';
 import { useGeminiApiKey } from './hooks/useGeminiApiKey';
 import { useAICompanionSessions } from './hooks/useAICompanionSessions';
+import { useAIBackgroundProcessor } from './hooks/useAIBackgroundProcessor';
 import { Note, SidebarTab } from '../../types';
 import Skeleton from '../ui/Skeleton';
 
@@ -123,24 +124,29 @@ export default function AICompanionView({ onAddNote, onTabChange, loading = fals
 
   const toast = useToast();
   
-  // State manajemen alur pemrosesan AI
+  // State manajemen interaktif
   const [dragActive, setDragActive] = useState(false);
-  const [stage, setStage] = useState<ProcessingStage>('idle');
-  const [progress, setProgress] = useState(0);
-  const [videoMeta, setVideoMeta] = useState<ProcessedVideoMetadata | null>(null);
-  
-  // State pemutar video dan panel interaktif
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [activeTab, setActiveTab] = useState<ActiveTab>('transcript');
   const [transcriptSearch, setTranscriptSearch] = useState('');
-  
-  // State data analisis kuliah aktif
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  const [transcript, setTranscript] = useState<TranscriptLine[]>([]);
-  const [chapters, setChapters] = useState<LectureChapter[]>([]);
-  const [takeaways, setTakeaways] = useState<string[]>([]);
-  const [enrichment, setEnrichment] = useState<AcademicEnrichment | undefined>(undefined);
+
+  // Menggunakan custom hook untuk background processing AI (SoC Lanjutan)
+  const {
+    stage,
+    progress,
+    videoMeta,
+    videoUrl,
+    currentSessionId,
+    transcript,
+    chapters,
+    takeaways,
+    enrichment,
+    startActualAIProcessing,
+    handleLoadDemo,
+    handleReset,
+    loadHistorySession,
+    updateVideoUrl,
+  } = useAIBackgroundProcessor();
 
   // Menggunakan custom hooks untuk API Key dan Sessions (SoC Lanjutan)
   const {
@@ -203,150 +209,7 @@ export default function AICompanionView({ onAddNote, onTabChange, loading = fals
     }
   }, [isEnvKeyValid, localApiKey, hasPromptedKey, stage]);
 
-  // Alur pemrosesan asli menggunakan Gemini API & Client WAV extraction
-  const startActualAIProcessing = async (
-    file: File,
-    fileName: string,
-    fileSizeStr: string,
-    objectUrl: string
-  ) => {
-    setVideoMeta({ name: fileName, size: fileSizeStr, isDemo: false });
-    setStage('extracting');
-    setProgress(10);
-
-    try {
-      // Tahap 1: Ekstraksi Audio trek & downsampling ke WAV
-      const { blob: audioBlob, duration } = await extractAudioAsWav(file, (status, p) => {
-        // Map visual progress stages
-        if (p < 50) {
-          setStage('extracting');
-        } else if (p < 85) {
-          setStage('extracting');
-        }
-        setProgress(Math.round(p * 0.45)); // Down-sampling accounts for 0-45% of total progress
-      });
-
-      // Tahap 2: Transkripsi & Analisis Multimodal via Gemini API
-      setStage('transcribing');
-      setProgress(50);
-      
-      const analysisResult = await analyzeLectureAudio(audioBlob, duration, activeApiKey, (status, p) => {
-        if (p >= 90) {
-          setStage('summarizing');
-          setProgress(75);
-        } else {
-          setStage('transcribing');
-          setProgress(50 + Math.round((p - 85) * 1.5));
-        }
-      });
-
-      // Tahap 3: Pembuatan Ringkasan & Grounding Wawasan Akademik
-      setStage('summarizing');
-      setProgress(80);
-      
-      const sessionId = String(Date.now());
-      setCurrentSessionId(sessionId);
-      setTranscript(analysisResult.transcript);
-      setChapters(analysisResult.chapters);
-      setTakeaways(analysisResult.takeaways);
-      setEnrichment(analysisResult.enrichment);
-
-      // Simpan muatan data sesi analisis penuh ke localStorage browser
-      localStorage.setItem(`planly_session_data_${sessionId}`, JSON.stringify(analysisResult));
-
-      // Tahap 4: Pengayaan Akademik Selesai
-      setStage('enriching');
-      setProgress(95);
-
-      setTimeout(() => {
-        setStage('completed');
-        setProgress(100);
-        setVideoUrl(objectUrl);
-
-        // Daftarkan sesi baru ke riwayat menu utama
-        const newSession: ProcessedSession = {
-          id: sessionId,
-          name: fileName,
-          size: fileSizeStr,
-          dateStr: new Date().toLocaleDateString('id-ID', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          }),
-          isDemo: false
-        };
-
-        addSession(newSession);
-
-        toast.success('Analisis Video Kuliah Selesai! Siap untuk dipelajari.');
-      }, 1000);
-
-    } catch (error) {
-      console.error(error);
-      toast.error('Gagal memproses analisis video kuliah: ' + (error instanceof Error ? error.message : error));
-      handleReset();
-    }
-  };
-
-  // Simulasi pemrosesan analisis AI secara bertahap untuk demo static
-  const handleLoadDemo = () => {
-    setVideoMeta({ name: 'Kuliah_Kecerdasan_Buatan_Pertemuan_8.mp4', size: '24.5 MB', isDemo: true });
-    setStage('extracting');
-    setProgress(15);
-
-    // Tahap 1: Ekstraksi Audio
-    setTimeout(() => {
-      setStage('transcribing');
-      setProgress(40);
-      
-      // Tahap 2: Transkripsi
-      setTimeout(() => {
-        setStage('summarizing');
-        setProgress(70);
-        
-        // Tahap 3: Pembuatan Ringkasan
-        setTimeout(() => {
-          setStage('enriching');
-          setProgress(90);
-          
-          // Tahap 4: Pengayaan Akademis
-          setTimeout(() => {
-            setStage('completed');
-            setProgress(100);
-            
-            // Pasang data analisis simulasi JST
-            setTranscript(DEMO_ANALYSIS_RESULT.transcript);
-            setChapters(DEMO_ANALYSIS_RESULT.chapters);
-            setTakeaways(DEMO_ANALYSIS_RESULT.takeaways);
-            setEnrichment(DEMO_ANALYSIS_RESULT.enrichment);
-            setVideoUrl(DEMO_VIDEO_URL);
-            setCurrentSessionId('demo');
-
-            // Simpan sesi kuliah baru ke riwayat
-            const newSession: ProcessedSession = {
-              id: 'demo',
-              name: 'Kuliah_Kecerdasan_Buatan_Pertemuan_8.mp4',
-              size: '24.5 MB',
-              dateStr: new Date().toLocaleDateString('id-ID', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              }),
-              isDemo: true
-            };
-
-            addSession(newSession);
-
-            toast.success('Sesi Demo Kuliah AI berhasil dimuat.');
-          }, 800);
-        }, 800);
-      }, 800);
-    }, 800);
-  };
+  // Logika pemrosesan video dan simulasi didelegasikan ke custom hook useAIBackgroundProcessor
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -390,8 +253,7 @@ export default function AICompanionView({ onAddNote, onTabChange, loading = fals
 
     if (stage === 'completed') {
       // Mode hubungkan kembali berkas lokal (reconnect)
-      setVideoUrl(objectUrl);
-      setVideoMeta(prev => prev ? { ...prev, name: file.name, size: sizeStr } : { name: file.name, size: sizeStr, isDemo: false });
+      updateVideoUrl(objectUrl, file.name, sizeStr);
       toast.success('Video kuliah berhasil dihubungkan kembali!');
     } else {
       // Mode analisis baru biasa
@@ -403,7 +265,7 @@ export default function AICompanionView({ onAddNote, onTabChange, loading = fals
         }
         return;
       }
-      startActualAIProcessing(file, file.name, sizeStr, objectUrl);
+      startActualAIProcessing(file, file.name, sizeStr, objectUrl, activeApiKey, addSession);
     }
   };
 
@@ -415,67 +277,18 @@ export default function AICompanionView({ onAddNote, onTabChange, loading = fals
     deleteApiKey();
   };
 
-  const handleReset = () => {
-    if (videoUrl && !videoUrl.startsWith('http')) {
-      URL.revokeObjectURL(videoUrl);
-    }
-    setStage('idle');
-    setProgress(0);
-    setVideoMeta(null);
-    setVideoUrl(null);
-    setCurrentTime(0);
-    setTranscriptSearch('');
-    setTranscript([]);
-    setChapters([]);
-    setTakeaways([]);
-    setEnrichment(undefined);
-    setCurrentSessionId(null);
+  const triggerLoadDemo = () => {
+    handleLoadDemo(addSession);
+  };
+
+  const handleResetWorkspace = () => {
+    handleReset();
     setMessages([
       {
         sender: 'ai',
         text: 'Halo! Saya adalah Asisten Kuliah AI Anda. Saya telah menganalisis transkrip rekaman kuliah ini. Ada konsep materi kuliah yang ingin Anda tanyakan?'
       }
     ]);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  const handleLoadHistorySession = (sess: ProcessedSession) => {
-    setVideoMeta({ name: sess.name, size: sess.size, isDemo: sess.isDemo });
-    
-    if (sess.isDemo) {
-      // Muat data simulasi JST
-      setTranscript(DEMO_ANALYSIS_RESULT.transcript);
-      setChapters(DEMO_ANALYSIS_RESULT.chapters);
-      setTakeaways(DEMO_ANALYSIS_RESULT.takeaways);
-      setEnrichment(DEMO_ANALYSIS_RESULT.enrichment);
-      setVideoUrl(DEMO_VIDEO_URL);
-      setCurrentSessionId('demo');
-    } else {
-      // Muat data dari localStorage
-      const savedData = localStorage.getItem(`planly_session_data_${sess.id}`);
-      if (savedData) {
-        try {
-          const parsed = JSON.parse(savedData) as LectureAnalysisResult;
-          setTranscript(parsed.transcript);
-          setChapters(parsed.chapters);
-          setTakeaways(parsed.takeaways);
-          setEnrichment(parsed.enrichment);
-          setCurrentSessionId(sess.id);
-        } catch (e) {
-          console.error(e);
-          toast.error('Gagal memuat detail data sesi analisis.');
-        }
-      } else {
-        toast.warning('Data payload analisis tidak ditemukan di penyimpanan browser.');
-      }
-      setVideoUrl(null); // File lokal butuh re-connect
-    }
-
-    setStage('completed');
-    setProgress(100);
-    toast.success(`Memuat sesi: ${sess.name}`);
   };
 
   const triggerDeleteConfirm = (e: React.MouseEvent, id: string) => {
@@ -647,8 +460,8 @@ export default function AICompanionView({ onAddNote, onTabChange, loading = fals
               </button>
               
               <button
-                onClick={handleReset}
-                className="px-4 py-2 border !border-slate-200 hover:!border-slate-800 dark:!border-slate-800 dark:hover:!border-white hover:bg-slate-50 dark:hover:bg-slate-800 text-on-surface-variant hover:text-on-surface text-xs font-bold rounded-xl flex items-center gap-2 cursor-pointer transition-colors bg-white dark:bg-slate-900"
+                onClick={handleResetWorkspace}
+                className="px-4 py-2 border !border-slate-200 hover:!border-slate-600 dark:!border-slate-800 dark:hover:!border-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 text-on-surface-variant hover:text-on-surface text-xs font-bold rounded-xl flex items-center gap-2 cursor-pointer transition-colors bg-white dark:bg-slate-900"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Kembali / Unggah Baru</span>
@@ -741,8 +554,8 @@ export default function AICompanionView({ onAddNote, onTabChange, loading = fals
           onDrop={handleDrop}
           fileInputRef={fileInputRef}
           onFileChange={handleFileChange}
-          onLoadDemo={handleLoadDemo}
-          onLoadHistorySession={handleLoadHistorySession}
+          onLoadDemo={triggerLoadDemo}
+          onLoadHistorySession={loadHistorySession}
           onDeleteSessionClick={triggerDeleteConfirm}
         />
       )}
@@ -778,7 +591,7 @@ export default function AICompanionView({ onAddNote, onTabChange, loading = fals
                   className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer border-none ${
                     activeTab === 'transcript'
                       ? 'bg-primary text-white shadow-xs'
-                      : 'text-on-surface-variant hover:text-on-surface hover:bg-slate-800 dark:hover:bg-slate-850/40 bg-transparent'
+                      : 'text-on-surface-variant hover:text-on-surface hover:bg-slate-200 dark:hover:bg-slate-800 bg-transparent'
                   }`}
                 >
                   <Clock className="w-4 h-4" />
@@ -790,7 +603,7 @@ export default function AICompanionView({ onAddNote, onTabChange, loading = fals
                   className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer border-none ${
                     activeTab === 'summary'
                       ? 'bg-primary text-white shadow-xs'
-                      : 'text-on-surface-variant hover:text-on-surface hover:bg-slate-800 dark:hover:bg-slate-850/40 bg-transparent'
+                      : 'text-on-surface-variant hover:text-on-surface hover:bg-slate-200 dark:hover:bg-slate-800 bg-transparent'
                   }`}
                 >
                   <FileText className="w-4 h-4" />
@@ -802,7 +615,7 @@ export default function AICompanionView({ onAddNote, onTabChange, loading = fals
                   className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer border-none ${
                     activeTab === 'chat'
                       ? 'bg-primary text-white shadow-xs'
-                      : 'text-on-surface-variant hover:text-on-surface hover:bg-slate-800 dark:hover:bg-slate-850/40 bg-transparent'
+                      : 'text-on-surface-variant hover:text-on-surface hover:bg-slate-200 dark:hover:bg-slate-800 bg-transparent'
                   }`}
                 >
                   <MessageSquare className="w-4 h-4" />

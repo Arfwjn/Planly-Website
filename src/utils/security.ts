@@ -5,16 +5,14 @@
  * dengan mengenkripsinya menggunakan kunci dinamis yang diturunkan dari fingerprint browser.
  */
 
-// Menghasilkan sidik jari browser unik berbasis lingkungan client
+// Menghasilkan sidik jari browser unik berbasis lingkungan client yang stabil
 const getBrowserFingerprint = (): string => {
   if (typeof window === 'undefined') return 'planly_default_fallback_salt_321';
   
-  // Gabungkan userAgent, bahasa peramban, dan dimensi layar
+  // Gabungkan userAgent dan bahasa peramban (abaikan dimensi layar karena tidak stabil akibat zoom/resize)
   const components = [
     window.navigator?.userAgent || 'unknown_agent',
     window.navigator?.language || 'id-ID',
-    (window.screen?.width || 1920).toString(),
-    (window.screen?.height || 1080).toString(),
     'PlanlySecureSalt_1928374' // Kunci garam statis tambahan
   ];
   
@@ -33,8 +31,8 @@ const deriveKeyBytes = (fingerprint: string): number[] => {
   // Ambil byte dari hash berputar
   for (let i = 0; i < 32; i++) {
     const byte = (hash >> (i % 4 * 8)) & 0xFF;
-    // Lakukan pencampuran tambahan
-    keyBytes.push(byte ^ (i * 17));
+    // Lakukan pencampuran tambahan dan batasi ke 8-bit (0-255) agar tidak terjadi overflow bit tinggi
+    keyBytes.push((byte ^ (i * 17)) & 0xFF);
   }
   
   return keyBytes;
@@ -101,12 +99,26 @@ export const decryptApiKey = (encrypted: string): string => {
       decryptedChars.push(String.fromCharCode(charCode));
     }
     
-    return decryptedChars.join('');
+    const decrypted = decryptedChars.join('');
+    
+    // Validasi apakah hasil dekripsi hanya berisi karakter ASCII tercetak (printable ASCII)
+    // Jika sidik jari berubah/salah, proses XOR akan menghasilkan karakter biner acak/non-ASCII
+    const isPrintableAscii = /^[\x20-\x7E]+$/.test(decrypted);
+    if (!isPrintableAscii) {
+      console.warn('Decrypted API Key contains invalid characters. The browser fingerprint may have changed.');
+      return '';
+    }
+    
+    return decrypted;
   } catch (err) {
     console.error('API Key decryption failed:', err);
     try {
       // Fallback base64 dasar
-      return atob(encrypted);
+      const decoded = atob(encrypted);
+      if (/^[\x20-\x7E]+$/.test(decoded)) {
+        return decoded;
+      }
+      return '';
     } catch {
       return '';
     }
