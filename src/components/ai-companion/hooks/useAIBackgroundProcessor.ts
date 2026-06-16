@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useSyncExternalStore } from 'react';
 import { ProcessingStage, ProcessedVideoMetadata, TranscriptLine, LectureChapter, AcademicEnrichment } from '../types';
 import { extractAudioAsWav, analyzeLectureAudio } from '../../../services/ai/aiCompanionService';
 import { DEMO_ANALYSIS_RESULT, DEMO_VIDEO_URL } from '../constants';
@@ -29,27 +29,27 @@ let globalState: ProcessorState = {
   enrichment: undefined,
 };
 
-const listeners = new Set<(state: ProcessorState) => void>();
+const listeners = new Set<() => void>();
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function getSnapshot() {
+  return globalState;
+}
 
 function updateGlobalState(updates: Partial<ProcessorState>) {
   globalState = { ...globalState, ...updates };
-  listeners.forEach(listener => listener(globalState));
+  listeners.forEach(listener => listener());
 }
 
 export function useAIBackgroundProcessor() {
-  const [state, setState] = useState<ProcessorState>(globalState);
+  const state = useSyncExternalStore(subscribe, getSnapshot);
   const toast = useToast();
-
-  useEffect(() => {
-    // Sync state on mount
-    setState(globalState);
-    
-    // Register listener for background progress updates
-    listeners.add(setState);
-    return () => {
-      listeners.delete(setState);
-    };
-  }, []);
 
   const startActualAIProcessing = async (
     file: File,
