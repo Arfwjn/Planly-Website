@@ -1,3 +1,18 @@
+/**
+ * =============================================================================
+ * Planly — FaceEnrollmentPreviewModal.tsx
+ * 
+ * Kegunaan:
+ * Komponen konfigurasi Profil pengguna, pencapaian target akademik (IPK/GPA), sinkronisasi kalender OAuth, & backup data.
+ * 
+ * Relasi & Dependency:
+ * - Berelasi dengan ProfileView.tsx (orkestrator), profileService, dan calendarSync.
+ * 
+ * Aliran Data / State:
+ * - Mengambil ringkasan data nilai IPK mahasiswa, kontrol sinkronisasi kalender eksternal, dan ekspor/impor data JSON.
+ * =============================================================================
+ */
+
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';

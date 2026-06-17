@@ -1,3 +1,18 @@
+/**
+ * =============================================================================
+ * Planly — AttendanceView.tsx
+ * 
+ * Kegunaan:
+ * Komponen modul presensi/kehadiran mahasiswa memanfaatkan penangkapan swafoto kamera web & geolokasi GPS.
+ * 
+ * Relasi & Dependency:
+ * - Berelasi dengan AttendanceView.tsx (orkestrator) dan menyalurkan data ke attendanceService.
+ * 
+ * Aliran Data / State:
+ * - Membaca video stream kamera web browser, mengambil koordinat GPS peramban, lalu mengirim payload absensi ke API.
+ * =============================================================================
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Camera, Clock, MapPin, CheckCircle2, Lock, UserCheck, Calendar, X, Globe } from 'lucide-react';
 import { Course, RescheduledSession, AttendanceRecord, AttendanceSubmitPayload, SidebarTab } from '../../types';

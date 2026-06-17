@@ -1,3 +1,18 @@
+/**
+ * =============================================================================
+ * Planly — taskHelpers.ts
+ * 
+ * Kegunaan:
+ * Komponen manajemen tugas kuliah akademik (daftar tugas tertunggak & selesai, prioritas, & unduh berkas lampiran).
+ * 
+ * Relasi & Dependency:
+ * - Berelasi dengan TasksView.tsx (orkestrator) dan berkomunikasi dengan backend via tasksService.
+ * 
+ * Aliran Data / State:
+ * - Menampilkan daftar tugas terstruktur, upload lampiran Base64, dan mengubah status pengerjaan tugas.
+ * =============================================================================
+ */
+
 import { Course } from '../../types';
 
 /**

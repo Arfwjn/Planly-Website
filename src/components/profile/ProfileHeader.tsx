@@ -1,3 +1,18 @@
+/**
+ * =============================================================================
+ * Planly — ProfileHeader.tsx
+ * 
+ * Kegunaan:
+ * Komponen konfigurasi Profil pengguna, pencapaian target akademik (IPK/GPA), sinkronisasi kalender OAuth, & backup data.
+ * 
+ * Relasi & Dependency:
+ * - Berelasi dengan ProfileView.tsx (orkestrator), profileService, dan calendarSync.
+ * 
+ * Aliran Data / State:
+ * - Mengambil ringkasan data nilai IPK mahasiswa, kontrol sinkronisasi kalender eksternal, dan ekspor/impor data JSON.
+ * =============================================================================
+ */
+
 import React, { useRef } from 'react';
 import { Camera, User as UserIcon } from 'lucide-react';
 import { User } from '../../types';

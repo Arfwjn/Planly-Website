@@ -1,3 +1,18 @@
+/**
+ * =============================================================================
+ * Planly — CourseEditModal.tsx
+ * 
+ * Kegunaan:
+ * Komponen antarmuka modul Mata Kuliah terdaftar (daftar grid kelas, ruangan, dosen, absensi, & detail materi).
+ * 
+ * Relasi & Dependency:
+ * - Berelasi dengan CoursesView.tsx (orkestrator) dan berkomunikasi dengan server via coursesService.
+ * 
+ * Aliran Data / State:
+ * - Mengambil data detail perkuliahan user aktif, menghitung kelas terdekat hari berjalan, dan mendaftarkan kelas baru.
+ * =============================================================================
+ */
+
 import React, { useState, useEffect } from 'react';
 import { X, AlertCircle, ChevronUp, ChevronDown } from 'lucide-react';
 import { Course } from '../../types';

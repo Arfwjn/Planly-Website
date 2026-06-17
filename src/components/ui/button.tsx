@@ -1,3 +1,18 @@
+/**
+ * =============================================================================
+ * Planly — button.tsx
+ * 
+ * Kegunaan:
+ * Komponen antarmuka (UI) umum reusable (CustomSelect, DatePicker, Skeleton loader, alert toast, EmptyState, dll.).
+ * 
+ * Relasi & Dependency:
+ * - Digunakan berulang kali (shared components) oleh berbagai modul halaman View di aplikasi.
+ * 
+ * Aliran Data / State:
+ * - Menerima props input, trigger event handler, dan mengontrol transisi visual antarmuka agar konsisten.
+ * =============================================================================
+ */
+
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"

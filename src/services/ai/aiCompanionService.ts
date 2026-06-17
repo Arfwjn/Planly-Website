@@ -1,3 +1,18 @@
+/**
+ * =============================================================================
+ * Planly — aiCompanionService.ts
+ * 
+ * Kegunaan:
+ * Servis integrasi kecerdasan buatan Gemini AI (audio WAV extraction, lecture analysis, & RAG chat dengan transkrip).
+ * 
+ * Relasi & Dependency:
+ * - Dipanggil oleh AICompanionView.tsx dan CompanionChatTab.tsx untuk memproses kecerdasan asisten AI.
+ * 
+ * Aliran Data / State:
+ * - Mengekstrak trek suara dari MP4, mengirimkan WAV ke Gemini Flash, memparsing data JSON, & mengirim riwayat chat.
+ * =============================================================================
+ */
+
 import { GoogleGenAI } from '@google/genai';
 import { 
   TranscriptLine, 

@@ -1,3 +1,18 @@
+/**
+ * =============================================================================
+ * Planly — AICompanionView.tsx
+ * 
+ * Kegunaan:
+ * Komponen asisten kuliah AI interaktif (RAG chatbot, pemutar video, sinkronisasi transkrip kuliah, & key takeaways).
+ * 
+ * Relasi & Dependency:
+ * - Berelasi dengan AICompanionView.tsx (orkestrator) dan menggunakan layanan Gemini AI di aiCompanionService.ts.
+ * 
+ * Aliran Data / State:
+ * - Mengunggah video kuliah (.mp4), memutar transkrip seekable timestamp [MM:SS], merender rumus LaTeX KaTeX, & chat RAG.
+ * =============================================================================
+ */
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Sparkles, ArrowLeft, Clock, FileText, MessageSquare, Settings, BookOpen, Shield, ShieldAlert, Key, CheckCircle2 } from 'lucide-react';
 import { useToast } from '../ui/Toast';

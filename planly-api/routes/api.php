@@ -1,6 +1,20 @@
 <?php
 
 /**
+ * =============================================================================
+ * Planly — api.php
+ * 
+ * Kegunaan:
+ * Definisi rute (routing) url HTTP backend Laravel.
+ * 
+ * Relasi & Dependency:
+ * - Memetakan rute url API publik / privat (Sanctum) ke method di Controller yang sesuai.
+ * 
+ * Aliran Data / State:
+ * - Menjadi pintu gerbang masuk seluruh request Axios dari frontend React.
+ * =============================================================================
+ */
+/**
  * File ini mendefinisikan seluruh rute (routes) API untuk aplikasi Planly.
  * Di sini kita mengatur rute publik untuk autentikasi serta rute-rute yang dilindungi
  * menggunakan middleware Sanctum.

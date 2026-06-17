@@ -1,3 +1,18 @@
+/**
+ * =============================================================================
+ * Planly — TasksView.tsx
+ * 
+ * Kegunaan:
+ * Komponen manajemen tugas kuliah akademik (daftar tugas tertunggak & selesai, prioritas, & unduh berkas lampiran).
+ * 
+ * Relasi & Dependency:
+ * - Berelasi dengan TasksView.tsx (orkestrator) dan berkomunikasi dengan backend via tasksService.
+ * 
+ * Aliran Data / State:
+ * - Menampilkan daftar tugas terstruktur, upload lampiran Base64, dan mengubah status pengerjaan tugas.
+ * =============================================================================
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Plus, CheckSquare, CheckCircle, ListChecks, ClipboardList } from 'lucide-react';
 import EmptyState from '../ui/InteractiveEmptyState';

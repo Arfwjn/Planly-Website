@@ -1,4 +1,19 @@
 /**
+ * =============================================================================
+ * Planly — color.ts
+ * 
+ * Kegunaan:
+ * Fungsi helper utility kustom (pemformatan iCalendar .ics, enkripsi API key browser fingerprint, konversi warna, dll.).
+ * 
+ * Relasi & Dependency:
+ * - Dipanggil oleh berbagai modul servis/UI untuk tugas-tugas utilitas independen.
+ * 
+ * Aliran Data / State:
+ * - Mengolah parameter masukan mentah (raw input) dan mengembalikan format keluaran terproses secara instan.
+ * =============================================================================
+ */
+
+/**
  * Utilitas Warna untuk Planly
  * 
  * Berisi fungsi bantuan untuk konversi warna kustom HEX ke format RGB

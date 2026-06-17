@@ -1,3 +1,18 @@
+/**
+ * =============================================================================
+ * Planly — synthAudio.ts
+ * 
+ * Kegunaan:
+ * Service Layer frontend untuk melakukan kueri / pengiriman data ke server API Laravel (atau localStorage mock).
+ * 
+ * Relasi & Dependency:
+ * - Menggunakan httpClient/apiHelper. Objek dikatalogkan terpadu di dalam api.ts untuk dipakai oleh UI.
+ * 
+ * Aliran Data / State:
+ * - Melakukan request HTTP GET/POST/PUT/DELETE secara asinkron ke endpoint API backend dan mengembalikan raw data.
+ * =============================================================================
+ */
+
 class SynthAudioPlayer {
   private ctx: AudioContext | null = null;
   private sourceNodes: AudioNode[] = [];

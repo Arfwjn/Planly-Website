@@ -1,3 +1,18 @@
+/**
+ * =============================================================================
+ * Planly — TaskCard.tsx
+ * 
+ * Kegunaan:
+ * Komponen manajemen tugas kuliah akademik (daftar tugas tertunggak & selesai, prioritas, & unduh berkas lampiran).
+ * 
+ * Relasi & Dependency:
+ * - Berelasi dengan TasksView.tsx (orkestrator) dan berkomunikasi dengan backend via tasksService.
+ * 
+ * Aliran Data / State:
+ * - Menampilkan daftar tugas terstruktur, upload lampiran Base64, dan mengubah status pengerjaan tugas.
+ * =============================================================================
+ */
+
 import React from 'react';
 import { GraduationCap, Clock, Paperclip } from 'lucide-react';
 import { Task, Course } from '../../types';

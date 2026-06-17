@@ -1,3 +1,18 @@
+/**
+ * =============================================================================
+ * Planly — types.ts
+ * 
+ * Kegunaan:
+ * Definisi tipe data TypeScript global (Interfaces & Types) untuk menjamin tipe data aman di frontend.
+ * 
+ * Relasi & Dependency:
+ * - Diimpor oleh hampir semua file komponen React, hooks, dan services di frontend.
+ * 
+ * Aliran Data / State:
+ * - Menyediakan pedoman tipe data statis saat kompilasi tanpa logika run-time.
+ * =============================================================================
+ */
+
 export type ProcessingStage = 'idle' | 'extracting' | 'transcribing' | 'summarizing' | 'enriching' | 'completed';
 export type ActiveTab = 'transcript' | 'summary' | 'chat';
 

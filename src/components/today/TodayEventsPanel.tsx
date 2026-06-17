@@ -1,3 +1,18 @@
+/**
+ * =============================================================================
+ * Planly — TodayEventsPanel.tsx
+ * 
+ * Kegunaan:
+ * Berkas kode dalam proyek Planly.
+ * 
+ * Relasi & Dependency:
+ * - Berhubungan dengan modul utama aplikasi.
+ * 
+ * Aliran Data / State:
+ * - Mengikuti alur data terpadu (REST API / local mock storage).
+ * =============================================================================
+ */
+
 import React from 'react';
 import { Clock, MapPin, Users, Calendar, PartyPopper, Sparkles } from 'lucide-react';
 import { CampusEvent, SidebarTab } from '../../types';

@@ -1,5 +1,19 @@
 <?php
 
+/**
+ * =============================================================================
+ * Planly — TaskResource.php
+ * 
+ * Kegunaan:
+ * Laravel API Resource untuk menstandardisasi bentuk respon data keluar (JSON output) ke klien frontend.
+ * 
+ * Relasi & Dependency:
+ * - Digunakan di Controller untuk membungkus instance Model atau Collection database.
+ * 
+ * Aliran Data / State:
+ * - Memformat properti model database, mengubah format waktu/tanggal, dan melampirkan data relasi.
+ * =============================================================================
+ */
 namespace App\Http\Resources;
 
 use Illuminate\Http\Request;

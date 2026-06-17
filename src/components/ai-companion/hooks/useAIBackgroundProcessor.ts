@@ -1,3 +1,18 @@
+/**
+ * =============================================================================
+ * Planly — useAIBackgroundProcessor.ts
+ * 
+ * Kegunaan:
+ * Komponen asisten kuliah AI interaktif (RAG chatbot, pemutar video, sinkronisasi transkrip kuliah, & key takeaways).
+ * 
+ * Relasi & Dependency:
+ * - Berelasi dengan AICompanionView.tsx (orkestrator) dan menggunakan layanan Gemini AI di aiCompanionService.ts.
+ * 
+ * Aliran Data / State:
+ * - Mengunggah video kuliah (.mp4), memutar transkrip seekable timestamp [MM:SS], merender rumus LaTeX KaTeX, & chat RAG.
+ * =============================================================================
+ */
+
 import { useSyncExternalStore } from 'react';
 import { ProcessingStage, ProcessedVideoMetadata, TranscriptLine, LectureChapter, AcademicEnrichment } from '../types';
 import { extractAudioAsWav, analyzeLectureAudio } from '../../../services/ai/aiCompanionService';

@@ -1,3 +1,18 @@
+/**
+ * =============================================================================
+ * Planly — CourseCard.tsx
+ * 
+ * Kegunaan:
+ * Komponen antarmuka modul Mata Kuliah terdaftar (daftar grid kelas, ruangan, dosen, absensi, & detail materi).
+ * 
+ * Relasi & Dependency:
+ * - Berelasi dengan CoursesView.tsx (orkestrator) dan berkomunikasi dengan server via coursesService.
+ * 
+ * Aliran Data / State:
+ * - Mengambil data detail perkuliahan user aktif, menghitung kelas terdekat hari berjalan, dan mendaftarkan kelas baru.
+ * =============================================================================
+ */
+
 import React from 'react';
 import { User, Clock, MapPin } from 'lucide-react';
 import { Course, Task } from '../../types';

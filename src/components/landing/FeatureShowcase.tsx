@@ -1,3 +1,18 @@
+/**
+ * =============================================================================
+ * Planly — FeatureShowcase.tsx
+ * 
+ * Kegunaan:
+ * Berkas kode dalam proyek Planly.
+ * 
+ * Relasi & Dependency:
+ * - Berhubungan dengan modul utama aplikasi.
+ * 
+ * Aliran Data / State:
+ * - Mengikuti alur data terpadu (REST API / local mock storage).
+ * =============================================================================
+ */
+
 import React from 'react';
 import { Calendar, Sparkles, UserCheck, Clock, FileText, CheckCircle2 } from 'lucide-react';
 import BrowserMockup from './BrowserMockup';

@@ -1,5 +1,19 @@
 <?php
 
+/**
+ * =============================================================================
+ * Planly — AuthController.php
+ * 
+ * Kegunaan:
+ * Laravel Controller API untuk menangani request HTTP masuk dari frontend React.
+ * 
+ * Relasi & Dependency:
+ * - Berelasi dengan Model Eloquent, FormRequest validator, API Resource formatter, & diatur di api.php.
+ * 
+ * Aliran Data / State:
+ * - Memvalidasi otorisasi user, kueri database scoped (ownership), manipulasi CRUD tabel database, & mengembalikan JSON.
+ * =============================================================================
+ */
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;

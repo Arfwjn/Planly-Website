@@ -1,4 +1,19 @@
 /**
+ * =============================================================================
+ * Planly — security.ts
+ * 
+ * Kegunaan:
+ * Fungsi helper utility kustom (pemformatan iCalendar .ics, enkripsi API key browser fingerprint, konversi warna, dll.).
+ * 
+ * Relasi & Dependency:
+ * - Dipanggil oleh berbagai modul servis/UI untuk tugas-tugas utilitas independen.
+ * 
+ * Aliran Data / State:
+ * - Mengolah parameter masukan mentah (raw input) dan mengembalikan format keluaran terproses secara instan.
+ * =============================================================================
+ */
+
+/**
  * Utilitas Keamanan untuk Proteksi API Key di Sisi Klien
  * 
  * Melindungi Gemini API Key dari pencurian data dalam plain-text di localStorage

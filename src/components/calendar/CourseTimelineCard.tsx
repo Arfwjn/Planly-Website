@@ -1,3 +1,18 @@
+/**
+ * =============================================================================
+ * Planly — CourseTimelineCard.tsx
+ * 
+ * Kegunaan:
+ * Komponen visualisasi jadwal perkuliahan, agenda rutin, reschedule, & kalender interaktif bulanan/mingguan.
+ * 
+ * Relasi & Dependency:
+ * - Berelasi dengan CalendarView.tsx (orkestrator) dan terintegrasi dengan Google / Outlook Calendar.
+ * 
+ * Aliran Data / State:
+ * - Membaca kueri jadwal kuliah harian/bulanan mahasiswa, memicu form reschedule kelas, dan check-in kehadiran.
+ * =============================================================================
+ */
+
 import React from 'react';
 import { Clock, User, MapPin, Info, CheckSquare, Check, UserCheck, Undo2, Calendar as CalendarIcon } from 'lucide-react';
 import { Course, Task } from '../../types';

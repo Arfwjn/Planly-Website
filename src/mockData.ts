@@ -1,3 +1,18 @@
+/**
+ * =============================================================================
+ * Planly — mockData.ts
+ * 
+ * Kegunaan:
+ * Penyedia dataset awal simulasi lokal (mock data) mahasiswa untuk memfasilitasi mode offline.
+ * 
+ * Relasi & Dependency:
+ * - Dipakai oleh apiHelper.ts sebagai fallback data awal jika localStorage masih kosong.
+ * 
+ * Aliran Data / State:
+ * - Menyediakan struktur objek array statis siap pakai untuk courses, tasks, notes, user, dan events.
+ * =============================================================================
+ */
+
 import { User, Course, Task, Note, CampusEvent, RescheduledSession } from './types';
 
 // Dynamic date helper — keeps dummy data relative to today

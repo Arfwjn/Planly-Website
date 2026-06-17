@@ -1,3 +1,18 @@
+/**
+ * =============================================================================
+ * Planly — Toast.tsx
+ * 
+ * Kegunaan:
+ * Komponen antarmuka (UI) umum reusable (CustomSelect, DatePicker, Skeleton loader, alert toast, EmptyState, dll.).
+ * 
+ * Relasi & Dependency:
+ * - Digunakan berulang kali (shared components) oleh berbagai modul halaman View di aplikasi.
+ * 
+ * Aliran Data / State:
+ * - Menerima props input, trigger event handler, dan mengontrol transisi visual antarmuka agar konsisten.
+ * =============================================================================
+ */
+
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { AnimatePresence } from 'motion/react';
 import { AlertToast } from './alert-toast';

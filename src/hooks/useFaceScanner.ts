@@ -1,3 +1,18 @@
+/**
+ * =============================================================================
+ * Planly — useFaceScanner.ts
+ * 
+ * Kegunaan:
+ * React custom hook untuk memisahkan logika reaktif & pemantauan state dari komponen UI.
+ * 
+ * Relasi & Dependency:
+ * - Digunakan di App.tsx atau komponen View untuk berbagi logika state bersama.
+ * 
+ * Aliran Data / State:
+ * - Menangani manajemen state lokal, efek sinkronisasi berkala, kalkulasi sisa tenggat waktu, & timer fokus Pomodoro.
+ * =============================================================================
+ */
+
 import { useState, useEffect, useRef } from 'react';
 import * as faceapi from '@vladmandic/face-api';
 import {

@@ -1,3 +1,18 @@
+/**
+ * =============================================================================
+ * Planly — NotesView.tsx
+ * 
+ * Kegunaan:
+ * Komponen modul pencatatan kuliah (catatan belajar) dengan editor Markdown & pratinjau live.
+ * 
+ * Relasi & Dependency:
+ * - Berelasi dengan NotesView.tsx (orkestrator) dan menggunakan notesService untuk sinkronisasi catatan.
+ * 
+ * Aliran Data / State:
+ * - Melakukan CRUD data catatan, parsing format teks Markdown, dan checklist interaktif langsung dari kartu.
+ * =============================================================================
+ */
+
 import React, { useState } from 'react';
 import { Plus, X, FileText, PenLine, BookMarked } from 'lucide-react';
 import EmptyState from '../ui/InteractiveEmptyState';

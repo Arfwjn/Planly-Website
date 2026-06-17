@@ -1,3 +1,18 @@
+/**
+ * =============================================================================
+ * Planly — AuthView.tsx
+ * 
+ * Kegunaan:
+ * Komponen antarmuka (UI) khusus modul Autentikasi (seperti form masuk, pendaftaran akun, & header auth).
+ * 
+ * Relasi & Dependency:
+ * - Berelasi dengan AuthView.tsx (orkestrator) dan menggunakan layanan authService di frontend.
+ * 
+ * Aliran Data / State:
+ * - Klien mengirimkan kredensial masuk/daftar, kemudian menerima token JWT (Sanctum) untuk disimpan di localStorage.
+ * =============================================================================
+ */
+
 import React, { useState } from 'react';
 import { ShieldAlert } from 'lucide-react';
 import { LoginResponse } from '../../types';

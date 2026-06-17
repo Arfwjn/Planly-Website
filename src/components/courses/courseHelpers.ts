@@ -1,3 +1,18 @@
+/**
+ * =============================================================================
+ * Planly — courseHelpers.ts
+ * 
+ * Kegunaan:
+ * Komponen antarmuka modul Mata Kuliah terdaftar (daftar grid kelas, ruangan, dosen, absensi, & detail materi).
+ * 
+ * Relasi & Dependency:
+ * - Berelasi dengan CoursesView.tsx (orkestrator) dan berkomunikasi dengan server via coursesService.
+ * 
+ * Aliran Data / State:
+ * - Mengambil data detail perkuliahan user aktif, menghitung kelas terdekat hari berjalan, dan mendaftarkan kelas baru.
+ * =============================================================================
+ */
+
 import type { SelectOption } from '../ui/CustomSelect';
 
 export const dayOfWeekOptions: SelectOption[] = [

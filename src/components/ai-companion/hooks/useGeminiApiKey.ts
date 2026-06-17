@@ -1,3 +1,18 @@
+/**
+ * =============================================================================
+ * Planly — useGeminiApiKey.ts
+ * 
+ * Kegunaan:
+ * Komponen asisten kuliah AI interaktif (RAG chatbot, pemutar video, sinkronisasi transkrip kuliah, & key takeaways).
+ * 
+ * Relasi & Dependency:
+ * - Berelasi dengan AICompanionView.tsx (orkestrator) dan menggunakan layanan Gemini AI di aiCompanionService.ts.
+ * 
+ * Aliran Data / State:
+ * - Mengunggah video kuliah (.mp4), memutar transkrip seekable timestamp [MM:SS], merender rumus LaTeX KaTeX, & chat RAG.
+ * =============================================================================
+ */
+
 import { useState } from 'react';
 import { encryptApiKey, decryptApiKey } from '../../../utils/security';
 import { useToast } from '../../ui/Toast';
