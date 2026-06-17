@@ -132,8 +132,8 @@ class TaskController extends Controller
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        // Tandai tugas sebagai selesai dikerjakan
-        $task->update(['is_finished' => true]);
+        // Tandai/alihkan status penyelesaian tugas
+        $task->update(['is_finished' => !$task->is_finished]);
 
         return response()->json((new TaskResource($task))->resolve(), 200);
     }

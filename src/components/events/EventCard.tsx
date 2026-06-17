@@ -178,8 +178,8 @@ export default function EventCard({
           </div>
         ) : (
           <>
-            <span className="text-[10px] text-on-surface-variant/60 font-medium">ID: #{event.id}</span>
-            <div className="flex gap-2">
+            <span className="text-[10px] text-on-surface-variant/60 font-medium" style={{ display: 'none' }}>ID: #{event.id}</span>
+            <div className="flex gap-2 justify-center items-center ml-auto">
               <button
                 onClick={() => onOpenEdit(event)}
                 className="p-1.5 bg-white border border-slate-200/80 text-slate-600 hover:text-primary hover:bg-[#F5F2FF] dark:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:hover:bg-slate-700 rounded-lg transition-all cursor-pointer bg-transparent"
