@@ -44,18 +44,18 @@ export default function AttendanceRecapGrid({
     const targetSessions = 14; // Target tatap muka per semester
     const courseRecords = attendanceRecords.filter(r => r.course_id === course.id);
     const attendedCount = courseRecords.filter(r => r.status === 'Hadir').length;
-    const sickCount = courseRecords.filter(r => r.status === 'Sakit').length;
-    const permittedCount = courseRecords.filter(r => r.status === 'Izin').length;
-    const absentCount = courseRecords.filter(r => r.status === 'Alpha').length;
+    // const sickCount = courseRecords.filter(r => r.status === 'Sakit').length;
+    // const permittedCount = courseRecords.filter(r => r.status === 'Izin').length;
+    // const absentCount = courseRecords.filter(r => r.status === 'Alpha').length;
  
     const attendanceRate = targetSessions > 0 ? (attendedCount / targetSessions) * 100 : 0;
     
     return {
       ...course,
       attendedCount,
-      sickCount,
-      permittedCount,
-      absentCount,
+      // sickCount,
+      // permittedCount,
+      // absentCount,
       attendanceRate,
       isWarning: attendanceRate < 75
     };
@@ -112,21 +112,21 @@ export default function AttendanceRecapGrid({
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                   Hadir: {stat.attendedCount}
                 </span>
-                <span className="flex items-center gap-1">
+                {/* <span className="flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                   Sakit/Izin: {stat.sickCount + stat.permittedCount}
-                </span>
-                <span className="flex items-center gap-1">
+                </span> */}
+                {/* <span className="flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
                   Alpha: {stat.absentCount}
-                </span>
+                </span> */}
               </div>
 
               {/* Peringatan Kelulusan Absensi */}
               {stat.isWarning && (
                 <div className="flex items-start gap-1 bg-red-500/10 text-red-600 dark:text-red-400 p-2 rounded-lg border border-red-500/10 text-[9px] font-bold leading-normal">
                   <ShieldAlert className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-                  <span>Kehadiran di bawah 75%! Terancam tidak dapat mengikuti UAS mendapatkan nilai C.</span>
+                  <span>Kehadiran di bawah 75%! Terancam tidak dapat mengikuti UAS dan mendapatkan nilai C.</span>
                 </div>
               )}
             </div>

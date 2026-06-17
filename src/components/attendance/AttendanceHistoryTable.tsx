@@ -122,11 +122,11 @@ export default function AttendanceHistoryTable({
                   </td>
                   <td className="py-3 px-3 text-center">
                     {record.image_base64 ? (
-                      <div className="inline-block relative group">
+                      <div className="inline-block relative group hover:scale-105 transition-transform">
                         <img 
                           src={record.image_base64} 
                           alt="Verifikasi Wajah" 
-                          className="w-9 h-9 object-cover rounded-full border border-slate-200 dark:border-slate-700 shadow-2xs hover:scale-105 transition-transform" 
+                          className="w-9 h-9 blur-[2px] object-cover rounded-full border border-slate-200 dark:border-slate-700 shadow-2xs" 
                         />
                         <button
                           onClick={() => onPreviewPhoto(record.image_base64)}

@@ -56,14 +56,14 @@ export default function TodayStatsRow({
           <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block">
             Tugas Aktif
           </span>
-          <div className="text-3xl font-black text-on-surface group-hover:text-primary transition-colors leading-none">
+          <div className="text-3xl font-black text-on-surface group-hover:text-primary dark:group-hover:!text-primary/80 transition-colors leading-none">
             {pendingTasksCount} <span className="text-xs font-semibold text-on-surface-variant">Tugas</span>
           </div>
           <span className="text-[10px] text-on-surface-variant/80 font-medium block">
             {highPriorityCount} Prioritas Tinggi
           </span>
         </div>
-        <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0">
+        <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary dark:text-primary/80 flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0">
           <CheckSquare className="w-5 h-5" />
         </div>
       </div>
@@ -78,7 +78,7 @@ export default function TodayStatsRow({
           <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block">
             Kuliah Hari Ini
           </span>
-          <div className="text-3xl font-black text-on-surface group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors leading-none">
+          <div className="text-3xl font-black text-on-surface group-hover:text-emerald-600 dark:group-hover:!text-emerald-400 transition-colors leading-none">
             {todayCoursesCount} <span className="text-xs font-semibold text-on-surface-variant">Kelas</span>
           </div>
           <span className="text-[10px] text-on-surface-variant/80 font-medium block">
@@ -100,14 +100,14 @@ export default function TodayStatsRow({
           <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block">
             Fokus Pomodoro
           </span>
-          <div className="text-3xl font-black text-on-surface group-hover:text-amber-500 transition-colors leading-none">
+          <div className="text-3xl font-black text-on-surface group-hover:text-amber-500 dark:group-hover:!text-amber-300 transition-colors leading-none">
             {completedPomodoroCount} <span className="text-xs font-semibold text-on-surface-variant">Sesi</span>
           </div>
           <span className="text-[10px] text-on-surface-variant/80 font-medium block">
             Target Harian: 4 Sesi Kerja
           </span>
         </div>
-        <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0">
+        <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 dark:text-amber-300 flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0">
           <Flame className="w-5 h-5" />
         </div>
       </div>
