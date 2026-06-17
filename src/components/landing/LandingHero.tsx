@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import BrowserMockup from './BrowserMockup';
 

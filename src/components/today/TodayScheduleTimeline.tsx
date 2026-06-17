@@ -13,8 +13,7 @@
  * =============================================================================
  */
 
-import React from 'react';
-import { Clock, MapPin, Users, Info, CheckSquare, Notebook, Coffee, Smile, CalendarCheck, BookOpen } from 'lucide-react';
+import { MapPin, Users, Info, CheckSquare, Notebook, Coffee, Smile, CalendarCheck, BookOpen } from 'lucide-react';
 import { Course, Task, SidebarTab } from '../../types';
 import { hexToRgb } from '../../utils/color';
 import EmptyState from '../ui/InteractiveEmptyState';

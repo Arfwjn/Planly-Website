@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React from 'react';
+
 import { GraduationCap, ArrowRight, Sun, Moon } from 'lucide-react';
 
 interface LandingNavbarProps {

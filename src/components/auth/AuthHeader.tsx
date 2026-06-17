@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React from 'react';
+
 import { GraduationCap } from 'lucide-react';
 
 interface AuthHeaderProps {

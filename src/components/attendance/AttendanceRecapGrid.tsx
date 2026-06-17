@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React from 'react';
+
 import { Award, ShieldAlert, BookMarked, ClipboardCheck, Plus } from 'lucide-react';
 import { Course, AttendanceRecord, SidebarTab } from '../../types';
 import EmptyState from '../ui/InteractiveEmptyState';

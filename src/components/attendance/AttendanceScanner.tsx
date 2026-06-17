@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Globe, CheckCircle2, RefreshCw } from 'lucide-react';
 import { ProcessedCourse } from '../../utils/reschedule';
@@ -41,7 +41,6 @@ export default function AttendanceScanner({
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
   const [gpsCoords, setGpsCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [loadingSubmit, setLoadingSubmit] = useState(false);
-  const [hasRegisteredFace, setHasRegisteredFace] = useState(true);
 
   // Initialize custom scanner hook
   const {
@@ -82,12 +81,10 @@ export default function AttendanceScanner({
     // 1. Check if user has registered face in localStorage
     const registeredStr = localStorage.getItem('planly_registered_face');
     if (!registeredStr) {
-      setHasRegisteredFace(false);
       setScanStatus('failed');
       setErrorMessage('Wajah Anda belum terdaftar di sistem. Silakan daftarkan wajah Anda terlebih dahulu di menu Profil > Akun & Akademik.');
       return;
     }
-    setHasRegisteredFace(true);
 
     // 2. Fetch GPS coordinates
     if (navigator.geolocation) {

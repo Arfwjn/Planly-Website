@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React from 'react';
+
 import { Course, RescheduledSession, CampusEvent } from '../../types';
 import { getCoursesForDate } from '../../utils/reschedule';
 

@@ -14,7 +14,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Sparkles, ArrowLeft, Clock, FileText, MessageSquare, Settings, BookOpen, Shield, ShieldAlert, Key, CheckCircle2 } from 'lucide-react';
+import { Sparkles, ArrowLeft, Clock, FileText, MessageSquare, BookOpen, ShieldAlert, Key, CheckCircle2 } from 'lucide-react';
 import { useToast } from '../ui/Toast';
 import ConfirmModal from '../ui/ConfirmModal';
 import ApiKeyModal from '../ui/ApiKeyModal';
@@ -27,18 +27,11 @@ import Skeleton from '../ui/Skeleton';
 
 // Impor tipe data (TypeScript interfaces & types)
 import { 
-  ProcessingStage, 
   ActiveTab, 
-  ProcessedVideoMetadata, 
-  TranscriptLine, 
-  ChatMessage, 
-  ProcessedSession,
-  LectureChapter,
-  AcademicEnrichment
+  ChatMessage
 } from './types';
 
 // Impor konstanta & helper terdekomposisi
-import { DEMO_TRANSCRIPT, DEMO_ANALYSIS_RESULT, DEMO_VIDEO_URL } from './constants';
 import { generateLectureNotesMarkdown, getOfflineAIResponse } from './helpers';
 
 // Impor sub-komponen modular
@@ -51,10 +44,7 @@ import CompanionChatTab from './CompanionChatTab';
 
 // Impor helper service Gemini AI & audio extraction
 import { 
-  extractAudioAsWav, 
-  analyzeLectureAudio, 
-  chatWithLectureContext, 
-  LectureAnalysisResult 
+  chatWithLectureContext
 } from '../../services/ai/aiCompanionService';
 
 export interface AICompanionViewProps {
@@ -151,7 +141,6 @@ export default function AICompanionView({ onAddNote, onTabChange, loading = fals
     progress,
     videoMeta,
     videoUrl,
-    currentSessionId,
     transcript,
     chapters,
     takeaways,

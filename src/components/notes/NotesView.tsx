@@ -13,8 +13,8 @@
  * =============================================================================
  */
 
-import React, { useState } from 'react';
-import { Plus, X, FileText, PenLine, BookMarked } from 'lucide-react';
+import { useState } from 'react';
+import { Plus, FileText, PenLine, BookMarked } from 'lucide-react';
 import EmptyState from '../ui/InteractiveEmptyState';
 import { Note, Course } from '../../types';
 import Skeleton from '../ui/Skeleton';

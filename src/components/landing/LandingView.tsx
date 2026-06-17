@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React from 'react';
+
 import { ArrowRight } from 'lucide-react';
 import LandingNavbar from './LandingNavbar';
 import LandingHero from './LandingHero';

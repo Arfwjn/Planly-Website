@@ -82,14 +82,14 @@ export function useAIBackgroundProcessor() {
 
     try {
       // Tahap 1: Ekstraksi Audio trek & downsampling ke WAV
-      const { blob: audioBlob, duration } = await extractAudioAsWav(file, (status, p) => {
+      const { blob: audioBlob, duration } = await extractAudioAsWav(file, (_, p) => {
         updateGlobalState({ stage: 'extracting', progress: Math.round(p * 0.45) });
       });
 
       // Tahap 2: Transkripsi & Analisis Multimodal via Gemini API
       updateGlobalState({ stage: 'transcribing', progress: 50 });
       
-      const analysisResult = await analyzeLectureAudio(audioBlob, duration, activeApiKey, (status, p) => {
+      const analysisResult = await analyzeLectureAudio(audioBlob, duration, activeApiKey, (_, p) => {
         if (p >= 90) {
           updateGlobalState({ stage: 'summarizing', progress: 75 });
         } else {

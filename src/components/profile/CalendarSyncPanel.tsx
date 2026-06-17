@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React from 'react';
+
 import { Calendar, Globe, RefreshCw, Download, Link } from 'lucide-react';
 import { CalendarSyncConfig } from '../../types';
 

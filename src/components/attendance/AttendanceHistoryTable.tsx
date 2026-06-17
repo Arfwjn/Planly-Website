@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { History, Globe, Eye, Check, Trash2, ChevronLeft, ChevronRight, ClipboardCheck, Clock3 } from 'lucide-react';
 import EmptyState from '../ui/InteractiveEmptyState';
 import { AttendanceRecord } from '../../types';

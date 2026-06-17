@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React from 'react';
+
 import { X, AlertTriangle } from 'lucide-react';
 
 interface ConfirmModalProps {

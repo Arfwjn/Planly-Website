@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, CheckSquare, CheckCircle, ListChecks, ClipboardList } from 'lucide-react';
 import EmptyState from '../ui/InteractiveEmptyState';
 import { Task, Course } from '../../types';

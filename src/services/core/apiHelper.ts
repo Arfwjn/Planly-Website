@@ -6,7 +6,7 @@
 // getNextMockId() biar modul-modul servis gak bisa ngubah state ID secara langsung.
 // =============================================================================
 
-import { initialUser, initialCourses, initialTasks, initialNotes } from '../../mockData';
+
 
 // Cek status mode mock berdasarkan VITE_USE_MOCK.
 export const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false';

@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Flame, BookOpen, Timer } from 'lucide-react';
 import { Course, Task, Note, SidebarTab } from '../../types';
 import { useToast } from '../ui/Toast';
@@ -80,11 +80,9 @@ export default function WorkspaceView({
   setIsFocusTimerRunning,
   onResetFocusTimer,
   pomodoroStage,
-  setPomodoroStage,
   pomodoroTaskId,
   setPomodoroTaskId,
   completedPomodoroCount,
-  setCompletedPomodoroCount,
   workspaceMode,
   setWorkspaceMode,
   lectureTime,

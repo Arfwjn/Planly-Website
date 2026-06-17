@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Plus, BookOpen, GraduationCap, Library } from 'lucide-react';
 import EmptyState from '../ui/InteractiveEmptyState';
 import { Course, Task } from '../../types';

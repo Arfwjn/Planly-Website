@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React from 'react';
+
 
 interface BrowserMockupProps {
   src: string;

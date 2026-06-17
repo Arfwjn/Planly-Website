@@ -13,8 +13,8 @@
  * =============================================================================
  */
 
-import React, { useState, useEffect } from 'react';
-import { Palette, Download, Upload, LogOut, Sun, Moon, Key, Eye, EyeOff, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Palette, Download, Upload, Sun, Moon, Key, Eye, EyeOff, ShieldCheck, CheckCircle2 } from 'lucide-react';
 
 interface BackupRecoveryPanelProps {
   theme: 'light' | 'dark';

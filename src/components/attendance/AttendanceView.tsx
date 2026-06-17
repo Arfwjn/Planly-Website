@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Camera, Clock, MapPin, CheckCircle2, Lock, UserCheck, Calendar, X, Globe } from 'lucide-react';
 import { Course, RescheduledSession, AttendanceRecord, AttendanceSubmitPayload, SidebarTab } from '../../types';
 import { getCoursesForDate, ProcessedCourse } from '../../utils/reschedule';

@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React from 'react';
+
 import { Calendar, Clock, MapPin, User, GraduationCap, X, Edit2, Trash2, CheckSquare } from 'lucide-react';
 import { Course, Task } from '../../types';
 import { dayNameIndonesian, getNextClassDate } from './courseHelpers';

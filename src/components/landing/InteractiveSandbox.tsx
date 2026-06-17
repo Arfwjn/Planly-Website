@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Zap, Play, Pause, RotateCcw, Check } from 'lucide-react';
 
 export default function InteractiveSandbox() {

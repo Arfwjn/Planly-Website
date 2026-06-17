@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { FileVideo, Brain, Globe, RefreshCw as SpinnerIcon, Terminal, Sparkles } from 'lucide-react';
 import { ProcessingStage } from './types';
 

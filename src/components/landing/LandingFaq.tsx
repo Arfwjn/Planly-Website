@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React from 'react';
+
 import { ChevronDown } from 'lucide-react';
 
 interface FaqItem {

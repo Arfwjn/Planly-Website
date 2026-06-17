@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React from 'react';
+
 import CustomSelect from '../ui/CustomSelect';
 import type { SelectOption } from '../ui/CustomSelect';
 import { Task } from '../../types';

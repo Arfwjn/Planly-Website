@@ -14,7 +14,7 @@
  */
 
 import React from 'react';
-import { Search, Clock } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { TranscriptLine } from './types';
 
 interface CompanionTranscriptTabProps {

@@ -13,10 +13,10 @@
  * =============================================================================
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Plus, CalendarHeart, PartyPopper, Sparkles } from 'lucide-react';
 import EmptyState from '../ui/InteractiveEmptyState';
-import { CampusEvent, EventCategory, CampusEventCreatePayload } from '../../types';
+import { CampusEvent, CampusEventCreatePayload } from '../../types';
 import Skeleton from '../ui/Skeleton';
 
 // Import sub-komponen modular

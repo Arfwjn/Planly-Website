@@ -13,9 +13,8 @@
  * =============================================================================
  */
 
-import React, { useState, useEffect } from 'react';
-import { Clock, BookOpen, Flame, LayoutDashboard, Coffee, CalendarCheck, Calendar, Sparkles } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { BookOpen, LayoutDashboard, Coffee, Calendar, Sparkles } from 'lucide-react';
 import { Course, Task, SidebarTab, CampusEvent, RescheduledSession } from '../../types';
 import NotificationBanner from '../ui/NotificationBanner';
 import Skeleton from '../ui/Skeleton';
@@ -54,7 +53,6 @@ interface TodayViewProps {
  * panel fokus Pomodoro, timeline kuliah hari ini, dan daftar event harian.
  */
 export default function TodayView({
-  user,
   courses,
   tasks,
   onToggleTaskState,
@@ -63,7 +61,6 @@ export default function TodayView({
   focusTimeLeft,
   isFocusTimerRunning,
   setIsFocusTimerRunning,
-  onResetFocusTimer,
   loading = false,
   events = [],
   rescheduledSessions,

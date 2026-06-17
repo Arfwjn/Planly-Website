@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React from 'react';
+
 import { FileText } from 'lucide-react';
 
 interface LectureNotePanelProps {

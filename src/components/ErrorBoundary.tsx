@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertOctagon, RotateCw } from 'lucide-react';
 
 interface Props {

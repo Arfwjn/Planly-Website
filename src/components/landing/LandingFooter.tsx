@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React from 'react';
+
 import { GraduationCap, ExternalLink } from 'lucide-react';
 
 export default function LandingFooter() {

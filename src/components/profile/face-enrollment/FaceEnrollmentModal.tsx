@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Loader2 } from 'lucide-react';
 import { useFaceScanner } from '../../../hooks/useFaceScanner';
@@ -46,7 +46,7 @@ export default function FaceEnrollmentModal({
     stopScanning,
     captureCroppedFace
   } = useFaceScanner({
-    onScanComplete: async (detection, video, box) => {
+    onScanComplete: async (detection, _, box) => {
       const croppedBase64 = captureCroppedFace(box);
       await onScanComplete(detection, croppedBase64);
     },

@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React from 'react';
+
 import { Camera, Trash2, Eye, ShieldCheck, RefreshCw, AlertTriangle } from 'lucide-react';
 
 interface FaceEnrollmentCardProps {

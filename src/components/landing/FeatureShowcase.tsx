@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React from 'react';
+
 import { Calendar, Sparkles, UserCheck, Clock, FileText, CheckCircle2 } from 'lucide-react';
 import BrowserMockup from './BrowserMockup';
 import AIChatMockup from './AIChatMockup';

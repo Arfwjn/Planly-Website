@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React from 'react';
+
 import { Sparkles, ArrowRight } from 'lucide-react';
 
 export default function AIChatMockup() {

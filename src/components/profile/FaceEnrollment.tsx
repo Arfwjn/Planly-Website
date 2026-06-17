@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import * as faceapi from '@vladmandic/face-api';
 import { useToast } from '../ui/Toast';
 import FaceEnrollmentCard from './face-enrollment/FaceEnrollmentCard';
@@ -25,7 +25,7 @@ interface FaceEnrollmentProps {
   theme: 'light' | 'dark';
 }
 
-export default function FaceEnrollment({ theme }: FaceEnrollmentProps) {
+export default function FaceEnrollment({ theme: _theme }: FaceEnrollmentProps) {
   const toast = useToast();
   const [registered, setRegistered] = useState(false);
   const [registerDate, setRegisterDate] = useState<string | null>(null);

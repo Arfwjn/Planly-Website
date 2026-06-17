@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React from 'react';
+
 import { CheckSquare, List, ListOrdered, Bold, Italic, Heading1, Heading2, Link2, Sigma } from 'lucide-react';
 
 interface FormattingToolbarProps {

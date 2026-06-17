@@ -13,7 +13,7 @@
  * =============================================================================
  */
 
-import React from 'react';
+
 import { Play, Pause, RotateCcw } from 'lucide-react';
 
 interface CircularTimerProps {

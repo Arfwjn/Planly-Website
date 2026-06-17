@@ -13,7 +13,6 @@
  * =============================================================================
  */
 
-import React from 'react';
 import { Course, RescheduledSession, CampusEvent } from '../../types';
 import { getCoursesForDate } from '../../utils/reschedule';
 
@@ -66,7 +65,7 @@ export default function DateStrip({
   return (
     <div className="w-full bg-white dark:bg-slate-900 border border-[#E2E8F0] dark:border-slate-800 rounded-2xl p-4 shadow-sm">
       <div className="flex justify-between items-center gap-3 overflow-x-auto no-scrollbar pb-1 w-full">
-        {daysInWeek.map((day, index) => {
+        {daysInWeek.map((day) => {
           const isSelected = selectedDayObj.dateObject.getDate() === day.dateObject.getDate() &&
                              selectedDayObj.dateObject.getMonth() === day.dateObject.getMonth() &&
                              selectedDayObj.dateObject.getFullYear() === day.dateObject.getFullYear();
