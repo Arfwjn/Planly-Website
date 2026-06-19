@@ -256,9 +256,3 @@ planly-website/
 ├── BACKEND_INTEGRATION.md     # Panduan migrasi database & controller backend
 └── PRD.md                     # Product Requirement Document (Paritas Fitur Mobile Flutter)
 ```
-
----
-
-## 📝 Lisensi
-
-Proyek ini dilisensikan di bawah **Lisensi MIT** - Lihat berkas [LICENSE](LICENSE) untuk detail lebih lanjut.
