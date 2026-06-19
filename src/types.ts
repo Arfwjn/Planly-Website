@@ -176,7 +176,7 @@ export interface ProfileUpdatePayload {
 /**
  * Menentukan tab aktif pada sidebar navigasi utama aplikasi Planly.
  */
-export type SidebarTab = 'today' | 'calendar' | 'tasks' | 'courses' | 'notes' | 'profile' | 'workspace' | 'events' | 'attendance' | 'ai-companion';
+export type SidebarTab = 'today' | 'calendar' | 'tasks' | 'courses' | 'notes' | 'profile' | 'workspace' | 'discussion' | 'events' | 'attendance' | 'ai-companion';
 
 // --- Event Kampus ---
 

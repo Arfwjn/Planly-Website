@@ -1,41 +1,86 @@
 # Planly — Ruang Kerja Akademik Mahasiswa (Web & Mobile Backend)
 
+<!-- Badges Section -->
+<div align="center">
+
+[![Vite](https://img.shields.io/badge/Vite-6.x-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vite.dev/)
+[![React](https://img.shields.io/badge/React-19.x-61DAFB?style=for-the-badge&logo=react&logoColor=white)](https://react.dev/)
+[![Laravel](https://img.shields.io/badge/Laravel-11.x-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)](https://laravel.com/)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v4.x-38B2AC?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![Gemini](https://img.shields.io/badge/Gemini_AI-Flash-8E75C2?style=for-the-badge&logo=google-gemini&logoColor=white)](https://deepmind.google/technologies/gemini/)
+
+</div>
+
+---
+
 **Planly** adalah platform web perencana akademik premium yang dirancang khusus untuk meningkatkan produktivitas belajar mahasiswa. Aplikasi ini menggabungkan pengelolaan jadwal kuliah otomatis, manajemen tugas kuliah, catatan materi berformat Markdown, verifikasi presensi kehadiran menggunakan kamera (Face Biometrics), asisten kuliah pintar menggunakan Gemini AI, hingga ekspor jadwal ke Google Calendar secara instan.
 
 Platform ini mendukung **Dual-Mode API** (Simulasi Lokal / Mock vs Koneksi Laravel Backend) untuk kemudahan pengembangan dan paritas penuh dengan target pengembangan aplikasi mobile Flutter.
 
 ---
 
+## 🗺️ Alur Pengguna (User Flow)
+
+Berikut adalah visualisasi alur aktivitas mahasiswa di dalam ekosistem **Planly**:
+
+```mermaid
+graph TD
+    A[Mulai / Landing Page] --> B{Status Login?}
+    B -- Belum Login --> C[AuthView: Register / Login]
+    C --> D[App.tsx: Layout Utama]
+    B -- Terautentikasi --> D
+    
+    D --> E[1. Jadwal Hari Ini & Pomodoro]
+    D --> F[2. Absensi Wajah & GPS]
+    D --> G[3. Ruang Belajar & Lecture Notes]
+    D --> H[4. Ruang Diskusi Kampus]
+    D --> I[5. Asisten AI Companion]
+    
+    F --> F1[Ambil Posisi GPS & Stream Kamera]
+    F1 --> F2{Verifikasi Wajah Euclidean <= 0.6?}
+    F2 -- Cocok --> F3[Presensi Berhasil]
+    F2 -- Gagal --> F4[Status Alpha]
+
+    I --> I1[Unggah Video Kuliah]
+    I1 --> I2[Client-Side WAV Downsampling 16kHz]
+    I2 --> I3[Analisis Gemini AI: Transkrip & Key Takeaways]
+    I3 --> I4[RAG Chatbot Diskusi Materi]
+```
+
+---
+
 ## 🚀 Fitur Utama
 
+### 📅 Perencana & Jadwal Kuliah Dinamis
 * **Dasbor "Hari Ini" (Today Dashboard)**: Halaman pemantau agenda harian yang merangkum jadwal kuliah aktif, status kuliah realtime (*pulsing indicator*), daftar tugas terdekat, dan widget pengontrol fokus Pomodoro.
 * **Timeline Jadwal & Kalender Dinamis**: Kalender interaktif bulanan dan mingguan yang terintegrasi dengan status kelas normal, pergeseran jadwal kelas kuliah (*reschedules*), serta pembatalan kelas (*canceled*).
-* **Verifikasi Kehadiran Cerdas (Class Attendance & Biometrics)**:
-  * Sistem absensi masuk kelas menggunakan live camera depan.
-  * **Face Recognition**: Deteksi struktur wajah dan pencocokan descriptor wajah real-time menggunakan pustaka `@vladmandic/face-api` (membandingkan live webcam descriptor dengan descriptor wajah terdaftar di profil mahasiswa dengan threshold Euclidean Distance <= 0.6).
-  * **GPS Radius**: Pengukuran kesesuaian koordinat GPS posisi mahasiswa dengan koordinat kelas.
-  * Statistik kehadiran interaktif dengan grafik syarat minimum 75% kehadiran kuliah.
-* **Asisten Kuliah AI (AI Companion & Chatbot)**:
-  * **Ekstraktor Audio**: Mengompres dan mengekstrak audio biner (WAV format 16000Hz mono) dari rekaman video kuliah langsung di sisi client (hemat bandwidth hingga 50x).
-  * **Gemini AI Analysis**: Menghasilkan transkrip bertimestamp otomatis, daftar ringkasan topik (chapters), poin penting (takeaways), dan kartu pengayaan Google Search.
-  * **RAG Chatbot**: Chatbot interaktif untuk tanya jawab materi berbasis konteks transkrip kuliah dengan pembatasan domain (menolak pertanyaan di luar materi kuliah).
-  * **Status & Keamanan API Key**: Konfigurasi API Key Gemini mandiri dengan enkripsi lokal (`localStorage`) berbasis browser fingerprint (mengacak kunci agar aman dari XSS/credential scrapers), penyamaran karakter masukan (bullet points), serta penanganan variabel lingkungan `.env`.
-* **Manajemen Tugas & Catatan Belajar**:
-  * **Format LaTeX KaTeX**: Pratinjau catatan yang mendukung penulisan rumus matematika block (`$$formula$$` dengan stateful multiline parser) dan inline (`$formula$`) secara asli menggunakan KaTeX.
-  * **Markdown Parser & Direct-to-Link**: Mengonversi penanda tebal (`**`) dan miring (`*`) asterisk ke elemen visual HTML asli serta mengubah link markdown `[Label](URL)` menjadi tombol pill interaktif ("Direct-to-Link").
-  * **Lampiran Berkas**: Pengunggahan lampiran pendukung tugas/catatan kuliah (Base64 file reader dengan batas file 1.5MB).
-  * **Checkpoint Catatan**: Editor checklist materi kuliah yang dapat dicentang langsung pada masonry grid dasbor utama.
-* **Ekspor & Sinkronisasi Kalender**:
-  * Unduh dokumen iCalendar (`.ics` file) yang kompatibel dengan Google Calendar atau Outlook.
-  * Salin link feed langganan kalender dinamis (ICS Subscription Feed Link) untuk sync otomatis di latar belakang.
-* **Interactive Empty States**:
-  * Visualisasi data kosong yang seragam dengan animasi hover 3D multi-ikon (icon float & rotate) serta tombol Call-to-Action (CTA) interaktif.
+
+### 👥 Ruang Diskusi Kampus (Campus Discussion Room)
+* **Kategori Kanal (Channels)**: Berbagi informasi dan tanya jawab terorganisir per topik (#umum, #tugas-kuliah, #rapat-himpunan, #study-club, #tips-tricks).
+* **Interaksi Sosial**: Fitur untuk menyukai (like) topik, melihat tanggapan, serta menambahkan komentar secara langsung dan real-time.
+* **Fitur Pencarian & Pembuatan Topik**: Cari bahasan diskusi secara instan dan buat topik baru melalui formulir input yang intuitif.
+
+### 📷 Verifikasi Kehadiran Cerdas (Class Attendance & Biometrics)
+* **Face Recognition**: Deteksi struktur wajah dan pencocokan descriptor wajah real-time menggunakan pustaka `@vladmandic/face-api` (membandingkan live webcam descriptor dengan descriptor wajah terdaftar di profil mahasiswa dengan threshold Euclidean Distance <= 0.6).
+* **GPS Geofencing**: Pengukuran kesesuaian koordinat GPS posisi mahasiswa dengan koordinat kelas untuk validasi presensi.
+* **Statistik & Rekap Kehadiran**: Grafik visualisasi persentase kehadiran per mata kuliah dengan warning otomatis di bawah syarat minimal 75%.
+
+### 🤖 Asisten Kuliah AI (AI Companion & Chatbot)
+* **Ekstraktor Audio Client-Side**: Mengompres dan mengekstrak audio biner (WAV format 16000Hz mono) dari rekaman video kuliah langsung di sisi client (mengurangi transfer data hingga 50x).
+* **Gemini AI Analysis**: Menghasilkan transkrip bertimestamp otomatis, daftar ringkasan topik (chapters), poin penting (takeaways), dan kartu pengayaan Google Search.
+* **RAG Chatbot**: Chatbot interaktif untuk tanya jawab materi berbasis konteks transkrip kuliah dengan pembatasan domain (menolak pertanyaan di luar materi kuliah).
+
+### 📝 Manajemen Tugas & Catatan Belajar
+* **Format LaTeX KaTeX**: Pratinjau catatan yang mendukung penulisan rumus matematika block (`$$formula$$` dengan stateful multiline parser) dan inline (`$formula$`) secara asli menggunakan KaTeX.
+* **Markdown Parser & Direct-to-Link**: Mengonversi penanda tebal (`**`) dan miring (`*`) asterisk ke elemen visual HTML asli serta mengubah link markdown `[Label](URL)` menjadi tombol pill interaktif ("Direct-to-Link").
+* **Checkpoint Catatan**: Editor checklist materi kuliah yang dapat dicentang langsung pada masonry grid dasbor utama.
 
 ---
 
 ## 🛠️ Stack Teknologi
 
-* **Frontend Framework**: React 19 (TypeScript)
+### Frontend (Client)
+* **Framework**: React 19 (TypeScript)
 * **Build Tool**: Vite 6
 * **Styling**: TailwindCSS v4 & Vanilla CSS
 * **Ikonografi**: Lucide React
@@ -43,14 +88,16 @@ Platform ini mendukung **Dual-Mode API** (Simulasi Lokal / Mock vs Koneksi Larav
 * **Face Biometrics**: Face-api.js (`@vladmandic/face-api`)
 * **AI Client SDK**: Google Gen AI SDK (`@google/genai`)
 * **Animasi**: Framer Motion / Motion
-* **HTTP Client**: Axios (untuk integrasi server)
-* **Backend API**: Laravel 11 & Sanctum (Bearer Token) di direktori `/planly-api`
+
+### Backend (API Server)
+* **Framework**: Laravel 11
+* **Autentikasi**: Sanctum (Bearer Token)
+* **Database**: MySQL / MariaDB
+* **Direktori API**: `/planly-api`
 
 ---
 
 ## 📦 Panduan Instalasi & Kloning
-
-Ikuti langkah-langkah di bawah ini untuk menjalankan Planly di komputer lokal Anda:
 
 ### 1. Kloning Repositori
 ```bash
@@ -58,44 +105,32 @@ git clone https://github.com/username/planly-website.git
 cd planly-website
 ```
 
-### 2. Pemasangan Dependencies
-Instal semua paket dependensi Node.js frontend:
+### 2. Jalankan Frontend (React)
+Instal dependensi dan jalankan server lokal:
 ```bash
 npm install
-```
-
-### 3. Konfigurasi Environment Variables (`.env`)
-Salin file `.env.example` menjadi `.env` di root directory:
-```bash
-cp .env.example .env
-```
-Isi konfigurasi berikut:
-```env
-# Mode Sinkronisasi Data:
-# - Set 'true' untuk menggunakan database simulasi lokal (localStorage / mockData)
-# - Set 'false' untuk menghubungkan frontend langsung dengan REST API Laravel
-VITE_USE_MOCK=false
-
-# URL API Server Laravel (Dipakai saat VITE_USE_MOCK=false)
-VITE_API_BASE_URL=http://localhost:8000/api
-
-# Gemini API Key Opsional (Alternatif jika tidak diatur di UI)
-GEMINI_API_KEY=MY_GEMINI_API_KEY
-```
-
-### 4. Menjalankan Server Pengembangan (Local Dev Server)
-Jalankan perintah berikut untuk memulai server lokal Planly:
-```bash
 npm run dev
 ```
-Aplikasi akan berjalan di alamat **`http://localhost:3000`**.
+*Aplikasi frontend berjalan di alamat `http://localhost:3000`.*
 
-### 5. Kompilasi Produksi (Production Build)
-Untuk mengompilasi dan mengoptimalkan kode program agar siap di-deploy, jalankan:
+### 3. Jalankan Backend (Laravel API)
+Masuk ke folder backend, instal dependensi, dan nyalakan server lokal:
 ```bash
-npm run build
+cd planly-api
+composer install
+php artisan key:generate
+php artisan migrate --seed
+php artisan serve
 ```
-Hasil kompilasi akan tersimpan di dalam folder `/dist`.
+*API Server berjalan di alamat `http://localhost:8000`.*
+
+### 4. Konfigurasi Environment Variables (`.env`)
+Buat berkas `.env` pada root directory proyek dengan isian:
+```env
+# Set 'true' untuk database lokal (localStorage), set 'false' untuk menggunakan API Laravel
+VITE_USE_MOCK=false
+VITE_API_BASE_URL=http://localhost:8000/api
+```
 
 ---
 
@@ -109,27 +144,22 @@ planly-website/
 │   │   ├── attendance/        # Verifikasi wajah & riwayat absen
 │   │   ├── auth/              # Halaman masuk/daftar
 │   │   ├── calendar/          # Timeline jadwal & grid bulanan
-│   │   ├── courses/           # Pendaftaran mata kuliah & input SKS kustom
+│   │   ├── courses/           # Pendaftaran mata kuliah & input SKS
+│   │   ├── discussion/        # Ruang Diskusi Kampus (Forum & Komentar)
 │   │   ├── events/            # Agenda non-kuliah kampus
-│   │   ├── notes/             # Catatan materi & editor Markdown (LaTeX & Link)
+│   │   ├── notes/             # Catatan materi & editor Markdown (LaTeX)
 │   │   ├── profile/           # Bento settings layout & ekspor kalender
 │   │   ├── tasks/             # Pengelola tugas & file uploader
 │   │   ├── today/             # Dasbor ringkasan hari ini & Pomodoro timer
 │   │   └── ui/                # Reusable UI (InteractiveEmptyState, ApiKeyModal, dll.)
 │   ├── hooks/                 # Custom Hooks (useFaceScanner, useAcademicData, useAppAuth)
 │   ├── services/              # Modul REST API Laravel & Helper HTTP
-│   │   ├── core/              # Axios instance & localstorage helper
-│   │   ├── biometrics/        # Layanan lokal deteksi/penyelarasan wajah face-api
-│   │   ├── ai/                # Layanan pemrosesan audio & Gemini RAG
-│   │   └── ...                # Servis data akademik terintegrasi
-│   ├── utils/                 # Utility helpers
-│   │   ├── security.ts        # Enkripsi & Dekripsi API Key berbasis browser fingerprint
-│   │   └── ...                # Helper iCal, formatting, dll.
+│   ├── utils/                 # Utility helpers (security, iCal exporter, dll.)
 │   ├── types.ts               # Interface Types TypeScript (snake_case)
 │   ├── mockData.ts            # Dummy Data Awal Mahasiswa (Arief Sidik W.)
 │   ├── App.tsx                # Entry point UI & Router Navigasi (Tab persistence)
 │   └── main.tsx               # Bootstrapper React utama
-├── API.md                     # Panduan endpoint REST API Laravel (Sumber data Flutter)
+├── API.md                     # Panduan endpoint REST API Laravel
 ├── BACKEND_INTEGRATION.md     # Panduan migrasi database & controller backend
 └── PRD.md                     # Product Requirement Document (Paritas Fitur Mobile Flutter)
 ```
