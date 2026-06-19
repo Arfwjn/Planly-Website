@@ -47,30 +47,30 @@ graph TB
     subgraph Client [Sisi Klien - React 19 SPA]
         A[App.tsx - Router & State Global]
         B[Custom Hooks: useAcademicData, useAppAuth, useFocusTimer, useAppTheme]
-        C[Modul Fitur: Today, Attendance, AI Companion, Tasks, Calendar, Notes]
-        D[Pustaka UI: Lucide, Framer Motion, KaTeX]
+        C["Modul Fitur: Today, Attendance, AI Companion, Tasks, Calendar, Notes"]
+        D["Pustaka UI: Lucide, Framer Motion, KaTeX"]
     end
     
     subgraph CoreEngine [Mesin Deteksi & AI - Sisi Klien]
-        E[vladmandic/face-api: Face Recognition]
-        F[Web Audio API: WAV 16kHz Downsampler]
-        G[@google/genai: Gemini API Client]
+        E["vladmandic/face-api: Face Recognition"]
+        F["Web Audio API: WAV 16kHz Downsampler"]
+        G["@google/genai: Gemini API Client"]
     end
 
     subgraph DataBridge [Jembatan Data]
-        H{VITE_USE_MOCK == true?}
-        I[Mock Engine: LocalStorage]
-        J[Axios HTTP Client]
+        H{"VITE_USE_MOCK == true?"}
+        I["Mock Engine: LocalStorage"]
+        J["Axios HTTP Client"]
     end
 
     subgraph Backend [Server API - Laravel 11]
-        K[Sanctum Auth Middleware]
-        L[Controllers: Course, Task, Note, Attendance, Profile]
-        M[Eloquent ORM]
+        K["Sanctum Auth Middleware"]
+        L["Controllers: Course, Task, Note, Attendance, Profile"]
+        M["Eloquent ORM"]
     end
 
     subgraph Database [Penyimpanan Data]
-        N[(MySQL / MariaDB)]
+        N[("MySQL / MariaDB")]
     end
 
     %% Hubungan Aliran
@@ -123,21 +123,21 @@ Proses validasi kehadiran mahasiswa dilakukan secara ketat di sisi klien sebelum
 
 ```mermaid
 graph TD
-    Start[Mulai Presensi Kehadiran] --> GetGPS[Ambil Koordinat GPS Pengguna]
-    GetGPS --> CompareGPS{Koordinat dalam Radius Kelas?}
+    Start["Mulai Presensi Kehadiran"] --> GetGPS["Ambil Koordinat GPS Pengguna"]
+    GetGPS --> CompareGPS{"Koordinat dalam Radius Kelas?"}
     
-    CompareGPS -- Gagal / Di Luar Radius --> ErrorGPS[Tampilkan Error: 'Di Luar Lokasi Kelas']
-    CompareGPS -- Berhasil / Dalam Radius --> OpenCam[Aktifkan Kamera & WebCam Stream]
+    CompareGPS -- Gagal / Di Luar Radius --> ErrorGPS["Tampilkan Error: 'Di Luar Lokasi Kelas'"]
+    CompareGPS -- Berhasil / Dalam Radius --> OpenCam["Aktifkan Kamera & WebCam Stream"]
     
-    OpenCam --> LoadModels[Muat Model Face-API TinyFaceDetector & FaceLandmark]
-    LoadModels --> DetectFace[Ekstrak Live Face Descriptor]
-    DetectFace --> CompareFace{Bandingkan dengan Profile Descriptor}
+    OpenCam --> LoadModels["Muat Model Face-API TinyFaceDetector & FaceLandmark"]
+    LoadModels --> DetectFace["Ekstrak Live Face Descriptor"]
+    DetectFace --> CompareFace{"Bandingkan dengan Profile Descriptor"}
     
-    CompareFace -- Euclidean Distance <= 0.6 --> Success[Presensi Berhasil: Hadir]
-    CompareFace -- Euclidean Distance > 0.6 --> Fail[Presensi Gagal: Wajah Tidak Cocok]
+    CompareFace -- Euclidean Distance <= 0.6 --> Success["Presensi Berhasil: Hadir"]
+    CompareFace -- Euclidean Distance > 0.6 --> Fail["Presensi Gagal: Wajah Tidak Cocok"]
     
-    Success --> SendAPI[Kirim Log Kehadiran ke Database via POST /attendance]
-    Fail --> ShowRetry[Tampilkan Kesalahan & Opsi Coba Lagi]
+    Success --> SendAPI["Kirim Log Kehadiran ke Database via POST /attendance"]
+    Fail --> ShowRetry["Tampilkan Kesalahan & Opsi Coba Lagi"]
     
     style Start fill:#1e1b4b,stroke:#4f46e5,stroke-width:1px,color:#fff
     style Success fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#fff
@@ -149,18 +149,18 @@ Untuk meminimalkan beban bandwidth jaringan, audio diekstrak dan didownsample di
 
 ```mermaid
 graph TD
-    Upload[Unggah File Rekaman Video/Audio Kuliah] --> CheckFormat{Cek Durasi & Format}
-    CheckFormat --> WebAudio[Web Audio API Client-Side Processing]
-    WebAudio --> Downsample[Downsample ke WAV 16kHz Mono 16-bit]
-    Downsample --> UploadGemini[Kirim file audio biner ke Gemini API]
+    Upload["Unggah File Rekaman Video/Audio Kuliah"] --> CheckFormat{"Cek Durasi & Format"}
+    CheckFormat --> WebAudio["Web Audio API Client-Side Processing"]
+    WebAudio --> Downsample["Downsample ke WAV 16kHz Mono 16-bit"]
+    Downsample --> UploadGemini["Kirim file audio biner ke Gemini API"]
     
-    UploadGemini --> GeminiProc{Analisis Gemini AI}
-    GeminiProc --> Transcribe[Generasi Transkrip bertimestamp]
-    GeminiProc --> Takeaways[Ekstraksi Poin Utama & Bab Ringkasan]
-    GeminiProc --> GoogleSearch[Pencarian Eksternal untuk Pengayaan Materi]
+    UploadGemini --> GeminiProc{"Analisis Gemini AI"}
+    GeminiProc --> Transcribe["Generasi Transkrip bertimestamp"]
+    GeminiProc --> Takeaways["Ekstraksi Poin Utama & Bab Ringkasan"]
+    GeminiProc --> GoogleSearch["Pencarian Eksternal untuk Pengayaan Materi"]
     
-    Transcribe & Takeaways & GoogleSearch --> RAGStore[Simpan Konteks di State Catatan/Session]
-    RAGStore --> ChatBot[Aktifkan RAG Chatbot untuk Tanya Jawab Terbatas Materi]
+    Transcribe & Takeaways & GoogleSearch --> RAGStore["Simpan Konteks di State Catatan/Session"]
+    RAGStore --> ChatBot["Aktifkan RAG Chatbot untuk Tanya Jawab Terbatas Materi"]
     
     style WebAudio fill:#311042,stroke:#8e75c2,stroke-width:1px,color:#fff
     style GeminiProc fill:#172554,stroke:#3b82f6,stroke-width:1px,color:#fff
