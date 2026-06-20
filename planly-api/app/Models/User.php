@@ -82,11 +82,11 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at'  => 'datetime', // Konversi tanggal verifikasi email ke objek Carbon datetime
-            'password'           => 'hashed',   // Otomatis melakukan hashing password menggunakan bcrypt saat disimpan
-            'semester'           => 'integer',  // Memastikan semester dibaca sebagai integer
-            'gpa_current'        => 'float',    // Memastikan IPK saat ini dibaca sebagai float decimal
-            'gpa_target'         => 'float',    // Memastikan target IPK dibaca sebagai float decimal
+            'email_verified_at' => 'datetime', // Konversi tanggal verifikasi email ke objek Carbon datetime
+            'password' => 'hashed',   // Otomatis melakukan hashing password menggunakan bcrypt saat disimpan
+            'semester' => 'integer',  // Memastikan semester dibaca sebagai integer
+            'gpa_current' => 'float',    // Memastikan IPK saat ini dibaca sebagai float decimal
+            'gpa_target' => 'float',    // Memastikan target IPK dibaca sebagai float decimal
             'target_study_hours' => 'integer',  // Memastikan target belajar dibaca sebagai integer
         ];
     }
