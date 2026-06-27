@@ -1,6 +1,6 @@
 // =============================================================================
 // Planly — TypeScript Types
-// 
+//
 // File ini mendefinisikan interface dan tipe data TypeScript yang digunakan
 // di seluruh aplikasi kita. Semua field di sini ditulis dalam format snake_case
 // agar selaras dan cocok secara langsung dengan response JSON dari API Laravel.
@@ -41,9 +41,9 @@ export interface Course {
   sks: number;
   lecturer_name: string;
   room: string;
-  day_of_week: string;  // 'Monday', 'Tuesday', dll.
-  start_time: string;   // format "HH:MM"
-  end_time: string;     // format "HH:MM"
+  day_of_week: string; // 'Monday', 'Tuesday', dll.
+  start_time: string; // format "HH:MM"
+  end_time: string; // format "HH:MM"
   color_hex: string;
 }
 
@@ -65,7 +65,7 @@ export interface Task {
   course_id: number | null;
   task_title: string;
   description: string | null;
-  deadline: string;     // format "YYYY-MM-DD HH:MM:SS"
+  deadline: string; // format "YYYY-MM-DD HH:MM:SS"
   is_finished: boolean;
   is_priority: boolean;
   attachments?: AttachmentFile[];
@@ -122,6 +122,7 @@ export interface RegisterRequest {
 export interface RegisterResponse {
   message: string;
   user: User;
+  token?: string;
 }
 
 // --- CRUD DTOs (Payload untuk operasi pembuatan dan pembaruan data) ---
@@ -194,9 +195,9 @@ export interface CampusEvent {
   event_name: string;
   category: EventCategory;
   description: string | null;
-  event_date: string;       // format "YYYY-MM-DD"
-  start_time: string;       // format "HH:MM"
-  end_time: string;         // format "HH:MM"
+  event_date: string; // format "YYYY-MM-DD"
+  start_time: string; // format "HH:MM"
+  end_time: string; // format "HH:MM"
   location: string;
   organizer: string;
   color_hex: string;
@@ -234,8 +235,8 @@ export interface AttendanceRecord {
   course_id: number;
   course_code: string;
   course_name: string;
-  date: string;              // Format "YYYY-MM-DD"
-  time: string;              // Format "HH:MM:SS"
+  date: string; // Format "YYYY-MM-DD"
+  time: string; // Format "HH:MM:SS"
   status: 'Hadir' | 'Sakit' | 'Izin' | 'Alpha';
   latitude: number | null;
   longitude: number | null;
@@ -267,5 +268,3 @@ export interface CalendarSyncConfig {
   sync_events: boolean;
   last_sync_time: string | null;
 }
-
-
