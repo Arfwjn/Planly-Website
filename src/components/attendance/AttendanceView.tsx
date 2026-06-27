@@ -296,7 +296,7 @@ export default function AttendanceView({
           }`}
         >
           <Camera className="w-4 h-4" />
-          <span>Absen Mandiri</span>
+          <span>Absensi Hari Ini</span>
           {activeTab === 'checkin' && (
             <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
           )}

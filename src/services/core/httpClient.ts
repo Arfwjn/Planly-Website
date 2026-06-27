@@ -10,7 +10,7 @@
 import axios from 'axios';
 
 // Ambil Base URL API dari file .env. Kalau gak ada, kita fallback ke localhost port 8000.
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api-plany-production.up.railway.app/api';
 
 // Kita bikin instance Axios baru dengan konfigurasi default.
 // Accept & Content-Type diset ke JSON biar server tahu kita kirim dan minta data JSON.
