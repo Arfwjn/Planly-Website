@@ -42,7 +42,7 @@ export default function FaceEnrollmentPreviewModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-3">
-          <h4 className="text-xs font-bold text-on-surface uppercase">Pratinjau Foto Wajah</h4>
+          <h4 className="text-xs font-bold text-on-surface uppercase">Wajah Terdaftar</h4>
           <button
             onClick={onClose}
             className="text-on-surface-variant hover:text-on-surface p-1 rounded-full cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border-none bg-transparent"

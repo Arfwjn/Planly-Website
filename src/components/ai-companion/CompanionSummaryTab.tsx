@@ -134,7 +134,7 @@ export default function CompanionSummaryTab({
           <div className="flex items-center gap-2.5 text-primary border-b border-primary/10 pb-2">
             <Globe className="w-5 h-5 text-primary stroke-[2.5px] animate-pulse" />
             <span className="text-xs font-extrabold uppercase tracking-wider">
-              Pengayaan Akademik (Sumber Internet & Google Search)
+              Wawasan Akademik Tambahan (Sumber Internet & Google Search)
             </span>
           </div>
           

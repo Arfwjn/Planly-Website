@@ -62,7 +62,7 @@ export default function GpaProgressCard({
         <div className="w-9 h-9 rounded-full bg-[#F5F2FF] dark:bg-slate-800/50 flex items-center justify-center text-primary">
           <TrendingUp className="w-4.5 h-4.5" />
         </div>
-        <h3 className="text-base font-bold text-on-surface">Statistik & Progres Akademik</h3>
+        <h3 className="text-base font-bold text-on-surface">Statistik Akademik</h3>
       </div>
       
       {/* Grid Statistik Utama */}

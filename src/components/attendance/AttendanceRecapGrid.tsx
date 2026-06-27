@@ -115,8 +115,8 @@ export default function AttendanceRecapGrid({
                 {/* <span className="flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                   Sakit/Izin: {stat.sickCount + stat.permittedCount}
-                </span> */}
-                {/* <span className="flex items-center gap-1">
+                </span> 
+                <span className="flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
                   Alpha: {stat.absentCount}
                 </span> */}
